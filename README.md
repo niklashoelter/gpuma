@@ -1,70 +1,47 @@
 # GPUMA
 
-A minimalist toolkit for molecular geometry optimization using fairchem UMA models and torch-sim. Includes a simple Python API and a CLI.
+GPUMA is a minimalist Python toolkit for facile and rapid high-throughput molecular geometry optimization 
+based on the [UMA/OMol25 machine-learning interatomic potential](https://arxiv.org/abs/2505.08762).  
+
+GPUMA is especially designed for batch optimizations of many structures (conformer ensembles, datasets) on GPU,
+ensuring efficient parallelization and maximum GPU utilization by leveraging the [torch-sim library](https://arxiv.org/abs/2508.06628).
+It wraps Fairchem UMA models and torch-sim functionality to provide both a simple command-line 
+interface (CLI) and a small but expressive Python API for single- and multi-structure optimizations.
+
+If conformer sampling is desired, GPUMA can generate conformer ensembles on the fly from SMILES strings 
+using the [morfeus library](https://digital-chemistry-laboratory.github.io/morfeus/). Alternative input formats
+are described in the CLI section below.
+
+Feedback and improvements are always welcome!
 
 ## Installation
 
-Using pip:
+### Option 1: Install from PyPI (recommended)
 
 ```bash
-# install this package first
+pip install gpuma
+```
+
+This installs `gpuma` together with its core dependencies. Make sure you are using
+Python 3.12 or newer.
+
+### Option 2: Install from source
+
+```bash
+# clone the repository
 git clone https://github.com/niklashoelter/gpuma.git
 cd gpuma
 
-uv pip install -e . # or plain pip: pip install -e .
+# install using (uv) pip
+uv pip install .
+# or, without uv:
+pip install .
 ```
 
-**Dependencies that need to be manually installed**:
-- pyyaml (optional if you use YAML configs)
-- pytest (for running tests)
-
-Note: Some ML/simulation dependencies (torch, rdkit, fairchem) provide OS- and GPU-specific wheels. Please consult project-specific installation notes as needed.
-
-## CLI Usage (Config-Driven)
+## CLI Usage
 
 The CLI is provided via the command `gpuma`. For best results, create a
 config file (JSON or YAML) and reference it in all CLI calls.
-
-**Example config file (JSON):**
-
-```json
-{
-  "optimization": {
-    "batch_optimization_mode": "batch",
-    "batch_optimizer": "fire",
-    "max_num_conformers": 20,
-    "conformer_seed": 42,
-
-    "model_name": "uma-m-1p1",
-    "model_path": null,
-    "model_cache_dir": null,
-    "device": "cuda",
-    "huggingface_token": null,
-    "huggingface_token_file": "/home/hf_secret",
-
-    "logging_level": "INFO"
-  }
-}
-```
-
-**Example config file (YAML):**
-
-```yaml
-optimization:
-  batch_optimization_mode: batch
-  batch_optimizer: fire
-  max_num_conformers: 20
-  conformer_seed: 42
-
-  model_name: uma-m-1p1
-  model_path: null
-  model_cache_dir: null
-  device: cuda
-  huggingface_token: null
-  huggingface_token_file: /home/hf_secret
-
-  logging_level: INFO
-```
 
 **Recommended CLI usage:**
 
@@ -112,7 +89,7 @@ from gpuma import Config, Structure
 
 # Convenience (top-level, via the public api module): optimize a single
 # molecule from SMILES and optionally save
-cfg = Config()  # or gpuma.load_config_from_file("config.json")
+cfg = gpuma.load_config_from_file("config.json")
 optimized: Structure = gpuma.optimize_single_smiles(
     "CCO", output_file="ethanol_opt.xyz", config=cfg
 )
@@ -189,11 +166,15 @@ optimization:
   - `sequential`: ASE/BFGS per conformer with a shared calculator
   - `batch`: torch-sim batch optimization (accelerated for larger ensembles)
 - `batch_optimizer`: optimizer for batch mode; `fire` (default) or `gradient_descent`
-- `device`: CPU/GPU (CUDA). Batch mode requires a GPU to run truly batched; on CPU it falls back to sequential.
-- Hugging Face token: either set directly or reference a file.
-- `logging_level`: set logging verbosity (`info`, `warning`, `error`).
-
-## Examples
+- `max_num_conformers`: max number of conformers to generate from SMILES (if applicable)
+- `conformer_seed`: random seed for conformer generation (if applicable)
+- `model_name`: Fairchem UMA model name (e.g., `uma-m-1p1`)
+- `model_path`: local path to a Fairchem UMA model (overrides `model_name` if set)
+- `model_cache_dir`: directory to cache downloaded models (default: `~/.cache/fairchem`)
+- `device`: compute device, e.g., `cuda` or `cpu`
+- `huggingface_token`: optional HF token for model access (if required)
+- `huggingface_token_file`: optional file path to read the HF token from
+- `logging_level`: logging verbosity; e.g., `DEBUG`, `INFO`, `WARNING
 
 See the `examples/` folder for:
 - Simple single optimization (`example_single_optimization.py`)
@@ -215,8 +196,8 @@ python examples/example_ensemble_optimization.py
 
 ## Troubleshooting
 - Missing libraries: install optional dependencies like `pyyaml` if you use YAML configs.
-- CUDA/GPU: ensure a compatible PyTorch is installed and set `device: "cuda"` in your config.
-- Fairchem/UMA: ensure network access for model downloads and optionally set `huggingface_token` (e.g., via a token file).
+- Fairchem/UMA: ensure network access for model downloads and optionally set or provide 
+`huggingface_token` (e.g., via a token file) to access the UMA model family.
 
 ## License
 MIT License (see LICENSE)
