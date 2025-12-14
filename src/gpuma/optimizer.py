@@ -3,20 +3,18 @@
 This module contains optimization logic for single structures and batches of
 structures (e.g., conformer ensembles).
 """
+from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
 
 from ase import Atoms
 from ase.optimize import BFGS
+from fairchem.core import FAIRChemCalculator
 
 from .config import Config, load_config_from_file
 from .decorators import time_it
 from .models import _check_device, load_model_fairchem, load_model_torchsim
 from .structure import Structure
-
-if TYPE_CHECKING:  # pragma: no cover - type checking only
-    from fairchem.core import FAIRChemCalculator
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +23,7 @@ logger = logging.getLogger(__name__)
 def optimize_single_structure(
     structure: Structure,
     config: Config | None = None,
-    calculator: "FAIRChemCalculator" | None = None,
+    calculator: FAIRChemCalculator | None = None,
 ) -> Structure:
     """Optimize a single :class:`Structure` using a Fairchem UMA model.
 

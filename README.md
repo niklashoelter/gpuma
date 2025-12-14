@@ -2,19 +2,14 @@
 
 A minimalist toolkit for molecular geometry optimization using fairchem UMA models and torch-sim. Includes a simple Python API and a CLI.
 
-## Known limitations
-
-- Batch optimization mode currently only supports neutral singlet systems (charge = 0, multiplicity = 1).
-  Different charges and spin multiplicities are only supported in single-structure optimizations.
-
 ## Installation
 
 Using pip:
 
 ```bash
 # install this package first
-git clone https://github.com/niklashoelter/uma_geometry_optimizer
-cd uma_geometry_optimizer
+git clone https://github.com/niklashoelter/gpuma.git
+cd gpuma
 
 uv pip install -e . # or plain pip: pip install -e .
 ```

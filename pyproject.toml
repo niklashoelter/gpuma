@@ -1,7 +1,3 @@
-[build-system]
-requires = ["setuptools>=61", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "gpuma"
 version = "1.0.0"
@@ -16,6 +12,7 @@ keywords = ["chemistry", "geometry-optimization", "uma", "fairchem", "ase", "mli
 classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "License :: OSI Approved :: MIT License",
   "Intended Audience :: Science/Research",
   "Topic :: Scientific/Engineering :: Chemistry",
@@ -34,10 +31,14 @@ dependencies = [
 
 [project.optional-dependencies]
 yaml = ["pyyaml>=6.0"]
-dev = ["pytest>=9.0.0", "ruff>=0.7.0"]
+dev = ["pytest>=9.0.0", "ruff>=0.7.0", "build>=1.2.1"]
 
 [project.scripts]
 gpuma = "gpuma.cli:main"
+
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

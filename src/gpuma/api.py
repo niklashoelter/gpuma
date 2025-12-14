@@ -34,7 +34,7 @@ def optimize_single_smiles(
         Optional path to an output XYZ file where the optimized structure
         will be written.
     config:
-        Optional :class:`~uma_geometry_optimizer.config.Config` object to
+        Optional :class:`~gpuma.config.Config` object to
         control the optimization pipeline.
 
     Returns
@@ -71,7 +71,7 @@ def optimize_single_xyz_file(
         Optional path to an output XYZ file where the optimized structure
         will be written.
     config:
-        Optional :class:`~uma_geometry_optimizer.config.Config` object to
+        Optional :class:`~gpuma.config.Config` object to
         control the optimization pipeline.
     charge:
         Total charge of the system. Defaults to ``0``.
@@ -113,7 +113,7 @@ def optimize_smiles_ensemble(
         Optional path to a multi-structure XYZ file where the optimized
         ensemble will be written.
     config:
-        Optional :class:`~uma_geometry_optimizer.config.Config` object to
+        Optional :class:`~gpuma.config.Config` object to
         control the optimization pipeline.
 
     Returns
