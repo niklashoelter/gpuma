@@ -59,7 +59,7 @@ gpuma optimize --smiles "CCO" --output ethanol_opt.xyz --config examples/config.
 gpuma optimize --xyz test.xyz --output test_opt.xyz --config examples/config.json
 
 # Create and optimize a conformer ensemble from SMILES
-gpuma ensemble --smiles "c1ccccc1" --conformers 10 --output benzene_ensemble.xyz --config examples/config.json
+gpuma ensemble --smiles "c1c(CCOCC)cccc1" --conformers 10 --output benzene_ensemble.xyz --config examples/config.json
 
 # Batch optimization from a multi-XYZ file
 gpuma batch --multi-xyz examples/read_multiple_xyz_file/conf0_confsearch_ensemble.xyz \
