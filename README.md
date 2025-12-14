@@ -43,6 +43,12 @@ pip install .
 The CLI is provided via the command `gpuma`. For best results, create a
 config file (JSON or YAML) and reference it in all CLI calls.
 
+**Important:** For the optimatzion of very large ensembles or high-throughput workflows, using
+the batch optimization mode is recommended (set in the config file, see below).
+In this case, make sure to use a multi-XYZ input file or a directory of XYZ files
+and only start one GPUMA process to leverage maximum efficient GPU parallelization
+and avoid runtime overhead for model initialization and memory estimation.
+
 **Recommended CLI usage:**
 
 ```bash
