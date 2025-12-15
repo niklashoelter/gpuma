@@ -157,7 +157,7 @@ def _optimize_batch_structures(
 
     optimizer_name = getattr(config.optimization, "batch_optimizer", "fire") or "fire"
     optimizer_name = str(optimizer_name).strip().lower()
-    if optimizer_name == "gradient_descent":
+    if optimizer_name == "fire":
         optimizer = torch_sim.Optimizer.fire
     else:
         optimizer = torch_sim.Optimizer.gradient_descent
@@ -201,8 +201,8 @@ def _optimize_batch_structures(
             symbols=atoms.get_chemical_symbols(),
             coordinates=atoms.get_positions().tolist(),
             energy=float(final_state.energy[i].item()),
-            charge=int(structures[i].charge),
-            multiplicity=int(structures[i].multiplicity),
+            charge=int(final_state.charge[i].item()),
+            multiplicity=int(final_state.spin[i].item()),
             comment=(
                 f"Optimized with model {getattr(model, 'model_name', None) or ''} in batch mode"
             ),
