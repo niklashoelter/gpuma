@@ -20,7 +20,7 @@ def print_cli_examples():
 
     print("\n# Optimize from XYZ file:")
     print('gpuma optimize --xyz input.xyz --output optimized.xyz')
-    print('gpuma optimize --xyz examples/read_multiple_xyz_dir/conf1_sp_geometry.xyz --output conf1_opt.xyz')
+    print('gpuma optimize --xyz examples/multi_xyz_dir/input_1.xyz --output conf1_opt.xyz')
 
     print("\n# With custom configuration:")
     print('gpuma optimize --smiles "CCO" --config custom_config.json --output ethanol_custom.xyz')
@@ -34,10 +34,10 @@ def print_cli_examples():
     print("\n3. BATCH OPTIMIZATION (from files)")
     print("-" * 40)
     print("# Optimize structures from multi-XYZ file:")
-    print('gpuma batch --multi-xyz examples/read_multiple_xyz_file/conf0_confsearch_ensemble.xyz --output optimized_structures.xyz')
+    print('gpuma batch --multi-xyz examples/example_input_xyzs/multi_xyz_file.xyz --output optimized_structures.xyz')
 
     print("\n# Optimize structures from directory:")
-    print('gpuma batch --xyz-dir examples/read_multiple_xyz_dir/ --output directory_batch.xyz')
+    print('gpuma batch --xyz-dir examples/multi_xyz_dir/ --output directory_batch.xyz')
 
     print("\n# With custom configuration:")
     print('gpuma ensemble --smiles "CCO" --conformers 3 --config examples/config.json --output ethanol_custom_ensemble.xyz')

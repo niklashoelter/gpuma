@@ -14,6 +14,10 @@ from gpuma import Structure
 from gpuma.config import load_config_from_file
 
 
+OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "example_output")
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+
 def example_optimize_from_smiles():
     """Example 1: Optimize a molecule from a SMILES string."""
     print("=== Example 1: Single optimization from SMILES ===")
@@ -24,32 +28,38 @@ def example_optimize_from_smiles():
     cfg = load_config_from_file("config.json")
     cfg.optimization.multiplicity = 1
 
+    output_file = os.path.join(OUTPUT_DIR, "single_from_smiles.xyz")
+
     struct: Structure = gpuma.optimize_single_smiles(
         smiles=smiles,
-        output_file="example_single_optimization_from_smiles.xyz",
+        output_file=output_file,
         config=cfg,
     )
 
     print("✓ Optimization successful!")
     print(f"  Atoms: {struct.n_atoms}")
     print(f"  Final energy: {struct.energy:.6f} eV")
-    print("  Output saved to: example_single_optimization_from_smiles.xyz")
+    print(f"  Output saved to: {output_file}")
 
     print("\n--- Alternative step-by-step approach ---")
     struct2: Structure = gpuma.smiles_to_xyz(smiles)
     struct2.comment = f"Optimized from SMILES: {smiles}"
     struct2 = gpuma.optimize_single_structure(struct2)
 
+    step_output = os.path.join(OUTPUT_DIR, "single_from_smiles_stepwise.xyz")
+    gpuma.save_xyz_file(struct2, step_output)
+
     print("✓ Step-by-step optimization successful!")
     print(f"  Final energy: {struct2.energy:.6f} eV")
+    print(f"  Output saved to: {step_output}")
 
 
 def example_optimize_from_xyz():
     """Example 2: Optimize a molecule from an XYZ file."""
     print("\n=== Example 2: Single optimization from XYZ file ===")
 
-    input_file = "read_multiple_xyz_dir/conf1_sp_geometry.xyz"
-    output_file = "example_single_optimization_from_xyz.xyz"
+    input_file = "example_input_xyzs/multi_xyz_dir/input_1.xyz"
+    output_file = os.path.join(OUTPUT_DIR, "single_from_xyz.xyz")
 
     if not os.path.exists(input_file):
         print(f"✗ Input file {input_file} not found")
@@ -81,14 +91,17 @@ def example_optimize_with_custom_config():
     smiles = "C1=C[O+]=CC=C1"
     print(f"Optimizing {smiles} with custom config...")
 
+    output_file = os.path.join(OUTPUT_DIR, "single_from_smiles_custom_config.xyz")
+
     struct: Structure = gpuma.optimize_single_smiles(
         smiles=smiles,
-        output_file="example_single_optimization_custom_config.xyz",
+        output_file=output_file,
         config=config,
     )
 
     print("✓ Optimization successful!")
     print(f"  Final energy: {struct.energy:.6f} eV")
+    print(f"  Output saved to: {output_file}")
 
 
 if __name__ == "__main__":

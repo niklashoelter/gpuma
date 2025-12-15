@@ -53,38 +53,41 @@ and avoid runtime overhead for model initialization and memory estimation.
 
 ```bash
 # Optimize a single structure from SMILES using a config file
-gpuma optimize --smiles "CCO" --output ethanol_opt.xyz --config examples/config.json
+gpuma optimize --smiles "C=C" --output examples/example_output/ethylene_opt.xyz --config examples/config.json
 
 # Optimize a triplet state from SMILES (multiplicity = 3)
 # Charge is inferred from the SMILES; multiplicity is set via CLI
-gpuma optimize --smiles "CCO" --multiplicity 3 --output ethanol_triplet_opt.xyz --config examples/config.json
+gpuma optimize --smiles "C=C" --multiplicity 3 --output examples/example_output/ethylene_triplet_opt.xyz --config examples/config.json
 
 # Optimize a single structure from an XYZ file
-gpuma optimize --xyz test.xyz --output test_opt.xyz --config examples/config.json
+gpuma optimize --xyz examples/example_input_xyzs/single_xyz_file.xyz --output examples/example_output/single_from_xyz_cli.xyz --config examples/config.json
 
 # Create and optimize a conformer ensemble from SMILES
-gpuma ensemble --smiles "c1c(CCOCC)cccc1" --conformers 10 --output benzene_ensemble.xyz --config examples/config.json
+gpuma ensemble --smiles "c1c(CCOCC)cccc1" --conformers 10 --output examples/example_output/benzene_ensemble.xyz --config examples/config.json
 
 # Batch optimization from a multi-XYZ file
-gpuma batch --multi-xyz examples/read_multiple_xyz_file/conf0_confsearch_ensemble.xyz \
-  --output optimized_ensemble.xyz --config examples/config.json
+gpuma batch --multi-xyz examples/example_input_xyzs/multi_xyz_file.xyz \
+  --output examples/example_output/optimized_ensemble.xyz --config examples/config.json
 
 # Batch optimization from a directory of XYZ files
-gpuma batch --xyz-dir examples/read_multiple_xyz_dir/ --output optimized_dir.xyz --config examples/config.json
+gpuma batch --xyz-dir examples/multi_xyz_dir/ --output examples/example_output/optimized_dir.xyz --config examples/config.json
+
+# Batch optimization from a directory of XYZ files with modified charge/spin
+gpuma batch --xyz-dir examples/multi_xyz_dir/ --output examples/example_output/optimized_dir_ch1_mult2.xyz --charge 1 --multiplicity 2 --config examples/config.json
 
 # Convert SMILES to XYZ (no optimization)
-gpuma convert --smiles "CCO" --output ethanol.xyz --config examples/config.json
+gpuma convert --smiles "CCO" --output examples/example_output/ethanol.xyz --config examples/config.json
 
 # Generate conformers from SMILES (no optimization)
-gpuma generate --smiles "c1ccccc1" --conformers 5 --output benzene_conformers.xyz --config examples/config.json
+gpuma generate --smiles "c1ccccc1" --conformers 5 --output examples/example_output/benzene_conformers.xyz --config examples/config.json
 
 # Create or validate configuration files
 gpuma config --create examples/config.json
 gpuma config --validate examples/config.json
 
 # Verbose vs. quiet (set in config file)
-gpuma optimize --smiles "CCO" --output ethanol.xyz --config examples/config.json
-gpuma ensemble --smiles "CCO" --conformers 3 --output ethanol.xyz --config examples/config.json
+gpuma optimize --smiles "CCO" --output examples/example_output/ethanol_verbose.xyz --config examples/config.json
+gpuma ensemble --smiles "CCO" --conformers 3 --output examples/example_output/ethanol_ensemble_verbose.xyz --config examples/config.json
 ```
 
 **Note:**
@@ -106,8 +109,20 @@ gpuma ensemble --smiles "CCO" --conformers 3 --output ethanol.xyz --config examp
   the XYZ comments as `Charge: ... | Multiplicity: ...`.
 
 You can control the compute device globally in the config or from the CLI with `--device` (which overrides the config).
-Accepted values are `cpu` for CPU-only execution, `cuda` to let PyTorch pick the default CUDA device, or
-`cuda:N` (e.g. `cuda:0`, `cuda:1`, ...) to target a specific GPU.
+Accepted values are `cpu` for CPU-only execution and `cuda` to enable GPU acceleration.
+
+**GPU selection:** Fairchem currently does not support selecting a specific GPU
+via the `device` argument. To target particular GPUs you should set the
+`CUDA_VISIBLE_DEVICES` environment variable before calling `gpuma`, e.g.:
+
+```bash
+# use only GPU 1
+CUDA_VISIBLE_DEVICES=1 gpuma optimize --smiles "C=C" --output examples/example_output/ethylene_opt_gpu1.xyz --config examples/config.json
+
+# use GPUs 1,2,3
+CUDA_VISIBLE_DEVICES=1,2,3 gpuma batch --xyz-dir examples/multi_xyz_dir/ --output examples/example_output/optimized_dir_gpu123.xyz --config examples/config.json
+```
+
 ## Python API (short)
 
 ```python
@@ -118,28 +133,24 @@ from gpuma import Config, Structure
 # molecule from SMILES and optionally save
 cfg = gpuma.load_config_from_file("config.json")
 optimized: Structure = gpuma.optimize_single_smiles(
-    "CCO", output_file="ethanol_opt.xyz", config=cfg
+    "CCO", output_file="examples/example_output/ethanol_opt.xyz", config=cfg
 )
 print(optimized.energy)
 
 # Convenience: optimize a single molecule from an XYZ file
 optimized2: Structure = gpuma.optimize_single_xyz_file(
-    "test.xyz", output_file="test_opt.xyz", config=cfg
+    "test.xyz", output_file="examples/example_output/test_opt.xyz", config=cfg
 )
 
 # Convenience: optimize a conformer ensemble generated from SMILES
 optimized_confs = gpuma.optimize_smiles_ensemble(
-    "c1ccccc1", num_conformers=5, output_file="benzene_ensemble.xyz", config=cfg
+    "c1ccccc1", num_conformers=5, output_file="examples/example_output/benzene_ensemble.xyz", config=cfg
 )
 
 # Lower-level building blocks are available via the package root as well
 s: Structure = gpuma.smiles_to_xyz("CCO")
 opt_s: Structure = gpuma.optimize_single_structure(s, cfg)
-gpuma.save_xyz_file(opt_s, "ethanol_opt.xyz")
-
-# You can also import directly from the dedicated API module if you prefer
-from gpuma.api import optimize_single_smiles
-opt3 = optimize_single_smiles("CCO", config=cfg)
+gpuma.save_xyz_file(opt_s, "examples/example_output/ethanol_opt.xyz")
 ```
 
 ## Configuration
@@ -207,7 +218,10 @@ optimization:
 - `model_name`: Fairchem UMA model name (e.g., `uma-m-1p1`)
 - `model_path`: local path to a Fairchem UMA model (overrides `model_name` if set)
 - `model_cache_dir`: directory to cache downloaded models (default: `~/.cache/fairchem`)
-- `device`: compute device string; one of `cpu`, `cuda` or `cuda:N` (e.g. `cuda:0`).
+- `device`: compute device string; one of `cpu` or `cuda`.
+  Fairchem only distinguishes between CPU and CUDA; selection of specific
+  GPUs should be handled via the `CUDA_VISIBLE_DEVICES` environment variable
+  before running the CLI or Python code.
 
 - `huggingface_token`: optional HF token for model access (if required)
 - `huggingface_token_file`: optional file path to read the HF token from
