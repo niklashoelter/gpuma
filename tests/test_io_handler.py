@@ -4,7 +4,7 @@ from gpuma.structure import Structure
 
 def test_read_and_save_single_xyz_roundtrip(tmp_path):
     xyz = """3
-Water | Energy: -1.000 eV
+Water | Energy: -1.000 eV | Charge: 0 | Multiplicity: 1
 O 0.000000 0.000000 0.000000
 H 0.000000 0.000000 1.000000
 H 0.000000 1.000000 0.000000
@@ -26,16 +26,17 @@ H 0.000000 1.000000 0.000000
     assert out.exists()
     data = out.read_text()
     assert "Energy: -1.000000" in data
+    assert "Charge: -1" in data and "Multiplicity: 2" in data
 
 
 def test_read_multi_xyz(tmp_path):
     content = """2
-Mol A | Energy: -2.0 eV
+Mol A | Energy: -2.0 eV | Charge: 0 | Multiplicity: 1
 H 0 0 0
 H 0 0 1
 
 2
-Mol B
+Mol B | Charge: 0 | Multiplicity: 1
 He 0 0 0
 He 0 0 1
 """
@@ -58,4 +59,5 @@ def test_save_multi_xyz(tmp_path):
     save_multi_xyz(structs, str(out), comments=["A", "B"])
     data = out.read_text()
     assert "A | Energy: -1.000000" in data
-    assert "B\nHe" in data
+    assert "Charge: 0" in data and "Multiplicity: 1" in data
+    assert "B | Charge: 0 | Multiplicity: 1" in data

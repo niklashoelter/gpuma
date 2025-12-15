@@ -46,3 +46,11 @@ def test_smiles_to_structure_if_available():
     pytest.importorskip("morfeus.conformer")
     s = smiles_to_structure("O")
     assert isinstance(s, Structure)
+
+
+def test_smiles_charge_is_inferred_and_multiplicity_default_if_available():
+    pytest.importorskip("morfeus.conformer")
+    s = smiles_to_structure("[NH4+]")
+    # formal charge +1 from SMILES, multiplicity default 1
+    assert s.charge == 1
+    assert s.multiplicity == 1

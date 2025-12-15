@@ -21,9 +21,13 @@ def example_optimize_from_smiles():
     smiles = "C1=C[O+]=CC=C1CCCCCC"
     print(f"Optimizing {smiles} ...")
 
+    cfg = load_config_from_file("config.json")
+    cfg.optimization.multiplicity = 1
+
     struct: Structure = gpuma.optimize_single_smiles(
         smiles=smiles,
         output_file="example_single_optimization_from_smiles.xyz",
+        config=cfg,
     )
 
     print("✓ Optimization successful!")
@@ -51,9 +55,14 @@ def example_optimize_from_xyz():
         print(f"✗ Input file {input_file} not found")
         return
 
+    cfg = load_config_from_file("config.json")
+    cfg.optimization.charge = 0
+    cfg.optimization.multiplicity = 1
+
     struct: Structure = gpuma.optimize_single_xyz_file(
         input_file=input_file,
         output_file=output_file,
+        config=cfg,
     )
 
     print("✓ Optimization successful!")

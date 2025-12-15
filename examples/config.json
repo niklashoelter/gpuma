@@ -6,6 +6,9 @@
     "max_num_conformers": 20,
     "conformer_seed": 42,
 
+    "charge": 0,
+    "multiplicity": 1,
+
     "model_name": "uma-s-1p1",
     "model_path": null,
     "model_cache_dir": "/mnt/share/models/cache",

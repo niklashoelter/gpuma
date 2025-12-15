@@ -1,5 +1,6 @@
 import logging
 
+import pytest
 import torch
 
 from gpuma.config import (
@@ -9,6 +10,7 @@ from gpuma.config import (
     get_huggingface_token,
     load_config_from_file,
     save_config_to_file,
+    validate_config,
 )
 
 
@@ -74,3 +76,31 @@ def test_get_huggingface_token_missing_file_logs_warning(tmp_path, caplog):
         token = cfg.optimization.get_huggingface_token()
     assert token is None
     assert any("Could not read HuggingFace token" in rec.message for rec in caplog.records)
+
+
+def test_validate_config_device_and_charge_multiplicity():
+    cfg = Config()
+    # defaults should be valid
+    validate_config(cfg)
+
+    # valid cuda device strings
+    cfg.optimization.device = "cuda"
+    validate_config(cfg)
+    cfg.optimization.device = "cuda:0"
+    validate_config(cfg)
+
+    # invalid device
+    cfg.optimization.device = "gpu42"
+    with pytest.raises(ValueError):
+        validate_config(cfg)
+
+    # invalid charge/multiplicity
+    cfg.optimization.device = default_device
+    cfg.optimization.charge = "x"
+    with pytest.raises(ValueError):
+        validate_config(cfg)
+    cfg.optimization.charge = 0
+    cfg.optimization.multiplicity = 0
+    with pytest.raises(ValueError):
+        validate_config(cfg)
+

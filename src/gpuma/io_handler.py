@@ -3,6 +3,7 @@
 This module provides functions for reading molecular structures from various
 formats and converting between different representations.
 """
+from __future__ import annotations
 
 import glob
 import logging
@@ -48,7 +49,6 @@ def read_xyz(file_path: str, charge: int = 0, multiplicity: int = 1) -> Structur
 
     symbols: list[str] = []
     coordinates: list[tuple[float, float, float]] = []
-    comment = ""
 
     try:
         with open(file_path, encoding="utf-8") as infile:
@@ -224,7 +224,9 @@ def read_xyz_directory(
     return structures
 
 
-def smiles_to_xyz(smiles_string: str, return_full_xyz_str: bool = False) -> Structure | str:
+def smiles_to_xyz(smiles_string: str,
+                  return_full_xyz_str: bool = False,
+                  multiplicity: int | None = None) -> Structure | str:
     """Convert a SMILES string to a :class:`Structure` or an XYZ string.
 
     Parameters
@@ -234,6 +236,8 @@ def smiles_to_xyz(smiles_string: str, return_full_xyz_str: bool = False) -> Stru
     return_full_xyz_str:
         If ``True``, return an XYZ-format string instead of a
         :class:`Structure` instance.
+    multiplicity:
+        Optional spin multiplicity to set on the structure (default: ``None``).
 
     Returns
     -------
@@ -245,124 +249,93 @@ def smiles_to_xyz(smiles_string: str, return_full_xyz_str: bool = False) -> Stru
         raise ValueError("SMILES string cannot be empty or None")
 
     struct = _smiles_to_structure_util(smiles_string.strip())
+    if multiplicity is not None:
+        struct.multiplicity = int(multiplicity)
 
     if return_full_xyz_str:
         xyz_lines = [str(struct.n_atoms)]
-        xyz_lines.append("Generated from SMILES using MORFEUS")
+        xyz_lines.append(
+            f"Generated from SMILES using MORFEUS | "
+            f"Charge: {struct.charge} | "
+            f"Multiplicity: {struct.multiplicity}"
+        )
         for atom, coord in zip(struct.symbols, struct.coordinates, strict=True):
             xyz_lines.append(f"{atom} {coord[0]:.6f} {coord[1]:.6f} {coord[2]:.6f}")
         return "\n".join(xyz_lines)
 
-    struct.comment = f"Generated from SMILES: {smiles_string}"
+    struct.comment = (f"Generated from SMILES: {smiles_string} | "
+                      f"Charge: {struct.charge} | "
+                      f"Multiplicity: {struct.multiplicity}")
     return struct
 
 
 def smiles_to_ensemble(
     smiles_string: str,
-    num_conformers: int,
-    return_full_xyz_str: bool = False,
-):
-    """Generate a conformational ensemble from a SMILES string.
+    max_num_confs: int,
+    multiplicity: int | None = None,
+) -> list[Structure]:
+    """Generate conformer ensemble from SMILES.
 
     Parameters
     ----------
     smiles_string:
         Valid SMILES string representing the molecular structure.
-    num_conformers:
+    max_num_confs:
         Maximum number of conformers to generate.
-    return_full_xyz_str:
-        If ``True``, returns a list of XYZ strings for each conformer.
+    multiplicity:
+        Optional spin multiplicity to set on the structures (default: ``None``).
 
     Returns
     -------
-    list[str] | list[Structure]
-        A list of XYZ strings or a list of :class:`Structure` instances.
+    list[Structure]
+        A list of :class:`Structure` instances representing the conformers.
     """
     if not smiles_string or not smiles_string.strip():
         raise ValueError("SMILES string cannot be empty or None")
-    if not isinstance(num_conformers, int) or num_conformers <= 0:
-        raise ValueError("num_conformers must be a positive integer")
 
-    conformers: list[Structure] = _smiles_to_ensemble_util(smiles_string.strip(), num_conformers)
-    if not return_full_xyz_str:
-        for i, struct in enumerate(conformers):
-            struct.comment = f"Conformer {i + 1} generated from SMILES using MORFEUS"
-        return conformers
-
-    xyz_conformers: list[str] = []
-    for i, struct in enumerate(conformers):
-        xyz_lines = [str(struct.n_atoms)]
-        xyz_lines.append(f"Conformer {i + 1} from SMILES using MORFEUS")
-        for atom, coord in zip(struct.symbols, struct.coordinates, strict=True):
-            xyz_lines.append(f"{atom} {coord[0]:.6f} {coord[1]:.6f} {coord[2]:.6f}")
-        xyz_conformers.append("\n".join(xyz_lines))
-
-    return xyz_conformers
+    mult = int(multiplicity) if multiplicity is not None else 1
+    structs = _smiles_to_ensemble_util(smiles_string.strip(), max_num_confs, multiplicity=mult)
+    return structs
 
 
-def save_xyz_file(structure: Structure, filepath: str) -> None:
-    """Save a single :class:`Structure` to an XYZ file.
+def save_xyz_file(structure: Structure, file_path: str) -> None:
+    """Save a single Structure to XYZ, including energy and electronic state."""
+    lines: list[str] = [str(structure.n_atoms)]
+    # include existing comment and ensure energy/charge/multiplicity are visible
+    base_comment = structure.comment or ""
+    energy_part = ""
+    if structure.energy is not None:
+        energy_part = f" | Energy: {structure.energy:.6f} eV"
+    state_part = f" | Charge: {structure.charge} | Multiplicity: {structure.multiplicity}"
+    comment = (base_comment + energy_part + state_part).strip() or "Structure"
+    lines.append(comment)
+    for symbol, coord in zip(structure.symbols, structure.coordinates, strict=True):
+        lines.append(f"{symbol} {coord[0]:.6f} {coord[1]:.6f} {coord[2]:.6f}")
 
-    Parameters
-    ----------
-    structure:
-        Structure to save. Uses ``structure.energy`` in the comment if set.
-    filepath:
-        Output file path for the XYZ file.
-    """
-    if not structure or structure.n_atoms == 0:
-        raise ValueError("Cannot save empty structure")
-
-    for i, coord in enumerate(structure.coordinates):
-        if len(coord) != 3:
-            raise ValueError(f"Coordinate {i} must have exactly 3 components (x, y, z)")
-
-    os.makedirs(os.path.dirname(os.path.abspath(filepath)), exist_ok=True)
-
-    with open(filepath, "w", encoding="utf-8") as outfile:
-        outfile.write(f"{structure.n_atoms}\n")
-        if structure.energy is not None:
-            outfile.write(f"{structure.comment} | Energy: {structure.energy:.6f}\n")
-        else:
-            outfile.write(f"{structure.comment}\n")
-        for symbol, coord in zip(structure.symbols, structure.coordinates, strict=True):
-            outfile.write(f"{symbol} {coord[0]:.6f} {coord[1]:.6f} {coord[2]:.6f}\n")
+    with open(file_path, "w", encoding="utf-8") as fh:
+        fh.write("\n".join(lines))
 
 
-def save_multi_xyz(
-    structures: list[Structure],
-    filepath: str,
-    comments: list[str] | None = None,
-) -> None:
-    """Save multiple structures to a single multi-XYZ file.
+def save_multi_xyz(structures: list[Structure],
+                   file_path: str,
+                   comments: list[str] | None = None) -> None:
+    """Save multiple structures to a multi-XYZ file, including energy and state."""
+    lines: list[str] = []
+    for idx, struct in enumerate(structures):
+        lines.append(str(struct.n_atoms))
+        base_comment = ""
+        if comments and idx < len(comments):
+            base_comment = comments[idx]
+        elif struct.comment:
+            base_comment = struct.comment
+        energy_part = ""
+        if struct.energy is not None:
+            energy_part = f" | Energy: {struct.energy:.6f} eV"
+        state_part = f" | Charge: {struct.charge} | Multiplicity: {struct.multiplicity}"
+        comment = (base_comment + energy_part + state_part).strip() or f"Structure {idx + 1}"
+        lines.append(comment)
+        for symbol, coord in zip(struct.symbols, struct.coordinates, strict=True):
+            lines.append(f"{symbol} {coord[0]:.6f} {coord[1]:.6f} {coord[2]:.6f}")
 
-    Parameters
-    ----------
-    structures:
-        List of :class:`Structure` objects. Energy is optional.
-    filepath:
-        Output file path for the multi-XYZ file.
-    comments:
-        Optional list of comments, one for each structure.
-    """
-    if not structures:
-        raise ValueError("Cannot save empty structure list")
-
-    os.makedirs(os.path.dirname(os.path.abspath(filepath)), exist_ok=True)
-
-    with open(filepath, "w", encoding="utf-8") as outfile:
-        for i, struct in enumerate(structures):
-            if struct.n_atoms != len(struct.coordinates):
-                raise ValueError(f"Structure {i}: symbols/coordinates length mismatch")
-            comment = (
-                comments[i]
-                if comments and i < len(comments)
-                else (struct.comment or f"Structure {i + 1}")
-            )
-            outfile.write(f"{struct.n_atoms}\n")
-            if struct.energy is not None:
-                outfile.write(f"{comment} | Energy: {struct.energy:.6f} eV\n")
-            else:
-                outfile.write(f"{comment}\n")
-            for symbol, coord in zip(struct.symbols, struct.coordinates, strict=True):
-                outfile.write(f"{symbol} {coord[0]:.6f} {coord[1]:.6f} {coord[2]:.6f}\n")
+    with open(file_path, "w", encoding="utf-8") as fh:
+        fh.write("\n".join(lines))

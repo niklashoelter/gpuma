@@ -335,6 +335,14 @@ UTILITY COMMANDS:
         action="store_true",
         help="Suppress output (overrides config setting)",
     )
+    parser.add_argument(
+        "--device",
+        type=str,
+        help=(
+            "Override compute device from config. "
+            "Accepted values: 'cpu', 'cuda', 'cuda:N' (e.g. 'cuda:0')."
+        ),
+    )
 
     return parser
 
@@ -348,28 +356,43 @@ def cmd_optimize(args, config: Config) -> None:
     """
     try:
         if args.smiles:
+            # charge is derived from SMILES; multiplicity can be overridden via config or CLI
+            eff_mult = int(args.multiplicity if hasattr(args, "multiplicity")
+                           else getattr(config.optimization, "multiplicity", 1))
             logger.info(
-                "Converting SMILES '%s' to 3D coordinates and optimizing...",
+                "Converting SMILES '%s' to 3D coordinates and optimizing (multiplicity=%d)...",
                 args.smiles,
+                eff_mult,
             )
             optimized = optimize_single_smiles(
                 smiles=args.smiles,
                 output_file=args.output,
                 config=config,
             )
+            optimized.multiplicity = eff_mult
         else:
+            eff_charge = int(
+                args.charge
+                if hasattr(args, "charge") and args.charge is not None
+                else getattr(config.optimization, "charge", 0)
+            )
+            eff_mult = int(
+                args.multiplicity
+                if hasattr(args, "multiplicity") and args.multiplicity is not None
+                else getattr(config.optimization, "multiplicity", 1)
+            )
             logger.info(
                 "Reading and optimizing structure from %s (charge=%d, multiplicity=%d)",
                 args.xyz,
-                args.charge,
-                args.multiplicity,
+                eff_charge,
+                eff_mult,
             )
             optimized = optimize_single_xyz_file(
                 input_file=args.xyz,
                 output_file=args.output,
                 config=config,
-                charge=args.charge,
-                multiplicity=args.multiplicity,
+                charge=eff_charge,
+                multiplicity=eff_mult,
             )
 
         logger.info(
@@ -429,24 +452,41 @@ def cmd_batch(args, config: Config) -> None:
     from .optimizer import optimize_structure_batch
 
     try:
-        if args.charge != 0 or args.multiplicity != 1:
-            logger.warning(
-                "Non-neutral charges or spin multiplicities are currently "
-                "not supported in batch optimization; falling back to "
-                "neutral singlet (charge=0, multiplicity=1).",
-            )
+        eff_charge = int(
+            args.charge
+            if hasattr(args, "charge") and args.charge is not None
+            else getattr(config.optimization, "charge", 0)
+        )
+        eff_mult = int(
+            args.multiplicity
+            if hasattr(args, "multiplicity") and args.multiplicity is not None
+            else getattr(config.optimization, "multiplicity", 1)
+        )
 
         if args.multi_xyz:
-            logger.info("Reading structures from multi-XYZ file: %s", args.multi_xyz)
-            structures = cast(list[Structure], read_multi_xyz(args.multi_xyz))
+            logger.info(
+                "Reading structures from multi-XYZ file: %s (charge=%d, multiplicity=%d)",
+                args.multi_xyz,
+                eff_charge,
+                eff_mult,
+            )
+            structures = cast(
+                list[Structure],
+                read_multi_xyz(args.multi_xyz, charge=eff_charge, multiplicity=eff_mult),
+            )
         else:
-            logger.info("Reading structures from directory: %s", args.xyz_dir)
+            logger.info(
+                "Reading structures from directory: %s (charge=%d, multiplicity=%d)",
+                args.xyz_dir,
+                eff_charge,
+                eff_mult,
+            )
             structures = cast(
                 list[Structure],
                 read_xyz_directory(
                     args.xyz_dir,
-                    charge=args.charge,
-                    multiplicity=args.multiplicity,
+                    charge=eff_charge,
+                    multiplicity=eff_mult,
                 ),
             )
 
@@ -539,7 +579,13 @@ def _apply_global_verbosity_flags(config: Config, verbose: bool, quiet: bool) ->
         config.optimization.logging_level = "ERROR"
 
 
-def main(argv: list[str] | None = None) -> int:
+def _apply_device_override(config: Config, device) -> None:
+    """Apply a global device override if provided via CLI."""
+    if device:
+        config.optimization.device = device
+
+
+def main(argv=None) -> int:
     """Entry point for the ``gpuma`` CLI.
 
     Parameters
@@ -560,8 +606,9 @@ def main(argv: list[str] | None = None) -> int:
     cfg_path = getattr(args, "config", None) or "config.json"
     config = load_config_from_file(cfg_path)
 
-    # Apply verbosity flags
+    # Apply verbosity and device flags
     _apply_global_verbosity_flags(config, args.verbose, args.quiet)
+    _apply_device_override(config, getattr(args, "device", None))
 
     # Configure logging
     logging_level = _level_from_string(config.optimization.logging_level)

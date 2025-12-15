@@ -51,7 +51,9 @@ def _to_coord_list(coords) -> list[tuple[float, float, float]]:
 
 
 @time_it
-def smiles_to_conformer_ensemble(smiles: str, max_num_confs: int = 10) -> list[Structure]:
+def smiles_to_conformer_ensemble(smiles: str,
+                                 max_num_confs: int = 5,
+                                 multiplicity: int = 1) -> list[Structure]:
     """Generate multiple conformers from a SMILES string.
 
     This function uses the :mod:`morfeus` library to generate conformers from a
@@ -90,9 +92,17 @@ def smiles_to_conformer_ensemble(smiles: str, max_num_confs: int = 10) -> list[S
 
     try:
         from morfeus.conformer import ConformerEnsemble  # type: ignore
+        from rdkit import Chem
 
-        ensemble = ConformerEnsemble.from_rdkit(smiles.strip())
+        mol = Chem.MolFromSmiles(smiles)
+        if mol is None:
+            raise ValueError("Invalid SMILES string")
+
+        charge = Chem.GetFormalCharge(mol)
+        mol = Chem.AddHs(mol)
+        ensemble = ConformerEnsemble.from_rdkit(mol)
         ensemble.prune_rmsd()
+        ensemble.multiplicity = multiplicity
         ensemble.sort()
 
         structures: list[Structure] = []
@@ -110,7 +120,7 @@ def smiles_to_conformer_ensemble(smiles: str, max_num_confs: int = 10) -> list[S
                 Structure(
                     symbols=atoms,
                     coordinates=coordinates,
-                    charge=ensemble.charge,
+                    charge=charge,
                     multiplicity=ensemble.multiplicity,
                 )
             )

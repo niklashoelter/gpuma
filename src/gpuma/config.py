@@ -28,6 +28,11 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "batch_optimizer": "fire",
         "max_num_conformers": 20,
         "conformer_seed": 42,
+        # Default electronic structure settings
+        # Charge and multiplicity can be overridden via CLI for XYZ inputs
+        # and via config or CLI for SMILES multiplicities.
+        "charge": 0,
+        "multiplicity": 1,
         "model_name": "uma-m-1p1",
         "model_path": None,
         # Optional local model cache directory; can be overridden by user config
@@ -128,6 +133,8 @@ class Config:
     def __init__(self, data: dict[str, Any] | None = None) -> None:
         merged = _deep_merge(DEFAULT_CONFIG, data or {})
         self._data: dict[str, Any] = merged
+        # basic validation to catch obvious mistakes early
+        validate_config(self)
 
     @property
     def optimization(self) -> _Section:
@@ -155,7 +162,9 @@ def load_config_from_file(filepath: str = "config.json") -> Config:
         Unknown keys are preserved.
     """
     if not os.path.exists(filepath):
-        return Config()
+        cfg = Config()
+        validate_config(cfg)
+        return cfg
 
     with open(filepath, encoding="utf-8") as f:
         if filepath.endswith(".json"):
@@ -173,7 +182,9 @@ def load_config_from_file(filepath: str = "config.json") -> Config:
     if not isinstance(user_cfg, dict):
         raise ValueError("Configuration file must contain a JSON/YAML object at the root")
 
-    return Config.from_dict(user_cfg)
+    cfg = Config.from_dict(user_cfg)
+    validate_config(cfg)
+    return cfg
 
 
 def save_config_to_file(config: Any, filepath: str) -> None:
@@ -224,6 +235,40 @@ def get_huggingface_token(config: Config | dict[str, Any]) -> str | None:
         logger.warning("Could not read HuggingFace token from %s: %s", token_file, e)
         return None
 
+
+def validate_config(config: Config) -> None:
+    """Validate core optimization settings in a Config instance.
+
+    Checks basic types and value ranges for commonly used options.
+    Raises ValueError if an invalid value is found.
+    """
+    opt = config.optimization
+
+    # Charge and multiplicity must be integers; multiplicity > 0
+    charge = getattr(opt, "charge", 0)
+    multiplicity = getattr(opt, "multiplicity", 1)
+    try:
+        int(charge)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"Invalid charge value in config: {charge!r}") from exc
+    try:
+        mult_int = int(multiplicity)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"Invalid multiplicity value in config: {multiplicity!r}") from exc
+    if mult_int <= 0:
+        raise ValueError("Multiplicity must be a positive integer")
+
+    # Device must be cpu, cuda or cuda:N
+    dev = str(getattr(opt, "device", default_device) or "").strip().lower()
+    if not dev:
+        raise ValueError("Device string in config cannot be empty")
+    if dev != "cpu" and not dev.startswith("cuda"):
+        raise ValueError(
+            f"Device must be 'cpu', 'cuda' or 'cuda:N' (e.g. 'cuda:0'), got {dev!r}"
+        )
+
+    # If CUDA is requested but not available, we don't fail here; the
+    # runtime will transparently fall back to CPU via model helpers.
 
 # Default configuration instance for convenience
 default_config = Config()

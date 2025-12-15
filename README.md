@@ -55,6 +55,10 @@ and avoid runtime overhead for model initialization and memory estimation.
 # Optimize a single structure from SMILES using a config file
 gpuma optimize --smiles "CCO" --output ethanol_opt.xyz --config examples/config.json
 
+# Optimize a triplet state from SMILES (multiplicity = 3)
+# Charge is inferred from the SMILES; multiplicity is set via CLI
+gpuma optimize --smiles "CCO" --multiplicity 3 --output ethanol_triplet_opt.xyz --config examples/config.json
+
 # Optimize a single structure from an XYZ file
 gpuma optimize --xyz test.xyz --output test_opt.xyz --config examples/config.json
 
@@ -86,7 +90,24 @@ gpuma ensemble --smiles "CCO" --conformers 3 --output ethanol.xyz --config examp
 **Note:**
 - If `--config` is not specified, `config.json` in the current directory is loaded by default.
 - Direct CLI flags are supported, but using a config file is preferred for all workflows.
+- Unless explicitly overridden, the electronic state defaults are always
+  `charge = 0` and `multiplicity = 1`.
 
+- For **SMILES inputs**, the total charge is automatically inferred from the
+  SMILES via RDKit/MORFEUS. The multiplicity can be controlled globally via
+  the config (`optimization.multiplicity`) or overridden per CLI call with
+  `--multiplicity` where supported. Internally this is passed to the models
+  as the `spin` channel.
+- For **XYZ inputs** (single and batch), both charge and multiplicity can be
+  set via CLI flags (`--charge`, `--multiplicity`) or via the config
+  (`optimization.charge`, `optimization.multiplicity`). CLI flags override the
+  config values. These values are passed down to the models as
+  `Atoms.info = {"charge": charge, "spin": multiplicity}` and are written to
+  the XYZ comments as `Charge: ... | Multiplicity: ...`.
+
+You can control the compute device globally in the config or from the CLI with `--device` (which overrides the config).
+Accepted values are `cpu` for CPU-only execution, `cuda` to let PyTorch pick the default CUDA device, or
+`cuda:N` (e.g. `cuda:0`, `cuda:1`, ...) to target a specific GPU.
 ## Python API (short)
 
 ```python
@@ -137,6 +158,9 @@ Example (JSON):
     "max_num_conformers": 20,
     "conformer_seed": 42,
 
+    "charge": 0,
+    "multiplicity": 1,
+
     "model_name": "uma-m-1p1",
     "model_path": null,
     "model_cache_dir": null,
@@ -158,6 +182,9 @@ optimization:
   max_num_conformers: 20
   conformer_seed: 42
 
+  charge: 0
+  multiplicity: 1
+
   model_name: uma-m-1p1
   model_path: null
   model_cache_dir: null
@@ -174,13 +201,17 @@ optimization:
 - `batch_optimizer`: optimizer for batch mode; `fire` (default) or `gradient_descent`
 - `max_num_conformers`: max number of conformers to generate from SMILES (if applicable)
 - `conformer_seed`: random seed for conformer generation (if applicable)
+- `charge`: total charge of the system (for SMILES this is inferred from the
+  input and not overridden by this setting)
+- `multiplicity`: spin multiplicity of the system
 - `model_name`: Fairchem UMA model name (e.g., `uma-m-1p1`)
 - `model_path`: local path to a Fairchem UMA model (overrides `model_name` if set)
 - `model_cache_dir`: directory to cache downloaded models (default: `~/.cache/fairchem`)
-- `device`: compute device, e.g., `cuda` or `cpu`
+- `device`: compute device string; one of `cpu`, `cuda` or `cuda:N` (e.g. `cuda:0`).
+
 - `huggingface_token`: optional HF token for model access (if required)
 - `huggingface_token_file`: optional file path to read the HF token from
-- `logging_level`: logging verbosity; e.g., `DEBUG`, `INFO`, `WARNING
+- `logging_level`: logging verbosity; e.g., `DEBUG`, `INFO`, `WARNING`
 
 See the `examples/` folder for:
 - Simple single optimization (`example_single_optimization.py`)

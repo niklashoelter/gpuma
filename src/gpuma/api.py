@@ -7,7 +7,7 @@ package's ``__init__`` to keep the top-level namespace lightweight.
 
 from __future__ import annotations
 
-from .config import Config
+from .config import Config, load_config_from_file
 from .io_handler import (
     read_xyz,
     save_multi_xyz,
@@ -42,7 +42,10 @@ def optimize_single_smiles(
     Structure
         The optimized molecular structure.
     """
-    structure = smiles_to_xyz(smiles)
+    if config is None:
+        config = load_config_from_file()
+    multiplicity = getattr(config.optimization, "multiplicity", 1)
+    structure = smiles_to_xyz(smiles, multiplicity=multiplicity)
     if not isinstance(structure, Structure):
         raise ValueError("smiles_to_xyz did not return a Structure")
     structure.comment = f"Optimized from SMILES: {smiles}"
@@ -58,8 +61,8 @@ def optimize_single_xyz_file(
     input_file: str,
     output_file: str | None = None,
     config: Config | None = None,
-    charge: int = 0,
-    multiplicity: int = 1,
+    charge: int | None = None,
+    multiplicity: int | None = None,
 ) -> Structure:
     """Optimize a single structure from an XYZ file.
 
@@ -83,7 +86,15 @@ def optimize_single_xyz_file(
     Structure
         The optimized molecular structure.
     """
-    structure = read_xyz(input_file, charge=charge, multiplicity=multiplicity)
+    if config is None:
+        config = load_config_from_file()
+    eff_charge = int(charge if charge is not None else getattr(config.optimization, "charge", 0))
+    eff_mult = int(
+        multiplicity
+        if multiplicity is not None
+        else getattr(config.optimization, "multiplicity", 1)
+    )
+    structure = read_xyz(input_file, charge=eff_charge, multiplicity=eff_mult)
     if not isinstance(structure, Structure):
         raise ValueError("read_xyz did not return a Structure")
     structure.comment = f"Optimized from: {input_file}"
@@ -121,11 +132,16 @@ def optimize_smiles_ensemble(
     list[Structure]
         The list of optimized structures.
     """
+    if config is None:
+        config = load_config_from_file()
+    multiplicity = int(getattr(config.optimization, "multiplicity", 1))
     conformers = smiles_to_ensemble(smiles, num_conformers)
     if not isinstance(conformers, list) or (
         len(conformers) and not isinstance(conformers[0], Structure)
     ):
         raise ValueError("smiles_to_ensemble did not return a list of Structure")
+    for s in conformers:
+        s.multiplicity = multiplicity
     results = optimize_structure_batch(conformers, config)
 
     if output_file:
