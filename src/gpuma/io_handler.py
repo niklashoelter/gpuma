@@ -205,18 +205,20 @@ def read_xyz_directory(
     if not os.path.exists(directory_path):
         raise FileNotFoundError(f"Directory {directory_path} not found")
 
-    xyz_files = glob.glob(os.path.join(directory_path, "*.xyz"))
-
-    if not xyz_files:
-        raise ValueError(f"No XYZ files found in directory {directory_path}")
+    xyz_files = glob.iglob(os.path.join(directory_path, "*.xyz"))
 
     structures: list[Structure] = []
+    found_any = False
 
     for xyz_file in xyz_files:
+        found_any = True
         try:
             structures.append(read_xyz(xyz_file, charge=charge, multiplicity=multiplicity))
         except Exception as exc:  # pragma: no cover - logged and skipped
             logger.warning("Failed to read %s: %s", xyz_file, exc)
+
+    if not found_any:
+        raise ValueError(f"No XYZ files found in directory {directory_path}")
 
     if not structures:
         raise ValueError("No valid structures could be read from any XYZ files")

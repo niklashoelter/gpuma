@@ -1,4 +1,5 @@
-from gpuma.io_handler import read_multi_xyz, read_xyz, save_multi_xyz, save_xyz_file
+import pytest
+from gpuma.io_handler import read_multi_xyz, read_xyz, read_xyz_directory, save_multi_xyz, save_xyz_file
 from gpuma.structure import Structure
 
 
@@ -61,3 +62,36 @@ def test_save_multi_xyz(tmp_path):
     assert "A | Energy: -1.000000" in data
     assert "Charge: 0" in data and "Multiplicity: 1" in data
     assert "B | Charge: 0 | Multiplicity: 1" in data
+
+
+def test_read_xyz_directory(tmp_path):
+    # 1. Test empty directory raises ValueError
+    empty_dir = tmp_path / "empty"
+    empty_dir.mkdir()
+    with pytest.raises(ValueError, match="No XYZ files found"):
+        read_xyz_directory(str(empty_dir))
+
+    # 2. Test directory with valid files
+    xyz_dir = tmp_path / "xyzs"
+    xyz_dir.mkdir()
+    (xyz_dir / "1.xyz").write_text("1\nH\nH 0 0 0")
+    (xyz_dir / "2.xyz").write_text("1\nHe\nHe 1 0 0")
+
+    structs = read_xyz_directory(str(xyz_dir), charge=1, multiplicity=2)
+    assert len(structs) == 2
+    # Verify properties passed down
+    assert all(s.charge == 1 and s.multiplicity == 2 for s in structs)
+    symbols = sorted([s.symbols[0] for s in structs])
+    assert symbols == ["H", "He"]
+
+    # 3. Test directory with only invalid files raises ValueError
+    bad_dir = tmp_path / "bad"
+    bad_dir.mkdir()
+    (bad_dir / "bad.xyz").write_text("Not an XYZ file")
+
+    with pytest.raises(ValueError, match="No valid structures could be read"):
+        read_xyz_directory(str(bad_dir))
+
+    # 4. Test non-existent directory raises FileNotFoundError
+    with pytest.raises(FileNotFoundError):
+        read_xyz_directory(str(tmp_path / "non_existent"))
