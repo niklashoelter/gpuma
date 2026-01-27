@@ -120,55 +120,66 @@ def read_multi_xyz(file_path: str, charge: int = 0, multiplicity: int = 1) -> li
 
     try:
         with open(file_path, encoding="utf-8") as infile:
-            lines = [line.rstrip("\n") for line in infile.readlines()]
-
-        i = 0
-        while i < len(lines):
-            if lines[i].strip() == "":
-                i += 1
-                continue
-
-            try:
-                num_atoms = int(lines[i].strip())
-            except ValueError:
-                i += 1
-                continue
-
-            if i + 1 + num_atoms >= len(lines):
-                break
-
-            comment = lines[i + 1] if (i + 1) < len(lines) else ""
-
-            symbols: list[str] = []
-            coordinates: list[tuple[float, float, float]] = []
-
-            valid = True
-            for j in range(num_atoms):
-                parts = lines[i + 2 + j].split()
-                if len(parts) < 4:
-                    valid = False
-                    break
-                symbol = parts[0]
+            line_iterator = iter(infile)
+            while True:
                 try:
-                    x, y, z = float(parts[1]), float(parts[2]), float(parts[3])
-                except ValueError:
-                    valid = False
+                    line = next(line_iterator)
+                except StopIteration:
                     break
-                symbols.append(symbol)
-                coordinates.append((x, y, z))
 
-            if valid and len(symbols) == num_atoms:
-                structures.append(
-                    Structure(
-                        symbols=symbols,
-                        coordinates=coordinates,
-                        comment=comment,
-                        charge=charge,
-                        multiplicity=multiplicity,
+                line_stripped = line.strip()
+                if not line_stripped:
+                    continue
+
+                try:
+                    num_atoms = int(line_stripped)
+                except ValueError:
+                    continue
+
+                try:
+                    comment_line = next(line_iterator)
+                    comment = comment_line.rstrip("\n")
+                except StopIteration:
+                    break
+
+                symbols: list[str] = []
+                coordinates: list[tuple[float, float, float]] = []
+
+                valid = True
+                for _ in range(num_atoms):
+                    try:
+                        atom_line = next(line_iterator)
+                    except StopIteration:
+                        valid = False
+                        break
+
+                    if not valid:
+                        continue
+
+                    parts = atom_line.split()
+                    if len(parts) < 4:
+                        valid = False
+                        continue
+
+                    symbol = parts[0]
+                    try:
+                        x, y, z = float(parts[1]), float(parts[2]), float(parts[3])
+                    except ValueError:
+                        valid = False
+                        continue
+                    symbols.append(symbol)
+                    coordinates.append((x, y, z))
+
+                if valid and len(symbols) == num_atoms:
+                    structures.append(
+                        Structure(
+                            symbols=symbols,
+                            coordinates=coordinates,
+                            comment=comment,
+                            charge=charge,
+                            multiplicity=multiplicity,
+                        )
                     )
-                )
-
-            i = i + 2 + num_atoms
 
     except Exception as exc:
         raise ValueError(f"Error reading multi-XYZ file: {exc}") from exc
