@@ -24,6 +24,29 @@ from .structure import Structure
 logger = logging.getLogger(__name__)
 
 
+_CALCULATOR_CACHE: dict[tuple, FAIRChemCalculator] = {}
+
+
+def _get_cached_calculator(config: Config) -> FAIRChemCalculator:
+    """Retrieve or load a calculator based on configuration parameters."""
+    opt = config.optimization
+    # Cache key based on parameters that affect model loading
+    key = (
+        str(opt.device),
+        str(opt.model_name),
+        str(opt.model_path) if opt.model_path else None,
+        str(opt.model_cache_dir) if opt.model_cache_dir else None,
+        str(opt.huggingface_token) if opt.huggingface_token else None,
+        str(opt.huggingface_token_file) if opt.huggingface_token_file else None,
+    )
+    if key in _CALCULATOR_CACHE:
+        return _CALCULATOR_CACHE[key]
+
+    calculator = load_model_fairchem(config)
+    _CALCULATOR_CACHE[key] = calculator
+    return calculator
+
+
 @time_it
 def optimize_single_structure(
     structure: Structure,
@@ -45,7 +68,7 @@ def optimize_single_structure(
 
     try:
         if calculator is None:
-            calculator = load_model_fairchem(config)
+            calculator = _get_cached_calculator(config)
 
         atoms = Atoms(symbols=symbols, positions=coordinates)
         atoms.calc = calculator
@@ -123,7 +146,7 @@ def _optimize_batch_sequential(
     config: Config,
 ) -> list[Structure]:
     """Optimize structures sequentially using single-structure optimization."""
-    calculator = load_model_fairchem(config)
+    calculator = _get_cached_calculator(config)
 
     optimized_results: list[Structure] = []
     logger.info("Starting sequential optimization of %d structures", len(structures))
