@@ -170,7 +170,7 @@ def _optimize_batch_structures(
     ase_structures = [
         Atoms(
             symbols=struct.symbols,
-            positions=[tuple(coord) for coord in struct.coordinates],
+            positions=struct.coordinates,
             info={"charge": struct.charge, "spin": struct.multiplicity},
         )
         for struct in structures

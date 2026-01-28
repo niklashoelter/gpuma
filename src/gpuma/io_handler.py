@@ -132,31 +132,36 @@ def read_multi_xyz(file_path: str, charge: int = 0, multiplicity: int = 1) -> li
 
     try:
         with open(file_path, encoding="utf-8") as infile:
+            line_iterator = iter(infile)
             while True:
-                line = infile.readline()
-                if not line:
+                try:
+                    line = next(line_iterator)
+                except StopIteration:
                     break
 
-                if not line.strip():
+                line_stripped = line.strip()
+                if not line_stripped:
                     continue
 
                 try:
-                    num_atoms = int(line.strip())
+                    num_atoms = int(line_stripped)
                 except ValueError:
                     continue
 
-                comment_line = infile.readline()
-                if not comment_line:
+                try:
+                    comment_line = next(line_iterator)
+                    comment = comment_line.rstrip("\n")
+                except StopIteration:
                     break
-                comment = comment_line.rstrip("\n")
 
                 symbols: list[str] = []
                 coordinates: list[tuple[float, float, float]] = []
 
                 valid = True
                 for _ in range(num_atoms):
-                    atom_line = infile.readline()
-                    if not atom_line:
+                    try:
+                        atom_line = next(line_iterator)
+                    except StopIteration:
                         valid = False
                         break
 
@@ -167,6 +172,7 @@ def read_multi_xyz(file_path: str, charge: int = 0, multiplicity: int = 1) -> li
                     if len(parts) < 4:
                         valid = False
                         continue
+
                     symbol = parts[0]
                     try:
                         x, y, z = float(parts[1]), float(parts[2]), float(parts[3])
