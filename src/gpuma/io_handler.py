@@ -52,28 +52,40 @@ def read_xyz(file_path: str, charge: int = 0, multiplicity: int = 1) -> Structur
 
     try:
         with open(file_path, encoding="utf-8") as infile:
-            lines = [line.rstrip("\n") for line in infile.readlines()]
-
-        try:
-            num_atoms = int(lines[0])
-        except Exception as exc:
-            raise ValueError("First line must contain the number of atoms as an integer") from exc
-
-        if len(lines) < 2 + num_atoms:
-            raise ValueError(f"Expected {num_atoms} atom lines, but found {max(0, len(lines) - 2)}")
-        comment = lines[1] if len(lines) > 1 else ""
-
-        for i in range(num_atoms):
-            parts = lines[2 + i].split()
-            if len(parts) < 4:
-                raise ValueError(f"Line {i + 3} must contain at least 4 elements: symbol x y z")
-            symbol = parts[0]
+            # Read first line: number of atoms
+            line = infile.readline()
             try:
-                x, y, z = float(parts[1]), float(parts[2]), float(parts[3])
+                num_atoms = int(line.strip())
             except ValueError as exc:
-                raise ValueError(f"Invalid coordinates in line {i + 3}: {parts[1:4]}") from exc
-            symbols.append(symbol)
-            coordinates.append((x, y, z))
+                raise ValueError("First line must contain the number of atoms as an integer") from exc
+
+            # Read second line: comment
+            comment_line = infile.readline()
+            # If EOF is reached, comment_line is "" (which is falsy)
+            # But a blank line "\n" is truthy.
+            if not comment_line and num_atoms >= 0:
+                # We expected a comment line
+                # Note: Original code calculated found as max(0, len(lines) - 2)
+                # If we have 1 line, found = 0.
+                raise ValueError(f"Expected {num_atoms} atom lines, but found 0")
+
+            comment = comment_line.rstrip("\n")
+
+            for i in range(num_atoms):
+                line = infile.readline()
+                if not line:
+                    raise ValueError(f"Expected {num_atoms} atom lines, but found {i}")
+
+                parts = line.split()
+                if len(parts) < 4:
+                    raise ValueError(f"Line {i + 3} must contain at least 4 elements: symbol x y z")
+                symbol = parts[0]
+                try:
+                    x, y, z = float(parts[1]), float(parts[2]), float(parts[3])
+                except ValueError as exc:
+                    raise ValueError(f"Invalid coordinates in line {i + 3}: {parts[1:4]}") from exc
+                symbols.append(symbol)
+                coordinates.append((x, y, z))
 
     except Exception as exc:
         if isinstance(exc, (FileNotFoundError, ValueError)):
