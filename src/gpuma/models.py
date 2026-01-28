@@ -92,6 +92,7 @@ def _verify_model_name_and_cache_dir(config: Config) -> tuple[str, Path | None]:
 
     return model_name, model_cache_dir
 
+
 def _verify_model_path(config: Config) -> Path | None:
     """Verify that model path is provided and return model name and cache directory."""
     opt = config.optimization
@@ -102,6 +103,7 @@ def _verify_model_path(config: Config) -> Path | None:
             return None
         return model_path
     return None
+
 
 @time_it
 def load_model_fairchem(config: Config):
@@ -138,6 +140,7 @@ def load_model_fairchem(config: Config):
     calculator = FAIRChemCalculator(predict_unit=predictor, task_name="omol")
     return calculator
 
+
 @time_it
 def load_model_torchsim(config: Config):
     """Load a torch-sim FairChemModel from name or checkpoint path."""
@@ -159,4 +162,3 @@ def load_model_torchsim(config: Config):
         device=torch_device,
     )
     return model
-

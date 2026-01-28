@@ -19,6 +19,7 @@ def mock_module(name):
     sys.modules[name] = m
     return m
 
+
 # Mock missing dependencies to allow running tests in environments without heavy libs
 mock_module("torch")
 mock_module("ase")

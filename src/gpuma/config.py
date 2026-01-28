@@ -263,12 +263,11 @@ def validate_config(config: Config) -> None:
     if not dev:
         raise ValueError("Device string in config cannot be empty")
     if dev != "cpu" and not dev.startswith("cuda"):
-        raise ValueError(
-            f"Device must be 'cpu', 'cuda' or 'cuda:N' (e.g. 'cuda:0'), got {dev!r}"
-        )
+        raise ValueError(f"Device must be 'cpu', 'cuda' or 'cuda:N' (e.g. 'cuda:0'), got {dev!r}")
 
     # If CUDA is requested but not available, we don't fail here; the
     # runtime will transparently fall back to CPU via model helpers.
+
 
 # Default configuration instance for convenience
 default_config = Config()

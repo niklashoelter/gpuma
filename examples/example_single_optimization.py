@@ -8,7 +8,7 @@ using different input methods (SMILES and XYZ files) via the GPUMA API.
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 import gpuma
 from gpuma import Structure

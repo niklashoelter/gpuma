@@ -146,8 +146,7 @@ def optimize_smiles_ensemble(
 
     if output_file:
         comments = [
-            f"Optimized conformer {i + 1} from SMILES: {smiles}"
-            for i in range(len(results))
+            f"Optimized conformer {i + 1} from SMILES: {smiles}" for i in range(len(results))
         ]
         save_multi_xyz(results, output_file, comments)
 

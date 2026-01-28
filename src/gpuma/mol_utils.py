@@ -51,9 +51,9 @@ def _to_coord_list(coords) -> list[tuple[float, float, float]]:
 
 
 @time_it
-def smiles_to_conformer_ensemble(smiles: str,
-                                 max_num_confs: int = 5,
-                                 multiplicity: int = 1) -> list[Structure]:
+def smiles_to_conformer_ensemble(
+    smiles: str, max_num_confs: int = 5, multiplicity: int = 1
+) -> list[Structure]:
     """Generate multiple conformers from a SMILES string.
 
     This function uses the :mod:`morfeus` library to generate conformers from a

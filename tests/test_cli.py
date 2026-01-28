@@ -83,8 +83,10 @@ def test_cmd_optimize_xyz_uses_cli_charge_and_multiplicity(monkeypatch, tmp_path
         captured["output_file"] = output_file
         captured["charge"] = charge
         captured["multiplicity"] = multiplicity
+
         class Dummy:
             energy = 0.0
+
         return Dummy()
 
     monkeypatch.setattr(cli, "optimize_single_xyz_file", fake_opt_single_xyz_file)
@@ -135,6 +137,7 @@ def test_cmd_batch_uses_cli_or_config_for_charge_and_multiplicity(monkeypatch, t
 
     # Avoid heavy optimization: patch the local import target used in cmd_batch
     from gpuma import optimizer as optimizer_mod
+
     monkeypatch.setattr(optimizer_mod, "optimize_structure_batch", fake_optimize_batch)
 
     # Act: since read_xyz_directory returns [], cmd_batch will exit early
@@ -144,4 +147,3 @@ def test_cmd_batch_uses_cli_or_config_for_charge_and_multiplicity(monkeypatch, t
     # Assert: CLI values were forwarded
     assert called["charge"] == 3
     assert called["multiplicity"] == 4
-

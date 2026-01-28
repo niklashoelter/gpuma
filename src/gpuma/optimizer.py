@@ -3,6 +3,7 @@
 This module contains optimization logic for single structures and batches of
 structures (e.g., conformer ensembles).
 """
+
 from __future__ import annotations
 
 import logging

@@ -70,6 +70,7 @@ def test_device_parsing_for_fairchem_and_torchsim(monkeypatch):
 
     import torch
     from torch import device as torch_device
+
     assert isinstance(seen["torch_device"], torch_device)
     # When CUDA is available, we expect a cuda:2 device; otherwise it will fall back to CPU
     if torch.cuda.is_available():  # type: ignore[attr-defined]

@@ -103,4 +103,3 @@ def test_validate_config_device_and_charge_multiplicity():
     cfg.optimization.multiplicity = 0
     with pytest.raises(ValueError):
         validate_config(cfg)
-

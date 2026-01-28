@@ -3,6 +3,7 @@
 This module provides functions for reading molecular structures from various
 formats and converting between different representations.
 """
+
 from __future__ import annotations
 
 import glob
@@ -226,9 +227,9 @@ def read_xyz_directory(
     return structures
 
 
-def smiles_to_xyz(smiles_string: str,
-                  return_full_xyz_str: bool = False,
-                  multiplicity: int | None = None) -> Structure | str:
+def smiles_to_xyz(
+    smiles_string: str, return_full_xyz_str: bool = False, multiplicity: int | None = None
+) -> Structure | str:
     """Convert a SMILES string to a :class:`Structure` or an XYZ string.
 
     Parameters
@@ -265,9 +266,11 @@ def smiles_to_xyz(smiles_string: str,
             xyz_lines.append(f"{atom} {coord[0]:.6f} {coord[1]:.6f} {coord[2]:.6f}")
         return "\n".join(xyz_lines)
 
-    struct.comment = (f"Generated from SMILES: {smiles_string} | "
-                      f"Charge: {struct.charge} | "
-                      f"Multiplicity: {struct.multiplicity}")
+    struct.comment = (
+        f"Generated from SMILES: {smiles_string} | "
+        f"Charge: {struct.charge} | "
+        f"Multiplicity: {struct.multiplicity}"
+    )
     return struct
 
 
@@ -318,9 +321,9 @@ def save_xyz_file(structure: Structure, file_path: str) -> None:
         fh.write("\n".join(lines))
 
 
-def save_multi_xyz(structures: list[Structure],
-                   file_path: str,
-                   comments: list[str] | None = None) -> None:
+def save_multi_xyz(
+    structures: list[Structure], file_path: str, comments: list[str] | None = None
+) -> None:
     """Save multiple structures to a multi-XYZ file, including energy and state."""
     lines: list[str] = []
     for idx, struct in enumerate(structures):
