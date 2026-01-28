@@ -7,12 +7,12 @@ using different input methods (SMILES and XYZ files) via the GPUMA API.
 
 import os
 import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 import gpuma
 from gpuma import Structure
 from gpuma.config import load_config_from_file
-
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "example_output")
 os.makedirs(OUTPUT_DIR, exist_ok=True)

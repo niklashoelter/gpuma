@@ -2,6 +2,7 @@ import os
 import sys
 from unittest.mock import MagicMock
 
+
 # Helper to mock a module structure if it's missing
 def mock_module(name):
     if name in sys.modules:

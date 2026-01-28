@@ -1,5 +1,12 @@
 import pytest
-from gpuma.io_handler import read_multi_xyz, read_xyz, read_xyz_directory, save_multi_xyz, save_xyz_file
+
+from gpuma.io_handler import (
+    read_multi_xyz,
+    read_xyz,
+    read_xyz_directory,
+    save_multi_xyz,
+    save_xyz_file,
+)
 from gpuma.structure import Structure
 
 
