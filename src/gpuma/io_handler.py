@@ -58,7 +58,9 @@ def read_xyz(file_path: str, charge: int = 0, multiplicity: int = 1) -> Structur
             try:
                 num_atoms = int(line.strip())
             except ValueError as exc:
-                raise ValueError("First line must contain the number of atoms as an integer") from exc
+                raise ValueError(
+                    "First line must contain the number of atoms as an integer"
+                ) from exc
 
             # Read second line: comment
             comment_line = infile.readline()

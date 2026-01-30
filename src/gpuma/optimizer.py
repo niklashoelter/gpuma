@@ -6,6 +6,7 @@ structures (e.g., conformer ensembles).
 
 from __future__ import annotations
 
+import functools
 import logging
 
 from ase import Atoms
@@ -25,14 +26,39 @@ from .structure import Structure
 logger = logging.getLogger(__name__)
 
 
-_CALCULATOR_CACHE: dict[tuple, FAIRChemCalculator] = {}
+@functools.lru_cache(maxsize=1)
+def _load_calculator_impl(
+    device: str,
+    model_name: str,
+    model_path: str | None,
+    model_cache_dir: str | None,
+    huggingface_token: str | None,
+    huggingface_token_file: str | None,
+) -> FAIRChemCalculator:
+    """Load a calculator with LRU caching.
+
+    Constructs a temporary Config object to pass to load_model_fairchem.
+    """
+    # Reconstruct a minimal Config object required by load_model_fairchem
+    config_data = {
+        "optimization": {
+            "device": device,
+            "model_name": model_name,
+            "model_path": model_path,
+            "model_cache_dir": model_cache_dir,
+            "huggingface_token": huggingface_token,
+            "huggingface_token_file": huggingface_token_file,
+        }
+    }
+    config = Config(config_data)
+    return load_model_fairchem(config)
 
 
 def _get_cached_calculator(config: Config) -> FAIRChemCalculator:
     """Retrieve or load a calculator based on configuration parameters."""
     opt = config.optimization
     # Cache key based on parameters that affect model loading
-    key = (
+    return _load_calculator_impl(
         str(opt.device),
         str(opt.model_name),
         str(opt.model_path) if opt.model_path else None,
@@ -40,12 +66,6 @@ def _get_cached_calculator(config: Config) -> FAIRChemCalculator:
         str(opt.huggingface_token) if opt.huggingface_token else None,
         str(opt.huggingface_token_file) if opt.huggingface_token_file else None,
     )
-    if key in _CALCULATOR_CACHE:
-        return _CALCULATOR_CACHE[key]
-
-    calculator = load_model_fairchem(config)
-    _CALCULATOR_CACHE[key] = calculator
-    return calculator
 
 
 @time_it
