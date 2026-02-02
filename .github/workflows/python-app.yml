@@ -39,3 +39,10 @@ jobs:
     - name: Test with pytest
       run: |
         pytest -q
+    - name: Build package
+      run: |
+        pip install build twine
+        python -m build
+    - name: Check package description
+      run: |
+        twine check dist/*
