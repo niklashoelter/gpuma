@@ -1,7 +1,5 @@
-import logging
-import os
 import json
-from unittest.mock import patch, mock_open
+import logging
 
 import pytest
 import torch
@@ -9,12 +7,12 @@ import torch
 from gpuma.config import (
     DEFAULT_CONFIG,
     Config,
+    _read_config_file,
     default_device,
     get_huggingface_token,
     load_config_from_file,
     save_config_to_file,
     validate_config,
-    _read_config_file,
 )
 
 

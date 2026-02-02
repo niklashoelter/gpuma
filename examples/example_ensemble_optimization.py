@@ -54,7 +54,11 @@ def example_batch_from_multi_xyz():
 
     config = load_config_from_file("config.json")
     config.optimization.multiplicity = 3
-    structures = gpuma.read_multi_xyz(input_file, charge=0, multiplicity=config.optimization.multiplicity)
+    structures = gpuma.read_multi_xyz(
+        input_file,
+        charge=0,
+        multiplicity=config.optimization.multiplicity
+    )
     print(f"Read {len(structures)} structures from {input_file}")
 
     results = gpuma.optimize_structure_batch(structures, config)
