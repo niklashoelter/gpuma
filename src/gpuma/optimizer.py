@@ -6,6 +6,7 @@ structures (e.g., conformer ensembles).
 
 from __future__ import annotations
 
+import functools
 import logging
 
 from ase import Atoms
@@ -30,7 +31,7 @@ def _get_cached_calculator(config: Config) -> FAIRChemCalculator:
     """Retrieve or load a calculator based on configuration parameters."""
     opt = config.optimization
     # Cache key based on parameters that affect model loading
-    key = (
+    return _load_calculator_impl(
         str(opt.device),
         str(opt.model_name),
         str(opt.model_path) if opt.model_path else None,
@@ -38,12 +39,6 @@ def _get_cached_calculator(config: Config) -> FAIRChemCalculator:
         str(opt.huggingface_token) if opt.huggingface_token else None,
         str(opt.huggingface_token_file) if opt.huggingface_token_file else None,
     )
-    if key in _CALCULATOR_CACHE:
-        return _CALCULATOR_CACHE[key]
-
-    calculator = load_model_fairchem(config)
-    _CALCULATOR_CACHE[key] = calculator
-    return calculator
 
 
 @time_it
