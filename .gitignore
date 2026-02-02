@@ -142,5 +142,6 @@ Thumbs.db
 # Local external library (excluded from VCS and packaging)
 torch-sim/
 /examples/models/
+examples/example_output/*
 
 uv.lock

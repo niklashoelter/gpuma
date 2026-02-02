@@ -234,16 +234,9 @@ See the `examples/` folder for:
 
 The example configs are sanitized (no tokens in plain text).
 
-## Development
+## Known limitations
 
-```bash
-# Lint/Typecheck (optional, if tools are available)
-python -m compileall -q src
-
-# Run examples
-python examples/example_single_optimization.py
-python examples/example_ensemble_optimization.py
-```
+When a run is started from SMILES, an RDKit force field (via the morfeus library) is used to generate an initial structure. Spin is not taken into account during this step, so the initial estimated geometries can be incorrect. When the UMA/Omol25 models are applied subsequently, the structure can sometimes be optimized to a maximum rather than a minimum because the model is not provided with Hessian matrices. This behavior only affects runs originating from SMILES; it does not occur with better starting geometries (e.g., when starting from XYZ files).
 
 ## Troubleshooting
 - Missing libraries: install optional dependencies like `pyyaml` if you use YAML configs.

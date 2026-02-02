@@ -33,7 +33,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         # and via config or CLI for SMILES multiplicities.
         "charge": 0,
         "multiplicity": 1,
-        "model_name": "uma-m-1p1",
+        "model_name": "uma-s-1p1",
         "model_path": None,
         # Optional local model cache directory; can be overridden by user config
         "model_cache_dir": None,

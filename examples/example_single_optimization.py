@@ -59,6 +59,7 @@ def example_optimize_from_xyz():
     print("\n=== Example 2: Single optimization from XYZ file ===")
 
     input_file = "example_input_xyzs/multi_xyz_dir/input_1.xyz"
+    input_file = "example_input_xyzs/butene_triplet.xyz"
     output_file = os.path.join(OUTPUT_DIR, "python_single_xyz_basic.xyz")
 
     if not os.path.exists(input_file):
@@ -67,7 +68,7 @@ def example_optimize_from_xyz():
 
     cfg = load_config_from_file("config.json")
     cfg.optimization.charge = 0
-    cfg.optimization.multiplicity = 1
+    cfg.optimization.multiplicity = 3
 
     struct: Structure = gpuma.optimize_single_xyz_file(
         input_file=input_file,
@@ -108,9 +109,9 @@ if __name__ == "__main__":
     print("GPUMA - Single Structure Optimization Examples")
     print("=" * 70)
 
-    example_optimize_from_smiles()
+    #example_optimize_from_smiles()
     example_optimize_from_xyz()
-    example_optimize_with_custom_config()
+    #example_optimize_with_custom_config()
 
     print("\n" + "=" * 70)
     print("Examples completed! Check the generated XYZ files.")

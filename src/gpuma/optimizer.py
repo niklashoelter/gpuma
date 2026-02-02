@@ -24,9 +24,7 @@ from .structure import Structure
 
 logger = logging.getLogger(__name__)
 
-
 _CALCULATOR_CACHE: dict[tuple, FAIRChemCalculator] = {}
-
 
 def _get_cached_calculator(config: Config) -> FAIRChemCalculator:
     """Retrieve or load a calculator based on configuration parameters."""
@@ -190,6 +188,7 @@ def _optimize_batch_structures(
     else:
         optimizer = torch_sim.Optimizer.gradient_descent
     convergence_fn = torch_sim.generate_energy_convergence_fn(energy_tol=1e-6)
+    convergence_fn = torch_sim.generate_force_convergence_fn(force_tol=1e-2)
 
     ase_structures = [
         Atoms(
@@ -219,7 +218,7 @@ def _optimize_batch_structures(
         optimizer=optimizer,
         convergence_fn=convergence_fn,
         autobatcher=batcher,
-        steps_between_swaps=3,
+        steps_between_swaps=5,
     )
 
     final_atoms = final_state.to_atoms()

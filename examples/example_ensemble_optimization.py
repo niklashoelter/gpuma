@@ -22,7 +22,7 @@ def example_ensemble_from_smiles():
     """Example 1: Generate and optimize a conformer ensemble from SMILES."""
     print("=== Example 1: Ensemble optimization from SMILES ===")
 
-    smiles = "CCC(C)COCCCCOCOCCCCOCCC(CC)CCCC(CCCC)OOCCC(CCC)CCC(CC)CC(C)CC"  # Example SMILES
+    smiles = "CCC(CC)CCOOC(CC)CCOC"  # Example SMILES
     num_conformers = 100
     print(f"Generating {num_conformers} conformers for {smiles} and optimizing...")
 
@@ -45,18 +45,19 @@ def example_batch_from_multi_xyz():
     """Example 2: Batch optimize structures from a multi-structure XYZ file."""
     print("\n=== Example 2: Batch optimization from multi-XYZ file ===")
 
-    input_file = "example_input_xyzs/multi_xyz_file.xyz"
+    input_file = "example_input_xyzs/butene_triplet_multi.xyz"
     output_file = os.path.join(OUTPUT_DIR, "python_batch_from_multi_xyz_optimized.xyz")
 
     if not os.path.exists(input_file):
         print(f"✗ Input file {input_file} not found")
         return
 
-    structures = gpuma.read_multi_xyz(input_file)
+    config = load_config_from_file("config.json")
+    config.optimization.multiplicity = 3
+    structures = gpuma.read_multi_xyz(input_file, charge=0, multiplicity=config.optimization.multiplicity)
     print(f"Read {len(structures)} structures from {input_file}")
 
-    results = gpuma.optimize_structure_batch(structures)
-
+    results = gpuma.optimize_structure_batch(structures, config)
     comments = [f"Optimized structure {i + 1} from multi-XYZ" for i in range(len(results))]
     gpuma.save_multi_xyz(results, output_file, comments)
 
@@ -126,7 +127,6 @@ def example_ensemble_with_config():
     for i, s in enumerate(results):
         print(f"  Conformer {i + 1}: {s.energy:.6f} eV")
     print(f"  Output saved to: {output_file}")
-
 
 if __name__ == "__main__":
     print("GPUMA - Ensemble and Batch Optimization Examples")

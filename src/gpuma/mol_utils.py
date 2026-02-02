@@ -100,6 +100,7 @@ def smiles_to_conformer_ensemble(
 
         charge = Chem.GetFormalCharge(mol)
         mol = Chem.AddHs(mol)
+
         ensemble = ConformerEnsemble.from_rdkit(mol)
         ensemble.prune_rmsd()
         ensemble.multiplicity = multiplicity
