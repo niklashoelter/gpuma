@@ -20,7 +20,7 @@ classifiers = [
 ]
 
 dependencies = [
-  "ase>=3.26",
+  "ase==3.27.0",
   "torch-sim-atomistic==0.5.1",
   "fairchem-core>=2.7,<2.10",
   "morfeus-ml>=0.7",
@@ -32,7 +32,7 @@ dependencies = [
 
 [project.optional-dependencies]
 yaml = ["pyyaml>=6.0"]
-dev = ["pytest>=9.0.0", "ruff>=0.7.0", "build>=1.2.1", "twine>=5.0.0"]
+dev = ["pytest>=9.0.0", "ruff>=0.7.0", "build>=1.2.1", "twine>=5.0.0", "pip-tools>=7.5.2"]
 
 [project.scripts]
 gpuma = "gpuma.cli:main"
