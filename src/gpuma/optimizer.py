@@ -133,12 +133,36 @@ def optimize_single_structure(
         atoms.calc = calculator
         atoms.info = {"charge": charge, "spin": multiplicity}
 
+        # Resolve convergence criteria
+        # Single structure optimization only supports force convergence.
+        # If both are given, use force (and warn).
+        # If only energy is given, fallback to force (and warn).
+        force_crit = config.optimization.force_convergence_criterion
+        energy_crit = config.optimization.energy_convergence_criterion
+
+        if force_crit is not None and energy_crit is not None:
+            logger.warning(
+                "Both force and energy convergence criteria given. "
+                "For single structure optimization, the force criterion should be used."
+            )
+            # Use force_crit as is
+        elif force_crit is None and energy_crit is not None:
+            logger.warning(
+                "Energy convergence criterion requested but only force convergence "
+                "criterion can be used for single structure optimization. "
+                "Falling back to default force criterion (0.05)."
+            )
+            force_crit = 0.05
+        elif force_crit is None:
+            # Should not happen with defaults, but safe fallback
+            force_crit = 0.05
+
         logger.info(
             "Starting single geometry optimization for structure with %d atoms",
             len(symbols),
         )
         optimizer = BFGS(atoms, logfile=None)
-        optimizer.run()
+        optimizer.run(fmax=force_crit)
         logger.info(
             "Optimization completed after %d steps",
             optimizer.get_number_of_steps(),
@@ -248,8 +272,23 @@ def _optimize_batch_structures(
     else:
         optimizer = torch_sim.Optimizer.gradient_descent
 
-    convergence_fn = torch_sim.generate_energy_convergence_fn(energy_tol=1e-6)
-    convergence_fn = torch_sim.generate_force_convergence_fn(force_tol=1e-2)
+    # Resolve convergence criteria
+    force_crit = config.optimization.force_convergence_criterion
+    energy_crit = config.optimization.energy_convergence_criterion
+
+    if force_crit is not None and energy_crit is not None:
+        logger.warning(
+            "Both force and energy convergence criteria given. "
+            "Using force convergence criterion."
+        )
+        convergence_fn = torch_sim.generate_force_convergence_fn(force_tol=force_crit)
+    elif force_crit is not None:
+        convergence_fn = torch_sim.generate_force_convergence_fn(force_tol=force_crit)
+    elif energy_crit is not None:
+        convergence_fn = torch_sim.generate_energy_convergence_fn(energy_tol=energy_crit)
+    else:
+        # Fallback to default force criterion if neither is set (unlikely with defaults)
+        convergence_fn = torch_sim.generate_force_convergence_fn(force_tol=0.05)
 
     ase_structures = [
         Atoms(

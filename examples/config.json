@@ -9,6 +9,9 @@
     "charge": 0,
     "multiplicity": 1,
 
+    "force_convergence_criterion": 5e-2,
+    "energy_convergence_criterion": null,
+
     "model_name": "uma-s-1p1",
     "model_path": null,
     "model_cache_dir": "/mnt/share/models/cache",

@@ -172,6 +172,9 @@ Example (JSON):
     "charge": 0,
     "multiplicity": 1,
 
+    "force_convergence_criterion": 5e-2,
+    "energy_convergence_criterion": null,
+
     "model_name": "uma-m-1p1",
     "model_path": null,
     "model_cache_dir": null,
@@ -196,6 +199,9 @@ optimization:
   charge: 0
   multiplicity: 1
 
+  force_convergence_criterion: 5.0e-2
+  energy_convergence_criterion: null
+
   model_name: uma-m-1p1
   model_path: null
   model_cache_dir: null
@@ -215,6 +221,11 @@ optimization:
 - `charge`: total charge of the system (for SMILES this is inferred from the
   input and not overridden by this setting)
 - `multiplicity`: spin multiplicity of the system
+- `force_convergence_criterion`: force convergence threshold (default: 5e-2).
+  Used for both single and batch optimizations.
+- `energy_convergence_criterion`: energy convergence threshold (default: None).
+  If provided, it is used for batch optimization (unless force is also set).
+  Not supported for single structure optimization.
 - `model_name`: Fairchem UMA model name (e.g., `uma-m-1p1`)
 - `model_path`: local path to a Fairchem UMA model (overrides `model_name` if set)
 - `model_cache_dir`: directory to cache downloaded models (default: `~/.cache/fairchem`)

@@ -34,6 +34,9 @@ DEFAULT_CONFIG: dict[str, Any] = {
         # and via config or CLI for SMILES multiplicities.
         "charge": 0,
         "multiplicity": 1,
+        # Convergence criteria
+        "force_convergence_criterion": 5e-2,
+        "energy_convergence_criterion": None,
         "model_name": "uma-s-1p1",
         "model_path": None,
         # Optional local model cache directory; can be overridden by user config
@@ -294,6 +297,30 @@ def validate_config(config: Config) -> None:
         raise ValueError(f"Invalid multiplicity value in config: {multiplicity!r}") from exc
     if mult_int <= 0:
         raise ValueError("Multiplicity must be a positive integer")
+
+    # Convergence criteria
+    force_crit = getattr(opt, "force_convergence_criterion", None)
+    energy_crit = getattr(opt, "energy_convergence_criterion", None)
+
+    if force_crit is not None:
+        try:
+            val = float(force_crit)
+            if val <= 0:
+                raise ValueError
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                f"force_convergence_criterion must be a positive float, got {force_crit!r}"
+            ) from exc
+
+    if energy_crit is not None:
+        try:
+            val = float(energy_crit)
+            if val <= 0:
+                raise ValueError
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                f"energy_convergence_criterion must be a positive float, got {energy_crit!r}"
+            ) from exc
 
     # Device must be cpu, cuda or cuda:N
     dev = str(getattr(opt, "device", default_device) or "").strip().lower()
