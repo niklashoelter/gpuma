@@ -1,4 +1,7 @@
 import logging
+import os
+import json
+from unittest.mock import patch, mock_open
 
 import pytest
 import torch
@@ -11,6 +14,7 @@ from gpuma.config import (
     load_config_from_file,
     save_config_to_file,
     validate_config,
+    _read_config_file,
 )
 
 
@@ -103,3 +107,33 @@ def test_validate_config_device_and_charge_multiplicity():
     cfg.optimization.multiplicity = 0
     with pytest.raises(ValueError):
         validate_config(cfg)
+
+
+def test_load_config_caching_behavior(tmp_path):
+    config_path = tmp_path / "config.json"
+    with open(config_path, "w") as f:
+        json.dump({"optimization": {"model_name": "cached"}}, f)
+
+    # Clear cache before starting
+    _read_config_file.cache_clear()
+
+    # First load
+    cfg1 = load_config_from_file(str(config_path))
+    assert cfg1.optimization.model_name == "cached"
+
+    # Modify file directly on disk
+    with open(config_path, "w") as f:
+        json.dump({"optimization": {"model_name": "modified"}}, f)
+
+    # Second load - should still see "cached" because it's cached
+    cfg2 = load_config_from_file(str(config_path))
+    assert cfg2.optimization.model_name == "cached"
+
+    # Now verify save_config_to_file clears cache
+    new_cfg = Config()
+    new_cfg.optimization.model_name = "saved"
+    save_config_to_file(new_cfg, str(config_path))
+
+    # Third load - should see "saved" because cache was cleared
+    cfg3 = load_config_from_file(str(config_path))
+    assert cfg3.optimization.model_name == "saved"

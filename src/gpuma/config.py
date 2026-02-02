@@ -9,6 +9,7 @@ preserved, and only a small set of known keys have defaults derived from
 from __future__ import annotations
 
 import copy
+import functools
 import json
 import logging
 import os
@@ -64,16 +65,27 @@ class _Section:
     """Lightweight wrapper to provide attribute access to a nested dict section."""
 
     def __init__(self, root: dict[str, Any], path: list[str]):
+        """Initialize the section wrapper.
+
+        Parameters
+        ----------
+        root:
+            The root dictionary of the configuration.
+        path:
+            List of keys to traverse to reach this section.
+        """
         object.__setattr__(self, "_root", root)
         object.__setattr__(self, "_path", path)
 
     def _node(self) -> dict[str, Any]:
+        """Resolve the path to the current node in the dictionary."""
         node = self._root
         for key in self._path:
             node = node.setdefault(key, {})
         return node
 
     def __getattr__(self, name: str):
+        """Get a value or a subsection by attribute name."""
         node = self._node()
         if name in node:
             val = node[name]
@@ -85,16 +97,20 @@ class _Section:
         )
 
     def __setattr__(self, name: str, value: Any) -> None:
+        """Set a value in the configuration by attribute name."""
         node = self._node()
         node[name] = value
 
     def to_dict(self) -> dict[str, Any]:
+        """Return a deep copy of the section as a dictionary."""
         return copy.deepcopy(self._node())
 
     def get(self, key: str, default: Any = None) -> Any:
+        """Get a value by key, similar to dict.get."""
         return self._node().get(key, default)
 
     def setdefault(self, key: str, default: Any = None) -> Any:
+        """Set a default value for a key, similar to dict.setdefault."""
         return self._node().setdefault(key, default)
 
     def get_huggingface_token(self) -> str | None:
@@ -131,6 +147,13 @@ class Config:
     """
 
     def __init__(self, data: dict[str, Any] | None = None) -> None:
+        """Initialize configuration with optional overrides.
+
+        Parameters
+        ----------
+        data:
+            Optional dictionary of configuration overrides.
+        """
         merged = _deep_merge(DEFAULT_CONFIG, data or {})
         self._data: dict[str, Any] = merged
         # basic validation to catch obvious mistakes early
@@ -151,8 +174,35 @@ class Config:
         return cls(data)
 
 
+@functools.lru_cache(maxsize=1)
+def _read_config_file(filepath: str) -> dict[str, Any]:
+    """Read and parse configuration file with caching.
+
+    Returns an empty dict if the file does not exist.
+    """
+    if not os.path.exists(filepath):
+        return {}
+
+    with open(filepath, encoding="utf-8") as f:
+        if filepath.endswith(".json"):
+            return json.load(f)
+        elif filepath.endswith(".yaml") or filepath.endswith(".yml"):
+            try:
+                from yaml import safe_load as _yaml_safe_load  # type: ignore
+
+                return _yaml_safe_load(f)
+            except ImportError as e:
+                raise ImportError("PyYAML is required to load YAML config files") from e
+        else:
+            raise ValueError("Config file must be JSON or YAML format")
+
+
 def load_config_from_file(filepath: str = "config.json") -> Config:
     """Load configuration from a JSON/YAML file and deep-merge with defaults.
+
+    This function caches the raw dictionary loaded from the file to avoid
+    repeated I/O and parsing. The returned Config object is always a new
+    instance, safe to modify.
 
     Args:
         filepath: Path to the config file. If it doesn't exist, defaults are used.
@@ -161,28 +211,12 @@ def load_config_from_file(filepath: str = "config.json") -> Config:
         A :class:`Config` instance with data merged with :data:`DEFAULT_CONFIG`.
         Unknown keys are preserved.
     """
-    if not os.path.exists(filepath):
-        cfg = Config()
-        validate_config(cfg)
-        return cfg
+    user_cfg = _read_config_file(filepath)
 
-    with open(filepath, encoding="utf-8") as f:
-        if filepath.endswith(".json"):
-            user_cfg = json.load(f)
-        elif filepath.endswith(".yaml") or filepath.endswith(".yml"):
-            try:
-                from yaml import safe_load as _yaml_safe_load  # type: ignore
-
-                user_cfg = _yaml_safe_load(f)
-            except ImportError as e:
-                raise ImportError("PyYAML is required to load YAML config files") from e
-        else:
-            raise ValueError("Config file must be JSON or YAML format")
-
-    if not isinstance(user_cfg, dict):
+    if user_cfg is not None and not isinstance(user_cfg, dict):
         raise ValueError("Configuration file must contain a JSON/YAML object at the root")
 
-    cfg = Config.from_dict(user_cfg)
+    cfg = Config.from_dict(copy.deepcopy(user_cfg))
     validate_config(cfg)
     return cfg
 
@@ -206,6 +240,9 @@ def save_config_to_file(config: Any, filepath: str) -> None:
                 raise ImportError("PyYAML is required to save YAML config files") from e
         else:
             raise ValueError("Config file must be JSON or YAML format")
+
+    # Invalidate cache since the file on disk has changed
+    _read_config_file.cache_clear()
 
 
 def get_huggingface_token(config: Config | dict[str, Any]) -> str | None:
