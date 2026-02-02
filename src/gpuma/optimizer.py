@@ -27,6 +27,33 @@ logger = logging.getLogger(__name__)
 
 _CALCULATOR_CACHE: dict[tuple, FAIRChemCalculator] = {}
 
+
+@functools.lru_cache(maxsize=1)
+def _load_calculator_impl(
+    device: str,
+    model_name: str,
+    model_path: str | None,
+    model_cache_dir: str | None,
+    huggingface_token: str | None,
+    huggingface_token_file: str | None,
+) -> FAIRChemCalculator:
+    """Cached implementation of calculator loading."""
+    # Reconstruct a temporary config for load_model_fairchem
+    temp_config = Config(
+        {
+            "optimization": {
+                "device": device,
+                "model_name": model_name,
+                "model_path": model_path,
+                "model_cache_dir": model_cache_dir,
+                "huggingface_token": huggingface_token,
+                "huggingface_token_file": huggingface_token_file,
+            }
+        }
+    )
+    return load_model_fairchem(temp_config)
+
+
 def _get_cached_calculator(config: Config) -> FAIRChemCalculator:
     """Retrieve or load a calculator based on configuration parameters."""
     opt = config.optimization
