@@ -68,6 +68,44 @@ def _get_cached_calculator(config: Config) -> FAIRChemCalculator:
     )
 
 
+@functools.lru_cache(maxsize=1)
+def _load_model_torchsim_impl(
+    device: str,
+    model_name: str,
+    model_path: str | None,
+    model_cache_dir: str | None,
+    hf_token: str | None,
+    hf_token_file: str | None,
+):
+    """Load a torch-sim model with caching support."""
+    # Reconstruct minimal config for loading
+    config_data = {
+        "optimization": {
+            "device": device,
+            "model_name": model_name,
+            "model_path": model_path,
+            "model_cache_dir": model_cache_dir,
+            "huggingface_token": hf_token,
+            "huggingface_token_file": hf_token_file,
+        }
+    }
+    cfg = Config(config_data)
+    return load_model_torchsim(cfg)
+
+
+def _get_cached_torchsim_model(config: Config):
+    """Retrieve or load a torch-sim model based on configuration parameters."""
+    opt = config.optimization
+    return _load_model_torchsim_impl(
+        str(opt.device),
+        str(opt.model_name),
+        str(opt.model_path) if opt.model_path else None,
+        str(opt.model_cache_dir) if opt.model_cache_dir else None,
+        str(opt.huggingface_token) if opt.huggingface_token else None,
+        str(opt.huggingface_token_file) if opt.huggingface_token_file else None,
+    )
+
+
 @time_it
 def optimize_single_structure(
     structure: Structure,
@@ -201,7 +239,7 @@ def _optimize_batch_structures(
     logger.info("Starting batch optimization of %d structures", len(structures))
 
     device = _device_for_torch(config.optimization.device)
-    model = load_model_torchsim(config)
+    model = _get_cached_torchsim_model(config)
 
     optimizer_name = getattr(config.optimization, "batch_optimizer", "fire") or "fire"
     optimizer_name = str(optimizer_name).strip().lower()
