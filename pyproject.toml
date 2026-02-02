@@ -1,6 +1,6 @@
 [project]
 name = "gpuma"
-version = "1.0.0"
+version = "1.0.1"
 description = "GPUMA - Geometry optimization toolkit using Fairchem UMA models and Torch-Sim"
 readme = "README.md"
 requires-python = ">=3.12"
