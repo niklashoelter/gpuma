@@ -1,7 +1,7 @@
 # This workflow will install Python dependencies, run tests and lint with a single version of Python
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 
-name: Python application
+name: Python package
 
 on:
   push:
@@ -31,11 +31,7 @@ jobs:
         
         # install this package (pulls dependencies from pyproject.toml)
         pip install -e .[yaml]
-        
-        # replace pip package with torch-sim from source (fairchem support)
-        pip uninstall -y torch-sim-atomistic || true
-        git clone https://github.com/niklashoelter/torch-sim
-        pip install ./torch-sim
+
     - name: Lint with flake8
       run: |
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
