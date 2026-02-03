@@ -28,7 +28,8 @@ nav:
   - Home: index.md
   - Installation: install.md
   - Configuration: config.md
-  - API Reference: reference.md
+  - Command Line Interface: cli.md
+  - Python API: reference.md
   - License: LICENSE.md
 
 plugins:
