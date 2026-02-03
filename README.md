@@ -46,7 +46,7 @@ pip install .
 
 ## Documentation
 
-Full documentation is available at [https://GloriusGroup.github.io/gpuma/](https://GloriusGroup.github.io/gpuma/).
+Full documentation is available at [https://niklashoelter.github.io/gpuma/](https://niklashoelter.github.io/gpuma/).
 
 Please refer to the documentation for detailed configuration options and advanced usage. Using a configuration file is highly recommended for reproducibility and ease of use.
 
