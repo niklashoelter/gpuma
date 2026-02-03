@@ -44,6 +44,7 @@ def read_xyz(file_path: str, charge: int = 0, multiplicity: int = 1) -> Structur
         If the specified file does not exist.
     ValueError
         If the file format is invalid.
+
     """
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"File {file_path} not found")
@@ -127,6 +128,7 @@ def read_multi_xyz(file_path: str, charge: int = 0, multiplicity: int = 1) -> li
         If the specified file does not exist.
     ValueError
         If the file format is invalid.
+
     """
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"File {file_path} not found")
@@ -227,6 +229,7 @@ def read_xyz_directory(
         If the directory does not exist.
     ValueError
         If no valid XYZ files are found.
+
     """
     if not os.path.exists(directory_path):
         raise FileNotFoundError(f"Directory {directory_path} not found")
@@ -272,6 +275,7 @@ def smiles_to_xyz(
     Structure | str
         Either a :class:`Structure` or an XYZ string depending on
         ``return_full_xyz_str``.
+
     """
     if not smiles_string or not smiles_string.strip():
         raise ValueError("SMILES string cannot be empty or None")
@@ -319,6 +323,7 @@ def smiles_to_ensemble(
     -------
     list[Structure]
         A list of :class:`Structure` instances representing the conformers.
+
     """
     if not smiles_string or not smiles_string.strip():
         raise ValueError("SMILES string cannot be empty or None")
@@ -371,3 +376,15 @@ def save_multi_xyz(
     with open(file_path, "w", encoding="utf-8") as fh:
         fh.write("\n".join(lines))
         fh.write("\n")
+
+def file_exists(file_path: str) -> bool:
+    """Check if a file exists at the given path.
+
+    Args:
+        file_path (str): The path to the file.
+
+    Returns:
+        bool: True if the file exists, False otherwise.
+
+    """
+    return os.path.isfile(file_path)

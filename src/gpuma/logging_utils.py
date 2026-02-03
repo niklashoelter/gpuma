@@ -15,6 +15,7 @@ def configure_logging(level: int = logging.INFO, logger_name: str | None = None)
     logger_name:
         Optional name of the logger to configure. If omitted, the root logger
         is configured.
+
     """
     logger = logging.getLogger(logger_name)
     logger.setLevel(level)

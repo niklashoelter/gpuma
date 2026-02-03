@@ -1,0 +1,47 @@
+site_name: "gpuma Documentation"
+site_description: "Documentation for the gpuma package."
+site_author: "Niklas Hölter"
+site_url: "https://GloriusGroup.github.io/gpuma/"
+
+theme:
+  name: "material"
+  features:
+    - navigation.expand
+    - content.code.copy
+  palette:
+    # Light mode
+    - scheme: default
+      primary: teal
+      accent: purple
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - scheme: slate
+      primary: teal
+      accent: lime
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+nav:
+  - Home: index.md
+  - Installation: install.md
+  - Configuration: config.md
+  - API Reference: reference.md
+  - License: LICENSE.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          selection:
+            docstring_style: google
+          rendering:
+            show_source: true
+            show_root_heading: true
+
+extra:
+  python_path: .

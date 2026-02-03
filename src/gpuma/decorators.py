@@ -19,6 +19,7 @@ def time_it(func):
     -------
     callable
         Wrapped function that logs its runtime at :mod:`logging.INFO` level.
+
     """
 
     @wraps(func)

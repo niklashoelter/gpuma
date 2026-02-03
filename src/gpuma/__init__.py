@@ -11,9 +11,11 @@ that is actually implemented and tested.
 """
 
 from .api import (
+    optimize_batch_multi_xyz_file,
+    optimize_batch_xyz_directory,
+    optimize_ensemble_smiles,
     optimize_single_smiles,
     optimize_single_xyz_file,
-    optimize_smiles_ensemble,
 )
 from .config import Config, default_config, load_config_from_file, save_config_to_file
 from .decorators import time_it
@@ -47,7 +49,9 @@ __all__ = [
     # Convenience functions (re-exported from ``api``)
     "optimize_single_smiles",
     "optimize_single_xyz_file",
-    "optimize_smiles_ensemble",
+    "optimize_ensemble_smiles",
+    "optimize_batch_multi_xyz_file",
+    "optimize_batch_xyz_directory",
     # Model functions
     "load_model_torchsim",
     "load_model_fairchem",

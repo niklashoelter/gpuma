@@ -83,6 +83,7 @@ def smiles_to_conformer_ensemble(
     -----
     Conformers are sorted by energy (lowest first) and pruned by RMSD to remove
     duplicates. The actual number returned may be less than ``max_num_confs``.
+
     """
     if not smiles or not smiles.strip():
         raise ValueError("SMILES string cannot be empty")

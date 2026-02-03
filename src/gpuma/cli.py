@@ -18,24 +18,22 @@ import argparse
 import logging
 import sys
 import warnings
-from typing import cast
 
 from .api import (
+    optimize_batch_multi_xyz_file,
+    optimize_batch_xyz_directory,
+    optimize_ensemble_smiles,
     optimize_single_smiles,
     optimize_single_xyz_file,
-    optimize_smiles_ensemble,
 )
 from .config import Config, load_config_from_file, save_config_to_file
 from .io_handler import (
-    read_multi_xyz,
-    read_xyz_directory,
     save_multi_xyz,
     save_xyz_file,
     smiles_to_ensemble,
     smiles_to_xyz,
 )
 from .logging_utils import configure_logging
-from .structure import Structure
 
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -56,6 +54,7 @@ def _level_from_string(name: str) -> int:
     int
         Corresponding :mod:`logging` module integer level. Defaults to
         :data:`logging.INFO` if the name is unknown.
+
     """
     levels = {
         "CRITICAL": logging.CRITICAL,
@@ -75,6 +74,7 @@ def setup_parser() -> argparse.ArgumentParser:
     argparse.ArgumentParser
         Configured :class:`ArgumentParser` instance with all subcommands and
         options.
+
     """
     parser = argparse.ArgumentParser(
         description=("GPUMA - Optimize molecular structures using Fairchem UMA models"),
@@ -429,7 +429,7 @@ def cmd_ensemble(args, config: Config) -> None:
         num_conf = args.conformers or config.optimization.max_num_conformers
         logger.info("Generating %d conformers for SMILES: %s", num_conf, args.smiles)
 
-        optimized_conformers = optimize_smiles_ensemble(
+        optimized_conformers = optimize_ensemble_smiles(
             smiles=args.smiles,
             num_conformers=num_conf,
             output_file=args.output,
@@ -453,19 +453,19 @@ def cmd_ensemble(args, config: Config) -> None:
 
 def cmd_batch(args, config: Config) -> None:
     """Handle batch optimization from files (multi-XYZ or directory)."""
-    from .optimizer import optimize_structure_batch
-
     try:
         eff_charge = int(
             args.charge
             if hasattr(args, "charge") and args.charge is not None
             else getattr(config.optimization, "charge", 0)
         )
+        config.optimization.charge = eff_charge
         eff_mult = int(
             args.multiplicity
             if hasattr(args, "multiplicity") and args.multiplicity is not None
             else getattr(config.optimization, "multiplicity", 1)
         )
+        config.optimization.multiplicity = eff_mult
 
         if args.multi_xyz:
             logger.info(
@@ -474,9 +474,11 @@ def cmd_batch(args, config: Config) -> None:
                 eff_charge,
                 eff_mult,
             )
-            structures = cast(
-                list[Structure],
-                read_multi_xyz(args.multi_xyz, charge=eff_charge, multiplicity=eff_mult),
+
+            structures = optimize_batch_multi_xyz_file(
+                input_file=args.multi_xyz,
+                output_file=args.output,
+                config=config,
             )
         else:
             logger.info(
@@ -485,44 +487,25 @@ def cmd_batch(args, config: Config) -> None:
                 eff_charge,
                 eff_mult,
             )
-            structures = cast(
-                list[Structure],
-                read_xyz_directory(
-                    args.xyz_dir,
-                    charge=eff_charge,
-                    multiplicity=eff_mult,
-                ),
+            structures = optimize_batch_xyz_directory(
+                input_directory=args.xyz_dir,
+                output_file=args.output,
+                config=config,
             )
 
         if not structures:
             logger.error("No structures found for batch optimization")
             sys.exit(1)
 
-        logger.info(
-            "Optimizing %d structures using batch optimization mode...",
-            len(structures),
-        )
-
-        optimized_structures = optimize_structure_batch(structures, config)
-
-        comments = [
-            f"Optimized structure {i + 1} from batch input"
-            for i in range(len(optimized_structures))
-        ]
-        save_multi_xyz(optimized_structures, args.output, comments)
-
-        logger.info(
-            "Batch optimization completed successfully! %d optimized structures saved to %s",
-            len(optimized_structures),
-            args.output,
-        )
+        logger.info("Batch optimization completed successfully!")
+        logger.info("Optimized structures saved to %s", args.output)
 
     except Exception as exc:  # pragma: no cover - defensive logging
         logger.exception("Error during batch optimization: %s", exc)
         sys.exit(1)
 
 
-def cmd_convert(args, config: Config) -> None:  # pylint: disable=unused-argument
+def cmd_convert(args) -> None:  # pylint: disable=unused-argument
     """Handle the SMILES to XYZ conversion command.
 
     This command generates a single 3D structure from SMILES without running
@@ -602,6 +585,7 @@ def main(argv=None) -> int:
     -------
     int
         Exit status code (``0`` for success).
+
     """
     parser = setup_parser()
     args = parser.parse_args(argv)

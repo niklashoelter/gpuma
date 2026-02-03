@@ -76,6 +76,7 @@ class _Section:
             The root dictionary of the configuration.
         path:
             List of keys to traverse to reach this section.
+
         """
         object.__setattr__(self, "_root", root)
         object.__setattr__(self, "_path", path)
@@ -141,12 +142,13 @@ class _Section:
 class Config:
     """Dict-backed configuration with attribute access for sections.
 
-    Example
+    Example:
     -------
     >>> cfg = load_config_from_file()
     >>> print(cfg.optimization.logging_level)
     >>> cfg.optimization.device = "cuda"
     >>> save_config_to_file(cfg, "config.json")
+
     """
 
     def __init__(self, data: dict[str, Any] | None = None) -> None:
@@ -156,6 +158,7 @@ class Config:
         ----------
         data:
             Optional dictionary of configuration overrides.
+
         """
         merged = _deep_merge(DEFAULT_CONFIG, data or {})
         self._data: dict[str, Any] = merged
@@ -213,6 +216,7 @@ def load_config_from_file(filepath: str = "config.json") -> Config:
     Returns:
         A :class:`Config` instance with data merged with :data:`DEFAULT_CONFIG`.
         Unknown keys are preserved.
+
     """
     user_cfg = _read_config_file(filepath)
 
