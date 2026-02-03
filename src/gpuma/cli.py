@@ -391,12 +391,12 @@ def cmd_optimize(args, config: Config) -> None:
                 eff_charge,
                 eff_mult,
             )
+            config.optimization.charge = eff_charge
+            config.optimization.multiplicity = eff_mult
             optimized = optimize_single_xyz_file(
                 input_file=args.xyz,
                 output_file=args.output,
                 config=config,
-                charge=eff_charge,
-                multiplicity=eff_mult,
             )
 
         logger.info(
@@ -428,10 +428,10 @@ def cmd_ensemble(args, config: Config) -> None:
 
         num_conf = args.conformers or config.optimization.max_num_conformers
         logger.info("Generating %d conformers for SMILES: %s", num_conf, args.smiles)
+        config.optimization.max_num_conformers = num_conf
 
         optimized_conformers = optimize_ensemble_smiles(
             smiles=args.smiles,
-            num_conformers=num_conf,
             output_file=args.output,
             config=config,
         )
@@ -505,7 +505,7 @@ def cmd_batch(args, config: Config) -> None:
         sys.exit(1)
 
 
-def cmd_convert(args) -> None:  # pylint: disable=unused-argument
+def cmd_convert(args, config: Config | None = None) -> None:  # pylint: disable=unused-argument
     """Handle the SMILES to XYZ conversion command.
 
     This command generates a single 3D structure from SMILES without running
