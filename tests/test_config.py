@@ -77,6 +77,24 @@ def test_validate_config():
     with pytest.raises(ValueError, match="Device must be"):
         Config({"optimization": {"device": "invalid_device"}})
 
+def test_validate_config_convergence():
+    # Test invalid convergence criteria
+    with pytest.raises(ValueError, match="force_convergence_criterion must be a positive float"):
+        Config({"optimization": {"force_convergence_criterion": -0.01}})
+
+    with pytest.raises(ValueError, match="force_convergence_criterion must be a positive float"):
+        Config({"optimization": {"force_convergence_criterion": "invalid"}})
+
+    with pytest.raises(ValueError, match="energy_convergence_criterion must be a positive float"):
+        Config({"optimization": {"energy_convergence_criterion": 0.0}})
+
+def test_validate_config_device_empty():
+    with pytest.raises(ValueError, match="Device string in config cannot be empty"):
+        Config({"optimization": {"device": ""}})
+
+    with pytest.raises(ValueError, match="Device string in config cannot be empty"):
+        Config({"optimization": {"device": "   "}})
+
 def test_huggingface_token(tmp_path, monkeypatch):
     # Case 1: Token in config
     cfg = Config({"optimization": {"huggingface_token": "token_in_config"}})

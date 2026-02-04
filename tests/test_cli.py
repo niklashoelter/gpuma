@@ -1,4 +1,5 @@
 from unittest.mock import patch
+import pytest
 
 from gpuma.cli import main
 
@@ -119,3 +120,10 @@ def test_cli_verbose(tmp_path, caplog):
     # Check for debug logs if any (depends on what's logged)
     # The config logic sets logging level to DEBUG
     pass
+
+def test_cli_help(capsys):
+    with patch("sys.argv", ["gpuma", "--help"]):
+        with pytest.raises(SystemExit):
+            main()
+        captured = capsys.readouterr()
+        assert "GPUMA" in captured.out or "usage:" in captured.out

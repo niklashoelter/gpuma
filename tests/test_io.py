@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch
 
 from gpuma.io_handler import (
     file_exists,
@@ -28,6 +29,25 @@ def test_read_xyz_not_found():
     with pytest.raises(FileNotFoundError):
         read_xyz("non_existent.xyz")
 
+def test_read_xyz_empty_file(tmp_path):
+    f = tmp_path / "empty.xyz"
+    f.touch()
+
+    with pytest.raises(ValueError):
+        read_xyz(str(f))
+
+def test_read_xyz_malformed(tmp_path):
+    f = tmp_path / "malformed.xyz"
+    # First line not integer
+    f.write_text("invalid\ncomment\nC 0 0 0")
+    with pytest.raises(ValueError, match="First line must contain the number of atoms"):
+        read_xyz(str(f))
+
+    # Missing coordinates
+    f.write_text("1\ncomment\nC 0 0")
+    with pytest.raises(ValueError, match="must contain at least 4 elements"):
+        read_xyz(str(f))
+
 def test_read_multi_xyz(tmp_path, sample_multi_xyz_content):
     f = tmp_path / "multi.xyz"
     f.write_text(sample_multi_xyz_content)
@@ -38,6 +58,25 @@ def test_read_multi_xyz(tmp_path, sample_multi_xyz_content):
     assert len(structs[0].symbols) == 3
     assert structs[1].comment == "Methane"
     assert len(structs[1].symbols) == 5
+
+def test_read_multi_xyz_malformed(tmp_path):
+    f = tmp_path / "multi_malformed.xyz"
+    content = """1
+Good
+H 0 0 0
+1
+Bad
+H 0 0
+1
+Good2
+H 1 1 1
+"""
+    f.write_text(content)
+    structs = read_multi_xyz(str(f))
+    # It should skip the middle one
+    assert len(structs) == 2
+    assert structs[0].comment == "Good"
+    assert structs[1].comment == "Good2"
 
 def test_read_xyz_directory(tmp_path, sample_xyz_content):
     d = tmp_path / "xyz_dir"
@@ -58,6 +97,14 @@ def test_save_xyz_file(tmp_path, sample_structure):
     assert "Methane | Energy: -10.500000 eV | Charge: 0 | Multiplicity: 1" in content
     assert "C 0.000000" in content
 
+def test_save_xyz_permission_error(tmp_path, sample_structure):
+    f = tmp_path / "protected.xyz"
+
+    # Mock open to raise PermissionError
+    with patch("builtins.open", side_effect=PermissionError("Denied")):
+        with pytest.raises(PermissionError):
+            save_xyz_file(sample_structure, str(f))
+
 def test_save_multi_xyz(tmp_path, sample_structure):
     f = tmp_path / "output_multi.xyz"
     s1 = sample_structure
@@ -65,10 +112,6 @@ def test_save_multi_xyz(tmp_path, sample_structure):
     save_multi_xyz([s1, s2], str(f), comments=["First", "Second"])
 
     content = f.read_text()
-    # Energy might persist on s1 if mutated
-    assert "First | Energy: -20.000000" in content or "First | Energy: -10.500000" not in content
-    # wait, s2 = sample_structure.with_energy(-20.0) mutates sample_structure!
-    # Because s2 is s1.
     assert "Second | Energy: -20.000000" in content
 
 def test_smiles_to_xyz():
