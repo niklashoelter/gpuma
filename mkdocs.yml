@@ -5,6 +5,8 @@ site_url: "https://GloriusGroup.github.io/gpuma/"
 
 theme:
   name: "material"
+  logo: "docs/logo.png"
+  favicon: "docs/logo.png"
   features:
     - navigation.expand
     - content.code.copy
