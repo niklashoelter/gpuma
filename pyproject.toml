@@ -18,6 +18,11 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Physics",
 ]
 
+[project.urls]
+Source = "https://github.com/NiklasHoelter/gpuma"
+Documentation = "https://niklashoelter.github.io/gpuma/"
+
+
 dependencies = [
   "ase==3.27.0",
   "torch-sim-atomistic==0.5.1",
