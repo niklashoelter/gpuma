@@ -2,9 +2,7 @@ name: Mirror to AK Glorius Group Repo
 
 on:
   push:
-    branches:
-      - master
-      - gh-pages
+    branches: [ "main", "master", "gh-pages" ]
 
 jobs:
     mirror:
