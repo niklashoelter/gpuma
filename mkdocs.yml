@@ -1,12 +1,15 @@
 site_name: "gpuma Documentation"
 site_description: "Documentation for the gpuma package."
 site_author: "Niklas Hölter"
-site_url: "https://GloriusGroup.github.io/gpuma/"
+site_url: "https://NiklasHoelter.github.io/gpuma/"
+repo_url: https://github.com/NiklasHoelter/gpuma
+repo_name: NiklasHoelter/gpuma
+edit_uri: edit/main/docs/ # Allows users to suggest edits directly via GitHub
 
 theme:
   name: "material"
-  logo: "docs/logo.png"
-  favicon: "docs/logo.png"
+  logo: "logo_round.png"
+  favicon: "logo_round.png"
   features:
     - navigation.expand
     - content.code.copy
@@ -15,16 +18,6 @@ theme:
     - scheme: default
       primary: teal
       accent: purple
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
-    # Dark mode
-    - scheme: slate
-      primary: teal
-      accent: lime
-      toggle:
-        icon: material/brightness-4
-        name: Switch to light mode
 
 nav:
   - Home: index.md
@@ -48,3 +41,16 @@ plugins:
 
 extra:
   python_path: .
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences # Allows nesting code blocks inside other blocks
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets # Allows you to embed code from external files
