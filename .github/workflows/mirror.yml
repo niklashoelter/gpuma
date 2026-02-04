@@ -11,9 +11,12 @@ jobs:
         runs-on: ubuntu-latest
         name: mirror
         steps:
-          - name: mirror
-            id: mirror
-            uses: bridgelightcloud/github-mirror-action@v1
+          # 1. Checkout your code (fetch-depth: 0 is crucial for a full mirror)
+          - uses: actions/checkout@v4
             with:
-              origin: 'https://github.com/GloriusGroup/gpuma.git'
-              GITHUB_TOKEN: ${{ secrets.GPUMA_MIRROR_GROUP_REPO_TOKEN }}
+              fetch-depth: 0
+
+          # 2. Run the mirror command manually
+          - name: Push to Mirror
+            run: |
+              git push --mirror https://oauth2:${{ secrets.GPUMA_MIRROR_GROUP_REPO_TOKEN }}@github.com/GloriusGroup/gpuma.git
