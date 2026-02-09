@@ -95,3 +95,22 @@ def test_optimize_batch_structures_implementation(sample_structure):
 
              assert len(results) == 1
              assert results[0].energy == -60.0
+
+def test_optimize_single_structure_convergence_warnings(sample_structure, caplog):
+    # Case 1: Both force and energy
+    config = Config({"optimization": {
+        "force_convergence_criterion": 0.01,
+        "energy_convergence_criterion": 0.001
+    }})
+    optimize_single_structure(sample_structure, config)
+    assert "Both force and energy convergence criteria given" in caplog.text
+
+    caplog.clear()
+
+    # Case 2: Only energy
+    config = Config({"optimization": {
+        "force_convergence_criterion": None,
+        "energy_convergence_criterion": 0.001
+    }})
+    optimize_single_structure(sample_structure, config)
+    assert "Energy convergence criterion requested but only force" in caplog.text

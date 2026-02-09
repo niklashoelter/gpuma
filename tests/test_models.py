@@ -1,4 +1,5 @@
 from unittest.mock import MagicMock, patch, ANY
+import os
 
 import pytest
 import torch
@@ -170,3 +171,14 @@ def test_missing_model_name(mock_hf_token):
 
     with pytest.raises(ValueError, match="Model name must be specified"):
         load_model_fairchem(config)
+
+def test_hf_token_set_from_config(monkeypatch):
+    token = "my_token"
+    config = Config({"optimization": {"huggingface_token": token, "model_name": "test"}})
+
+    # Ensure env is clean
+    monkeypatch.delenv("HF_TOKEN", raising=False)
+
+    from gpuma.models import _load_hf_token_to_env
+    _load_hf_token_to_env(config)
+    assert os.environ["HF_TOKEN"] == token
