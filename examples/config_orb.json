@@ -1,0 +1,26 @@
+{
+  "optimization": {
+
+    "batch_optimization_mode": "batch",
+    "batch_optimizer": "fire",
+    "max_num_conformers": 20,
+    "conformer_seed": 42,
+
+    "charge": 0,
+    "multiplicity": 1,
+
+    "force_convergence_criterion": 5e-2,
+    "energy_convergence_criterion": null,
+
+    "model_type": "orb",
+    "model_name": "orb_v3",
+    "model_path": null,
+    "model_cache_dir": null,
+    "device": "cuda",
+
+    "huggingface_token": null,
+    "huggingface_token_file": null,
+
+    "logging_level": "INFO"
+  }
+}

@@ -80,12 +80,36 @@ def example_optimize_from_xyz():
     print(f"  Final energy: {structure.energy:.6f} eV")
     print(f"  Output saved to: {output_file}")
 
+def example_optimize_from_smiles_orb():
+    """Example 3: Optimize a molecule from SMILES using ORB-v3."""
+    print("\n=== Example 3: Single optimization from SMILES (ORB-v3) ===")
+
+    smiles = "C1=C[O+]=CC=C1CCCCCC"
+    print(f"Optimizing {smiles} with ORB-v3 ...")
+
+    cfg = load_config_from_file("config_orb.json")
+    cfg.optimization.multiplicity = 1
+
+    output_file = os.path.join(OUTPUT_DIR, "python_single_smiles_orb.xyz")
+    structure = gpuma.optimize_single_smiles(
+        smiles=smiles,
+        output_file=output_file,
+        config=cfg,
+    )
+
+    print("✓ ORB-v3 optimization successful!")
+    print(f"  Atoms: {structure.n_atoms}")
+    print(f"  Final energy: {structure.energy:.6f} eV")
+    print(f"  Output saved to: {output_file}")
+
+
 if __name__ == "__main__":
     print("GPUMA - Single Structure Optimization Examples")
     print("=" * 70)
 
     example_optimize_from_smiles()
     example_optimize_from_xyz()
+    example_optimize_from_smiles_orb()
 
     print("\n" + "=" * 70)
     print("Examples completed! Check the generated XYZ files.")

@@ -87,6 +87,57 @@ def example_batch_from_xyz_directory():
     print(f"  Output saved to: {output_file}")
 
 
+def example_ensemble_from_smiles_orb():
+    """Example 4: Generate and optimize a conformer ensemble using ORB-v3 (batch)."""
+    print("\n=== Example 4: Ensemble optimization from SMILES (ORB-v3, batch) ===")
+
+    smiles = "CCC(CC)CCOOC(CC)CCOC"
+    config = load_config_from_file("config_orb.json")
+    config.optimization.max_num_conformers = 50
+    config.optimization.force_convergence_criterion = 5e-1
+    # batch mode is the default in config_orb.json
+    print(f"Generating conformers for {smiles} and optimizing with ORB-v3 (batch)...")
+
+    output_file = os.path.join(OUTPUT_DIR, "python_ensemble_orb_batch.xyz")
+
+    results = gpuma.optimize_ensemble_smiles(
+        smiles=smiles,
+        output_file=output_file,
+        config=config,
+    )
+
+    print("✓ ORB-v3 batch ensemble optimization successful!")
+    print(f"  Generated conformers: {len(results)}")
+    for i, s in enumerate(results):
+        print(f"  Conformer {i + 1}: {s.energy:.6f} eV")
+    print(f"  Output saved to: {output_file}")
+
+
+def example_ensemble_from_smiles_orb_sequential():
+    """Example 5: Optimize a conformer ensemble using ORB-v3 (sequential)."""
+    print("\n=== Example 5: Ensemble optimization from SMILES (ORB-v3, sequential) ===")
+
+    smiles = "CCC(CC)CCOOC(CC)CCOC"
+    config = load_config_from_file("config_orb.json")
+    config.optimization.max_num_conformers = 10
+    config.optimization.batch_optimization_mode = "sequential"
+    print(f"Generating conformers for {smiles} and optimizing with ORB-v3 (sequential)...")
+
+    output_file = os.path.join(OUTPUT_DIR, "python_ensemble_orb_sequential.xyz")
+
+    results = gpuma.optimize_ensemble_smiles(
+        smiles=smiles,
+        output_file=output_file,
+        config=config,
+    )
+
+    print("✓ ORB-v3 sequential ensemble optimization successful!")
+    print(f"  Generated conformers: {len(results)}")
+    for i, s in enumerate(results):
+        print(f"  Conformer {i + 1}: {s.energy:.6f} eV")
+    print(f"  Output saved to: {output_file}")
+
+
 if __name__ == "__main__":
     print("GPUMA - Ensemble and Batch Optimization Examples")
     print("=" * 70)
@@ -94,6 +145,8 @@ if __name__ == "__main__":
     example_ensemble_from_smiles()
     example_batch_from_multi_xyz()
     example_batch_from_xyz_directory()
+    example_ensemble_from_smiles_orb()
+    example_ensemble_from_smiles_orb_sequential()
 
     print("\n" + "=" * 70)
     print("Examples completed! Check the generated XYZ files.")
