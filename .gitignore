@@ -1,12 +1,9 @@
-# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 
-# C extensions
 *.so
 
-# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -27,9 +24,7 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+
 *.manifest
 *.spec
 
@@ -50,6 +45,7 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
+mkdocs.yml
 
 # Translations
 *.mo
@@ -145,3 +141,4 @@ torch-sim/
 examples/example_output/*
 
 uv.lock
+/.claude/
