@@ -10,6 +10,8 @@ from gpuma.models import (
     _device_for_torch,
     _parse_device_string,
     load_model_fairchem,
+    load_model_orb,
+    load_model_orb_torchsim,
     load_model_torchsim,
 )
 
@@ -182,3 +184,74 @@ def test_hf_token_set_from_config(monkeypatch):
     from gpuma.models import _load_hf_token_to_env
     _load_hf_token_to_env(config)
     assert os.environ["HF_TOKEN"] == token
+
+
+# --- ORB model tests ---
+
+def test_load_model_orb_logic():
+    config = Config({"optimization": {"model_type": "orb", "model_name": "orb_v3"}})
+
+    mock_orbff = MagicMock()
+    mock_calc = MagicMock()
+
+    with patch("orb_models.forcefield.pretrained") as mock_pretrained, \
+         patch("orb_models.forcefield.calculator.ORBCalculator", return_value=mock_calc):
+
+        mock_pretrained.orb_v3 = MagicMock(return_value=mock_orbff)
+
+        calc = load_model_orb(config)
+
+        mock_pretrained.orb_v3.assert_called_once()
+        assert calc is mock_calc
+
+
+def test_load_model_orb_invalid_name():
+    config = Config({"optimization": {"model_type": "orb", "model_name": "nonexistent_model"}})
+
+    with patch("orb_models.forcefield.pretrained") as mock_pretrained, \
+         patch("orb_models.forcefield.calculator.ORBCalculator"):
+
+        # Make getattr return None for unknown model
+        mock_pretrained.nonexistent_model = None
+        # Delete the attribute so getattr returns None
+        del mock_pretrained.nonexistent_model
+
+        with pytest.raises(ValueError, match="Unknown ORB model name"):
+            load_model_orb(config)
+
+
+def test_load_model_orb_missing_package():
+    config = Config({"optimization": {"model_type": "orb", "model_name": "orb_v3"}})
+
+    with patch.dict("sys.modules", {"orb_models": None, "orb_models.forcefield": None,
+                                     "orb_models.forcefield.pretrained": None,
+                                     "orb_models.forcefield.calculator": None}):
+        with pytest.raises(ImportError, match="orb-models is required"):
+            load_model_orb(config)
+
+
+def test_load_model_orb_torchsim_logic():
+    config = Config({"optimization": {"model_type": "orb", "model_name": "orb_v3"}})
+
+    mock_orbff = MagicMock()
+    mock_model = MagicMock()
+
+    with patch("orb_models.forcefield.pretrained") as mock_pretrained, \
+         patch("orb_models.forcefield.calculator.OrbTorchSimModel", return_value=mock_model):
+
+        mock_pretrained.orb_v3 = MagicMock(return_value=mock_orbff)
+
+        model = load_model_orb_torchsim(config)
+
+        mock_pretrained.orb_v3.assert_called_once()
+        assert model is mock_model
+
+
+def test_load_model_orb_torchsim_missing_package():
+    config = Config({"optimization": {"model_type": "orb", "model_name": "orb_v3"}})
+
+    with patch.dict("sys.modules", {"orb_models": None, "orb_models.forcefield": None,
+                                     "orb_models.forcefield.pretrained": None,
+                                     "orb_models.forcefield.calculator": None}):
+        with pytest.raises(ImportError, match="orb-models is required"):
+            load_model_orb_torchsim(config)

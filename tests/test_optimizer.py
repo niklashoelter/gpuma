@@ -114,3 +114,38 @@ def test_optimize_single_structure_convergence_warnings(sample_structure, caplog
     }})
     optimize_single_structure(sample_structure, config)
     assert "Energy convergence criterion requested but only force" in caplog.text
+
+
+# --- ORB model_type routing tests ---
+
+def test_optimize_single_structure_orb(sample_structure):
+    """ORB model_type should work the same as fairchem for single structure."""
+    config = Config({"optimization": {"model_type": "orb", "model_name": "orb_v3"}})
+    optimized = optimize_single_structure(sample_structure, config)
+    assert optimized.energy == -50.0
+
+
+def test_optimize_batch_sequential_orb(sample_structure):
+    config = Config({"optimization": {
+        "model_type": "orb",
+        "model_name": "orb_v3",
+        "batch_optimization_mode": "sequential",
+    }})
+    results = optimize_structure_batch([sample_structure], config)
+    assert len(results) == 1
+    assert results[0].energy == -50.0
+
+
+def test_optimize_batch_orb_calls_batch(sample_structure):
+    """Batch mode with ORB should route to _optimize_batch_structures."""
+    config = Config({"optimization": {
+        "model_type": "orb",
+        "model_name": "orb_v3",
+        "batch_optimization_mode": "batch",
+        "device": "cuda",
+    }})
+
+    with patch("gpuma.optimizer._parse_device_string", return_value="cuda"), \
+         patch("gpuma.optimizer._optimize_batch_structures") as mock_batch:
+        optimize_structure_batch([sample_structure], config)
+        mock_batch.assert_called()

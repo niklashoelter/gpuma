@@ -59,6 +59,16 @@ pip install gpuma
   pip install gpuma
   ```
 
+### ORB-v3 model support
+
+To use ORB-v3 models instead of Fairchem UMA, install the optional `orb` extra:
+
+```bash
+pip install gpuma[orb]
+```
+
+Then set `"model_type": "orb"` in your configuration file (see [Configuration](config.md)).
+
 > ⚠️ **Required for UMA models:**</br>
 > To access the UMA models on Hugging Face, **you must provide a token** either via the `HUGGINGFACE_TOKEN` environment variable or via the config (direct token string or path to a file containing the token).
 

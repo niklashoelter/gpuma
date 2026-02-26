@@ -4,7 +4,7 @@ All supported parameters live under the `optimization` key. Only these parameter
 
 **Always use a config file for CLI and API calls.**
 
-Example (JSON):
+Example (JSON, Fairchem UMA):
 
 ```json
 {
@@ -20,6 +20,7 @@ Example (JSON):
     "force_convergence_criterion": 5e-2,
     "energy_convergence_criterion": null,
 
+    "model_type": "fairchem",
     "model_name": "uma-m-1p1",
     "model_path": null,
     "model_cache_dir": null,
@@ -28,6 +29,18 @@ Example (JSON):
     "huggingface_token_file": "/home/hf_secret",
 
     "logging_level": "INFO"
+  }
+}
+```
+
+Example (JSON, ORB-v3):
+
+```json
+{
+  "optimization": {
+    "model_type": "orb",
+    "model_name": "orb_v3",
+    "device": "cuda"
   }
 }
 ```
@@ -47,6 +60,7 @@ optimization:
   force_convergence_criterion: 5.0e-2
   energy_convergence_criterion: null
 
+  model_type: fairchem
   model_name: uma-m-1p1
   model_path: null
   model_cache_dir: null
@@ -72,8 +86,13 @@ optimization:
 - `energy_convergence_criterion`: energy convergence threshold (default: None).
   If provided, it is used for batch optimization (unless force is also set).
   Not supported for single structure optimization.
-- `model_name`: Fairchem UMA model name (e.g., `uma-m-1p1`)
-- `model_path`: local path to a Fairchem UMA model (overrides `model_name` if set)
+- `model_type`: model backend to use; one of `fairchem` (or `uma`) for Fairchem UMA
+  models, or `orb` (or `orb-v3`) for ORB-v3 models (default: `fairchem`).
+  ORB-v3 requires the optional `orb-models` dependency (`pip install gpuma[orb]`).
+- `model_name`: model identifier. For Fairchem: e.g. `uma-m-1p1`. For ORB: a
+  pretrained model function name from `orb_models.forcefield.pretrained` (e.g. `orb_v3`).
+- `model_path`: local path to a Fairchem UMA model (overrides `model_name` if set;
+  not used for ORB models)
 - `model_cache_dir`: directory to cache downloaded models (default: `~/.cache/fairchem`)
 - `device`: compute device string; one of `cpu` or `cuda`.
   Fairchem only distinguishes between CPU and CUDA; selection of specific

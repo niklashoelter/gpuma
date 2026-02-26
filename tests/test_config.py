@@ -3,7 +3,13 @@ import json
 import pytest
 import yaml
 
-from gpuma.config import Config, get_huggingface_token, load_config_from_file, save_config_to_file
+from gpuma.config import (
+    Config,
+    get_huggingface_token,
+    load_config_from_file,
+    resolve_model_type,
+    save_config_to_file,
+)
 
 
 def test_config_initialization():
@@ -130,3 +136,37 @@ def test_config_to_dict():
     cfg = Config()
     d = cfg.to_dict()
     assert d["optimization"]["charge"] == 0
+
+
+def test_config_default_model_type():
+    cfg = Config()
+    assert cfg.optimization.model_type == "fairchem"
+
+
+def test_resolve_model_type_aliases():
+    assert resolve_model_type(Config({"optimization": {"model_type": "fairchem"}})) == "fairchem"
+    assert resolve_model_type(Config({"optimization": {"model_type": "uma"}})) == "fairchem"
+    assert resolve_model_type(Config({"optimization": {"model_type": "orb"}})) == "orb"
+    assert resolve_model_type(Config({"optimization": {"model_type": "orb-v3"}})) == "orb"
+
+
+def test_resolve_model_type_case_insensitive():
+    assert resolve_model_type(Config({"optimization": {"model_type": "FAIRCHEM"}})) == "fairchem"
+    assert resolve_model_type(Config({"optimization": {"model_type": "ORB"}})) == "orb"
+
+
+def test_resolve_model_type_from_dict():
+    assert resolve_model_type({"optimization": {"model_type": "orb-v3"}}) == "orb"
+    assert resolve_model_type({"optimization": {"model_type": "uma"}}) == "fairchem"
+    # Missing model_type defaults to fairchem
+    assert resolve_model_type({"optimization": {}}) == "fairchem"
+
+
+def test_resolve_model_type_invalid():
+    with pytest.raises(ValueError, match="Unknown model_type"):
+        resolve_model_type(Config({"optimization": {"model_type": "invalid"}}))
+
+
+def test_validate_config_invalid_model_type():
+    with pytest.raises(ValueError, match="Unknown model_type"):
+        Config({"optimization": {"model_type": "nonexistent"}})

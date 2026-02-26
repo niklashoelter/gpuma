@@ -77,7 +77,7 @@ def setup_parser() -> argparse.ArgumentParser:
 
     """
     parser = argparse.ArgumentParser(
-        description=("GPUMA - Optimize molecular structures using Fairchem UMA models"),
+        description=("GPUMA - Optimize molecular structures using Fairchem UMA or ORB-v3 models"),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 OPTIMIZATION MODES:
@@ -343,6 +343,15 @@ UTILITY COMMANDS:
             "Accepted values: 'cpu', 'cuda', 'cuda:N' (e.g. 'cuda:0')."
         ),
     )
+    parser.add_argument(
+        "--model-type",
+        type=str,
+        choices=["fairchem", "uma", "orb", "orb-v3"],
+        help=(
+            "Override model backend from config. "
+            "'fairchem'/'uma' for Fairchem UMA models, 'orb'/'orb-v3' for ORB-v3 models."
+        ),
+    )
 
     return parser
 
@@ -572,6 +581,12 @@ def _apply_device_override(config: Config, device) -> None:
         config.optimization.device = device
 
 
+def _apply_model_type_override(config: Config, model_type) -> None:
+    """Apply a global model-type override if provided via CLI."""
+    if model_type:
+        config.optimization.model_type = model_type
+
+
 def main(argv=None) -> int:
     """Entry point for the ``gpuma`` CLI.
 
@@ -594,9 +609,10 @@ def main(argv=None) -> int:
     cfg_path = getattr(args, "config", None) or "config.json"
     config = load_config_from_file(cfg_path)
 
-    # Apply verbosity and device flags
+    # Apply verbosity, device, and model-type flags
     _apply_global_verbosity_flags(config, args.verbose, args.quiet)
     _apply_device_override(config, getattr(args, "device", None))
+    _apply_model_type_override(config, getattr(args, "model_type", None))
 
     # Configure logging
     logging_level = _level_from_string(config.optimization.logging_level)

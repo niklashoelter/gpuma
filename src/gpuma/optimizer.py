@@ -1,4 +1,4 @@
-"""Core geometry optimization module using Fairchem UMA models for GPUMA.
+"""Core geometry optimization module using Fairchem UMA and ORB-v3 models for GPUMA.
 
 This module contains optimization logic for single structures and batches of
 structures (e.g., conformer ensembles).
@@ -8,40 +8,46 @@ from __future__ import annotations
 
 import functools
 import logging
+from typing import TYPE_CHECKING, Any
 
 from ase import Atoms
 from ase.optimize import BFGS
-from fairchem.core import FAIRChemCalculator
 
-from .config import Config, load_config_from_file
+from .config import Config, load_config_from_file, resolve_model_type
 from .decorators import time_it
 from .models import (
     _device_for_torch,
     _parse_device_string,
     load_model_fairchem,
+    load_model_orb,
+    load_model_orb_torchsim,
     load_model_torchsim,
 )
 from .structure import Structure
 
+if TYPE_CHECKING:
+    from fairchem.core import FAIRChemCalculator
+
 logger = logging.getLogger(__name__)
 
-_CALCULATOR_CACHE: dict[tuple, FAIRChemCalculator] = {}
+_CALCULATOR_CACHE: dict[tuple, Any] = {}
 
 
-@functools.lru_cache(maxsize=1)
+@functools.lru_cache(maxsize=2)
 def _load_calculator_impl(
+    model_type: str,
     device: str,
     model_name: str,
     model_path: str | None,
     model_cache_dir: str | None,
     huggingface_token: str | None,
     huggingface_token_file: str | None,
-) -> FAIRChemCalculator:
+) -> Any:
     """Cached implementation of calculator loading."""
-    # Reconstruct a temporary config for load_model_fairchem
     temp_config = Config(
         {
             "optimization": {
+                "model_type": model_type,
                 "device": device,
                 "model_name": model_name,
                 "model_path": model_path,
@@ -51,14 +57,17 @@ def _load_calculator_impl(
             }
         }
     )
+    if model_type == "orb":
+        return load_model_orb(temp_config)
     return load_model_fairchem(temp_config)
 
 
-def _get_cached_calculator(config: Config) -> FAIRChemCalculator:
+def _get_cached_calculator(config: Config) -> Any:
     """Retrieve or load a calculator based on configuration parameters."""
     opt = config.optimization
-    # Cache key based on parameters that affect model loading
+    model_type = resolve_model_type(config)
     return _load_calculator_impl(
+        model_type,
         str(opt.device),
         str(opt.model_name),
         str(opt.model_path) if opt.model_path else None,
@@ -68,8 +77,9 @@ def _get_cached_calculator(config: Config) -> FAIRChemCalculator:
     )
 
 
-@functools.lru_cache(maxsize=1)
+@functools.lru_cache(maxsize=2)
 def _load_model_torchsim_impl(
+    model_type: str,
     device: str,
     model_name: str,
     model_path: str | None,
@@ -78,9 +88,9 @@ def _load_model_torchsim_impl(
     hf_token_file: str | None,
 ):
     """Load a torch-sim model with caching support."""
-    # Reconstruct minimal config for loading
     config_data = {
         "optimization": {
+            "model_type": model_type,
             "device": device,
             "model_name": model_name,
             "model_path": model_path,
@@ -90,13 +100,17 @@ def _load_model_torchsim_impl(
         }
     }
     cfg = Config(config_data)
+    if model_type == "orb":
+        return load_model_orb_torchsim(cfg)
     return load_model_torchsim(cfg)
 
 
 def _get_cached_torchsim_model(config: Config):
     """Retrieve or load a torch-sim model based on configuration parameters."""
     opt = config.optimization
+    model_type = resolve_model_type(config)
     return _load_model_torchsim_impl(
+        model_type,
         str(opt.device),
         str(opt.model_name),
         str(opt.model_path) if opt.model_path else None,
@@ -110,9 +124,9 @@ def _get_cached_torchsim_model(config: Config):
 def optimize_single_structure(
     structure: Structure,
     config: Config | None = None,
-    calculator: FAIRChemCalculator | None = None,
+    calculator: Any | None = None,
 ) -> Structure:
-    """Optimize a single :class:`Structure` using a Fairchem UMA model.
+    """Optimize a single :class:`Structure` using a Fairchem UMA or ORB-v3 model.
 
     The same :class:`Structure` instance is returned with optimized coordinates
     and energy set.

@@ -32,6 +32,7 @@ dependencies = [
 
 [project.optional-dependencies]
 yaml = ["pyyaml>=6.0"]
+orb = ["orb-models"]
 dev = [
     "pytest>=9.0.0",
     "build>=1.2.1",

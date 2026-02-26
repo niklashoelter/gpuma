@@ -1,4 +1,4 @@
-"""Model loading utilities for Fairchem UMA and torch-sim models."""
+"""Model loading utilities for Fairchem UMA, ORB-v3, and torch-sim models."""
 
 from __future__ import annotations
 
@@ -162,3 +162,61 @@ def load_model_torchsim(config: Config):
         device=torch_device,
     )
     return model
+
+
+@time_it
+def load_model_orb(config: Config):
+    """Load an ORB-v3 ASE calculator.
+
+    Lazy-imports ``orb_models`` and builds an ``ORBCalculator`` from
+    a pretrained model specified by ``config.optimization.model_name``.
+    """
+    try:
+        from orb_models.forcefield import pretrained  # type: ignore
+        from orb_models.forcefield.calculator import ORBCalculator  # type: ignore
+    except ImportError as exc:
+        raise ImportError(
+            "orb-models is required for ORB model support. "
+            "Install it with: pip install gpuma[orb]"
+        ) from exc
+
+    model_name, _ = _verify_model_name_and_cache_dir(config)
+    device = _parse_device_string(str(config.optimization.device))
+
+    loader = getattr(pretrained, model_name, None)
+    if loader is None:
+        raise ValueError(
+            f"Unknown ORB model name {model_name!r}. "
+            f"Check orb_models.forcefield.pretrained for available models."
+        )
+    orbff = loader(device=device)
+    return ORBCalculator(orbff, device=device)
+
+
+@time_it
+def load_model_orb_torchsim(config: Config):
+    """Load an ORB-v3 torch-sim model wrapper.
+
+    Returns an ``OrbTorchSimModel`` suitable for use with
+    ``torch_sim.optimize()``.
+    """
+    try:
+        from orb_models.forcefield import pretrained  # type: ignore
+        from orb_models.forcefield.calculator import OrbTorchSimModel  # type: ignore
+    except ImportError as exc:
+        raise ImportError(
+            "orb-models is required for ORB model support. "
+            "Install it with: pip install gpuma[orb]"
+        ) from exc
+
+    model_name, _ = _verify_model_name_and_cache_dir(config)
+    torch_device = _device_for_torch(str(config.optimization.device))
+
+    loader = getattr(pretrained, model_name, None)
+    if loader is None:
+        raise ValueError(
+            f"Unknown ORB model name {model_name!r}. "
+            f"Check orb_models.forcefield.pretrained for available models."
+        )
+    orbff = loader(device=str(torch_device))
+    return OrbTorchSimModel(orbff, device=torch_device, dtype=torch.float32)

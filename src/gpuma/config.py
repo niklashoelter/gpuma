@@ -37,6 +37,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         # Convergence criteria
         "force_convergence_criterion": 5e-2,
         "energy_convergence_criterion": None,
+        "model_type": "fairchem",
         "model_name": "uma-s-1p1",
         "model_path": None,
         # Optional local model cache directory; can be overridden by user config
@@ -62,6 +63,37 @@ def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any
         else:
             result[k] = v
     return result
+
+
+_MODEL_TYPE_ALIASES: dict[str, str] = {
+    "fairchem": "fairchem",
+    "uma": "fairchem",
+    "orb": "orb",
+    "orb-v3": "orb",
+}
+
+VALID_MODEL_TYPES: frozenset[str] = frozenset(_MODEL_TYPE_ALIASES)
+
+
+def resolve_model_type(config: Config | dict[str, Any]) -> str:
+    """Normalize a ``model_type`` value to its canonical form.
+
+    Accepted aliases:
+    - ``"fairchem"`` / ``"uma"`` -> ``"fairchem"``
+    - ``"orb"`` / ``"orb-v3"`` -> ``"orb"``
+
+    Works with either :class:`Config` or a plain dict.
+    """
+    if isinstance(config, Config):
+        raw = str(getattr(config.optimization, "model_type", "fairchem")).strip().lower()
+    else:
+        raw = str((config or {}).get("optimization", {}).get("model_type", "fairchem")).strip().lower()
+    canonical = _MODEL_TYPE_ALIASES.get(raw)
+    if canonical is None:
+        raise ValueError(
+            f"Unknown model_type {raw!r}. Must be one of: {sorted(VALID_MODEL_TYPES)}"
+        )
+    return canonical
 
 
 class _Section:
@@ -287,6 +319,13 @@ def validate_config(config: Config) -> None:
     Raises ValueError if an invalid value is found.
     """
     opt = config.optimization
+
+    # Model type must be a known value
+    raw_model_type = str(getattr(opt, "model_type", "fairchem")).strip().lower()
+    if raw_model_type not in VALID_MODEL_TYPES:
+        raise ValueError(
+            f"Unknown model_type {raw_model_type!r}. Must be one of: {sorted(VALID_MODEL_TYPES)}"
+        )
 
     # Charge and multiplicity must be integers; multiplicity > 0
     charge = getattr(opt, "charge", 0)

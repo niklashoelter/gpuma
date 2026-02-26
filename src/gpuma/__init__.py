@@ -17,7 +17,13 @@ from .api import (
     optimize_single_smiles,
     optimize_single_xyz_file,
 )
-from .config import Config, default_config, load_config_from_file, save_config_to_file
+from .config import (
+    Config,
+    default_config,
+    load_config_from_file,
+    resolve_model_type,
+    save_config_to_file,
+)
 from .decorators import time_it
 from .io_handler import (
     read_multi_xyz,
@@ -28,7 +34,12 @@ from .io_handler import (
     smiles_to_ensemble,
     smiles_to_xyz,
 )
-from .models import load_model_fairchem, load_model_torchsim
+from .models import (
+    load_model_fairchem,
+    load_model_orb,
+    load_model_orb_torchsim,
+    load_model_torchsim,
+)
 from .optimizer import optimize_single_structure, optimize_structure_batch
 from .structure import Structure
 
@@ -55,11 +66,14 @@ __all__ = [
     # Model functions
     "load_model_torchsim",
     "load_model_fairchem",
+    "load_model_orb",
+    "load_model_orb_torchsim",
     # Configuration
     "Config",
     "default_config",
     "load_config_from_file",
     "save_config_to_file",
+    "resolve_model_type",
     # Decorators
     "time_it",
 ]

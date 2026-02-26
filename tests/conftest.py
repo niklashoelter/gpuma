@@ -187,6 +187,16 @@ except ImportError:
     torch_sim.autobatching.InFlightAutoBatcher = MagicMock()
     torch_sim.io.atoms_to_state = MagicMock()
 
+# Mock orb_models
+try:
+    import orb_models
+except ImportError:
+    orb_ff = _mock_module("orb_models.forcefield")
+    orb_pretrained = _mock_module("orb_models.forcefield.pretrained")
+    orb_calculator = _mock_module("orb_models.forcefield.calculator")
+    orb_calculator.ORBCalculator = MagicMock()
+    orb_calculator.OrbTorchSimModel = MagicMock()
+
 # Ensure we don't spec mocks in a way that causes issues
 # The error "Cannot spec a Mock object" usually comes from autospec=True
 # We are not using it, but maybe pytest or something else is.
@@ -253,7 +263,9 @@ def mock_load_models(request):
     with patch("gpuma.optimizer.load_model_fairchem") as mock_load_fc, \
          patch("gpuma.optimizer._get_cached_calculator") as mock_get_cached_fc, \
          patch("gpuma.optimizer.load_model_torchsim") as mock_load_ts, \
-         patch("gpuma.optimizer._get_cached_torchsim_model") as mock_get_cached_ts:
+         patch("gpuma.optimizer._get_cached_torchsim_model") as mock_get_cached_ts, \
+         patch("gpuma.optimizer.load_model_orb") as mock_load_orb, \
+         patch("gpuma.optimizer.load_model_orb_torchsim") as mock_load_orb_ts:
 
         mock_calc = MagicMock()
         mock_calc.results = {}
@@ -284,11 +296,13 @@ def mock_load_models(request):
 
         mock_load_fc.return_value = mock_calc
         mock_get_cached_fc.return_value = mock_calc
+        mock_load_orb.return_value = mock_calc
 
         # Setup TorchSim model mock
         mock_ts_model = MagicMock()
         mock_ts_model.model_name = "mock-uma"
         mock_load_ts.return_value = mock_ts_model
         mock_get_cached_ts.return_value = mock_ts_model
+        mock_load_orb_ts.return_value = mock_ts_model
 
         yield
