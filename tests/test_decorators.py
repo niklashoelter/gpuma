@@ -1,5 +1,7 @@
 import logging
+
 from gpuma.decorators import time_it
+
 
 def test_time_it(caplog):
     @time_it

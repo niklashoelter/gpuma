@@ -1,13 +1,16 @@
-"""GPUMA: A minimal package for molecular geometry optimization using Fairchem's UMA models.
+"""GPUMA: Molecular geometry optimization using Fairchem UMA and ORB-v3 models.
 
-This package provides essential tools for:
+This package provides tools for:
+
 - Single molecule optimization from SMILES strings or XYZ files
 - Batch optimization of multiple structures (e.g., conformer ensembles)
 - Format conversion between SMILES and XYZ coordinates
-- Configurable optimization parameters through JSON/YAML configuration files
+- Configurable optimization via JSON/YAML configuration files
 
-The package is designed to be simple and focused, providing only the functionality
-that is actually implemented and tested.
+Two model backends are supported:
+
+- **Fairchem UMA** (default): Universal machine-learning interatomic potentials.
+- **ORB-v3**: Uses the ``orb-models`` package (included in core dependencies).
 """
 
 from .api import (
@@ -34,12 +37,7 @@ from .io_handler import (
     smiles_to_ensemble,
     smiles_to_xyz,
 )
-from .models import (
-    load_model_fairchem,
-    load_model_orb,
-    load_model_orb_torchsim,
-    load_model_torchsim,
-)
+from .models import load_calculator, load_torchsim_model
 from .optimizer import optimize_single_structure, optimize_structure_batch
 from .structure import Structure
 
@@ -57,17 +55,15 @@ __all__ = [
     # Optimization functions
     "optimize_single_structure",
     "optimize_structure_batch",
-    # Convenience functions (re-exported from ``api``)
+    # High-level API
     "optimize_single_smiles",
     "optimize_single_xyz_file",
     "optimize_ensemble_smiles",
     "optimize_batch_multi_xyz_file",
     "optimize_batch_xyz_directory",
-    # Model functions
-    "load_model_torchsim",
-    "load_model_fairchem",
-    "load_model_orb",
-    "load_model_orb_torchsim",
+    # Model loading
+    "load_calculator",
+    "load_torchsim_model",
     # Configuration
     "Config",
     "default_config",

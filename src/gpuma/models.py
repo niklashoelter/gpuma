@@ -1,66 +1,67 @@
-"""Model loading utilities for Fairchem UMA, ORB-v3, and torch-sim models."""
+"""Model loading utilities for GPUMA.
+
+This module provides two public entry points for loading machine-learning
+interatomic potentials:
+
+- :func:`load_calculator` returns an ASE-compatible calculator for
+  single-structure optimization (ASE/BFGS).
+- :func:`load_torchsim_model` returns a torch-sim model wrapper for
+  GPU-accelerated batch optimization.
+
+Both functions inspect ``config.optimization.model_type`` and dispatch to
+the appropriate backend (Fairchem UMA or ORB-v3).
+
+Supported backends
+------------------
+- **Fairchem** (``model_type="fairchem"`` or ``"uma"``): Uses
+  ``fairchem-core`` and ``torch-sim-atomistic``.
+- **ORB-v3** (``model_type="orb"`` or ``"orb-v3"``): Uses the
+  ``orb-models`` package.  Optional D3 dispersion correction can be
+  enabled via ``config.optimization.d3_correction = True``.
+"""
 
 from __future__ import annotations
 
 import logging
 import os
 from pathlib import Path
-from typing import Literal
 
 import torch
 
-from .config import Config
+from .config import Config, resolve_model_type
 from .decorators import time_it
 
+logger = logging.getLogger(__name__)
 
-def _load_hf_token_to_env(config: Config) -> None:
-    """Load Huggingface token from config to environment variable."""
-    hf_token = config.optimization.get_huggingface_token()
-    if hf_token:
-        os.environ["HF_TOKEN"] = hf_token
+# ---------------------------------------------------------------------------
+# Device helpers
+# ---------------------------------------------------------------------------
 
 
 def _parse_device_string(device: str) -> str:
-    """Normalize a device string.
-    Accepts "cpu", "cuda" or "cuda:N" (N integer), case-insensitive.
-    Falls back to "cpu" if CUDA is not available.
+    """Normalize a device string to ``"cpu"`` or ``"cuda[:N]"``.
+
+    Falls back to ``"cpu"`` when CUDA is requested but unavailable.
     """
     dev = (device or "").strip().lower()
     if dev == "cpu":
         return "cpu"
     if dev.startswith("cuda"):
-        # allow "cuda" or "cuda:N"
         if not torch.cuda.is_available():
-            logging.warning(
+            logger.warning(
                 "CUDA device requested (%s) but CUDA is not available; falling back to 'cpu'.",
                 device,
             )
             return "cpu"
-        # torch will later validate indices; we just normalize spelling
         return dev
-    # unknown device string -> fallback and warn
-    logging.warning("Unknown device '%s'; falling back to 'cpu'.", device)
+    logger.warning("Unknown device '%s'; falling back to 'cpu'.", device)
     return "cpu"
 
 
-def _backend_device_for_fairchem(device: str) -> Literal["cuda", "cpu"]:
-    """Return a backend device string for Fairchem ("cuda" or "cpu" only).
-
-    Any "cuda" or "cuda:N" request becomes "cuda" (if CUDA is available),
-    everything else maps to "cpu". This keeps Fairchem's expectations intact
-    while still letting torch-sim use fully qualified CUDA devices.
-    """
-    normalized = _parse_device_string(device)
-    return "cuda" if normalized.startswith("cuda") else "cpu"
-
-
 def _device_for_torch(device: str) -> torch.device:
-    """Return a :class:`torch.device` for torch-sim based on config string.
+    """Convert a config device string to a :class:`torch.device`.
 
-    - "cpu" -> torch.device("cpu")
-    - "cuda" -> torch.device("cuda")
-    - "cuda:N" -> torch.device("cuda:N")
-    Any invalid or unavailable CUDA device falls back to CPU.
+    Any invalid or unavailable CUDA specification falls back to CPU.
     """
     normalized = _parse_device_string(device)
     if normalized == "cpu":
@@ -68,12 +69,27 @@ def _device_for_torch(device: str) -> torch.device:
     try:
         return torch.device(normalized)
     except Exception:
-        logging.warning("Invalid CUDA device '%s'; falling back to 'cpu'.", device)
+        logger.warning("Invalid CUDA device '%s'; falling back to 'cpu'.", device)
         return torch.device("cpu")
 
 
+# ---------------------------------------------------------------------------
+# Shared helpers
+# ---------------------------------------------------------------------------
+
+
+def _load_hf_token_to_env(config: Config) -> None:
+    """Set the ``HF_TOKEN`` environment variable from config if available."""
+    hf_token = config.optimization.get_huggingface_token()
+    if hf_token:
+        os.environ["HF_TOKEN"] = hf_token
+
+
 def _verify_model_name_and_cache_dir(config: Config) -> tuple[str, Path | None]:
-    """Verify that model name is provided and return model name and cache directory."""
+    """Return ``(model_name, cache_dir)`` after validating the config values.
+
+    Raises :class:`ValueError` if ``model_name`` is empty or missing.
+    """
     opt = config.optimization
     model_name = opt.model_name
     if not model_name:
@@ -83,102 +99,145 @@ def _verify_model_name_and_cache_dir(config: Config) -> tuple[str, Path | None]:
         try:
             os.makedirs(model_cache_dir, exist_ok=True)
         except OSError as e:
-            logging.warning(f"Could not create model cache directory at {model_cache_dir}: {e}")
+            logger.warning("Could not create model cache directory at %s: %s", model_cache_dir, e)
             model_cache_dir = None
-
-    if model_cache_dir is not None:
-        if not model_cache_dir.exists():
-            model_cache_dir = None
-
+    if model_cache_dir is not None and not model_cache_dir.exists():
+        model_cache_dir = None
     return model_name, model_cache_dir
 
 
 def _verify_model_path(config: Config) -> Path | None:
-    """Verify that model path is provided and return model name and cache directory."""
+    """Return the model checkpoint path if it exists, else ``None``."""
     opt = config.optimization
-    model_path = opt.model_path
-    if model_path:
-        model_path = Path(model_path)
-        if not model_path.exists():
-            return None
-        return model_path
+    if opt.model_path:
+        p = Path(opt.model_path)
+        return p if p.exists() else None
     return None
 
 
+# ---------------------------------------------------------------------------
+# Public API — two dispatcher functions
+# ---------------------------------------------------------------------------
+
+
 @time_it
-def load_model_fairchem(config: Config):
-    """Load a FAIRChemCalculator using fairchem's pretrained_mlip helper."""
+def load_calculator(config: Config):
+    """Load an ASE-compatible calculator for single-structure optimization.
+
+    Dispatches to the Fairchem or ORB-v3 backend based on
+    ``config.optimization.model_type``.
+
+    Parameters
+    ----------
+    config : Config
+        GPUMA configuration object.
+
+    Returns
+    -------
+    calculator
+        An ASE calculator (``FAIRChemCalculator`` or ``ORBCalculator``).
+
+    Raises
+    ------
+    ImportError
+        If the required backend package is not installed.
+    ValueError
+        If the model name is unknown or missing.
+    """
+    model_type = resolve_model_type(config)
+    if model_type == "orb":
+        return _load_orb_calculator(config)
+    return _load_fairchem_calculator(config)
+
+
+@time_it
+def load_torchsim_model(config: Config):
+    """Load a torch-sim model wrapper for GPU-accelerated batch optimization.
+
+    Dispatches to the Fairchem or ORB-v3 backend based on
+    ``config.optimization.model_type``.
+
+    Parameters
+    ----------
+    config : Config
+        GPUMA configuration object.
+
+    Returns
+    -------
+    model
+        A torch-sim model (``FairChemModel`` or ``OrbTorchSimModel``).
+
+    Raises
+    ------
+    ImportError
+        If the required backend package is not installed.
+    ValueError
+        If the model name is unknown or missing.
+    """
+    model_type = resolve_model_type(config)
+    if model_type == "orb":
+        return _load_orb_torchsim(config)
+    return _load_fairchem_torchsim(config)
+
+
+# ---------------------------------------------------------------------------
+# Fairchem backend
+# ---------------------------------------------------------------------------
+
+
+def _load_fairchem_calculator(config: Config):
+    """Load a ``FAIRChemCalculator`` from a pretrained UMA model."""
     from fairchem.core import FAIRChemCalculator, pretrained_mlip  # type: ignore
 
-    opt = config.optimization
     _load_hf_token_to_env(config)
-    # Fairchem only receives a backend device of "cuda" or "cpu"
-    backend_device = _backend_device_for_fairchem(str(opt.device))
+    device_str = _parse_device_string(str(config.optimization.device))
+    # Fairchem only accepts "cuda" or "cpu" (no index).
+    backend_device = "cuda" if device_str.startswith("cuda") else "cpu"
+
     model_path = _verify_model_path(config)
-
     if model_path:
-        predictor = pretrained_mlip.load_predict_unit(
-            path=model_path,
-            device=backend_device,
-        )
-        calculator = FAIRChemCalculator(predict_unit=predictor, task_name="omol")
-        return calculator
-    model_name, model_dir = _verify_model_name_and_cache_dir(config)
+        predictor = pretrained_mlip.load_predict_unit(path=model_path, device=backend_device)
+        return FAIRChemCalculator(predict_unit=predictor, task_name="omol")
 
-    if model_dir:
-        predictor = pretrained_mlip.get_predict_unit(
-            model_name,
-            device=backend_device,
-            cache_dir=str(model_dir),
-        )
-    else:
-        predictor = pretrained_mlip.get_predict_unit(
-            model_name,
-            device=backend_device,
-        )
-
-    calculator = FAIRChemCalculator(predict_unit=predictor, task_name="omol")
-    return calculator
+    model_name, model_cache_dir = _verify_model_name_and_cache_dir(config)
+    kwargs: dict = {"device": backend_device}
+    if model_cache_dir:
+        kwargs["cache_dir"] = str(model_cache_dir)
+    predictor = pretrained_mlip.get_predict_unit(model_name, **kwargs)
+    return FAIRChemCalculator(predict_unit=predictor, task_name="omol")
 
 
-@time_it
-def load_model_torchsim(config: Config):
-    """Load a torch-sim FairChemModel from name or checkpoint path."""
+def _load_fairchem_torchsim(config: Config):
+    """Load a ``FairChemModel`` for torch-sim batch optimization."""
     from torch_sim.models.fairchem import FairChemModel  # type: ignore
 
+    _load_hf_token_to_env(config)
     model_path = _verify_model_path(config)
     model_name, model_cache_dir = _verify_model_name_and_cache_dir(config)
     torch_device = _device_for_torch(str(config.optimization.device))
-    _load_hf_token_to_env(config)
 
     if model_path:
-        model = FairChemModel(model=model_path, task_name="omol", device=torch_device)
-        return model
-
-    model = FairChemModel(
+        return FairChemModel(model=model_path, task_name="omol", device=torch_device)
+    return FairChemModel(
         model=model_name,
         model_cache_dir=model_cache_dir,
         task_name="omol",
         device=torch_device,
     )
-    return model
 
 
-@time_it
-def load_model_orb(config: Config):
-    """Load an ORB-v3 ASE calculator.
+# ---------------------------------------------------------------------------
+# ORB-v3 backend
+# ---------------------------------------------------------------------------
 
-    Lazy-imports ``orb_models`` and builds an ``ORBCalculator`` from
-    a pretrained model specified by ``config.optimization.model_name``.
+
+def _load_orb_pretrained(config: Config):
+    """Load a pretrained ORB model and return ``(orbff, atoms_adapter)``.
+
+    If ``config.optimization.d3_correction`` is ``True``, the model is
+    wrapped with D3 dispersion correction via ``D3SumModel``.
     """
-    try:
-        from orb_models.forcefield import pretrained  # type: ignore
-        from orb_models.forcefield.calculator import ORBCalculator  # type: ignore
-    except ImportError as exc:
-        raise ImportError(
-            "orb-models is required for ORB model support. "
-            "Install it with: pip install gpuma[orb]"
-        ) from exc
+    from orb_models.forcefield import pretrained  # type: ignore
 
     model_name, _ = _verify_model_name_and_cache_dir(config)
     device = _parse_device_string(str(config.optimization.device))
@@ -187,36 +246,49 @@ def load_model_orb(config: Config):
     if loader is None:
         raise ValueError(
             f"Unknown ORB model name {model_name!r}. "
-            f"Check orb_models.forcefield.pretrained for available models."
+            "Check orb_models.forcefield.pretrained for available models."
         )
-    orbff = loader(device=device)
-    return ORBCalculator(orbff, device=device)
+    orbff, atoms_adapter = loader(device=device)
+
+    # Optionally wrap with D3 dispersion correction
+    use_d3 = getattr(config.optimization, "d3_correction", False)
+    if use_d3:
+        from orb_models.forcefield.inference.d3_model import (  # type: ignore
+            AlchemiDFTD3,
+            D3SumModel,
+        )
+
+        functional = str(getattr(config.optimization, "d3_functional", "PBE"))
+        damping = str(getattr(config.optimization, "d3_damping", "BJ"))
+        logger.info("Applying D3 dispersion correction (functional=%s, damping=%s)", functional, damping)
+        orbff = D3SumModel(orbff, AlchemiDFTD3(functional=functional, damping=damping))
+
+    return orbff, atoms_adapter, device
 
 
-@time_it
-def load_model_orb_torchsim(config: Config):
-    """Load an ORB-v3 torch-sim model wrapper.
-
-    Returns an ``OrbTorchSimModel`` suitable for use with
-    ``torch_sim.optimize()``.
-    """
+def _load_orb_calculator(config: Config):
+    """Load an ``ORBCalculator`` from a pretrained ORB-v3 model."""
     try:
-        from orb_models.forcefield import pretrained  # type: ignore
-        from orb_models.forcefield.calculator import OrbTorchSimModel  # type: ignore
+        from orb_models.forcefield.inference.calculator import ORBCalculator  # type: ignore
     except ImportError as exc:
         raise ImportError(
-            "orb-models is required for ORB model support. "
-            "Install it with: pip install gpuma[orb]"
+            "orb-models>=0.6.0 is required for ORB model support. "
+            "Install it with: pip install gpuma"
         ) from exc
 
-    model_name, _ = _verify_model_name_and_cache_dir(config)
-    torch_device = _device_for_torch(str(config.optimization.device))
+    orbff, atoms_adapter, device = _load_orb_pretrained(config)
+    return ORBCalculator(orbff, atoms_adapter=atoms_adapter, device=device)
 
-    loader = getattr(pretrained, model_name, None)
-    if loader is None:
-        raise ValueError(
-            f"Unknown ORB model name {model_name!r}. "
-            f"Check orb_models.forcefield.pretrained for available models."
-        )
-    orbff = loader(device=str(torch_device))
-    return OrbTorchSimModel(orbff, device=torch_device, dtype=torch.float32)
+
+def _load_orb_torchsim(config: Config):
+    """Load an ``OrbTorchSimModel`` for torch-sim batch optimization."""
+    try:
+        from orb_models.forcefield.inference.orb_torchsim import OrbTorchSimModel  # type: ignore
+    except ImportError as exc:
+        raise ImportError(
+            "orb-models>=0.6.0 is required for ORB model support. "
+            "Install it with: pip install gpuma"
+        ) from exc
+
+    orbff, atoms_adapter, _ = _load_orb_pretrained(config)
+    return OrbTorchSimModel(orbff, atoms_adapter)

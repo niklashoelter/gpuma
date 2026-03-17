@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Example: Single Structure Optimization with GPUMA.
 
-This example demonstrates how to optimize single molecular structures
-using different input methods (SMILES and XYZ files) via the GPUMA API.
+Demonstrates how to optimize single molecular structures using different
+input methods (SMILES and XYZ files) and model backends (Fairchem UMA
+and ORB-v3) via the GPUMA API.
 """
 
 import os
@@ -18,8 +19,8 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 
 def example_optimize_from_smiles():
-    """Example 1: Optimize a molecule from a SMILES string."""
-    print("=== Example 1: Single optimization from SMILES ===")
+    """Example 1: Optimize a molecule from a SMILES string (Fairchem UMA)."""
+    print("=== Example 1: Single optimization from SMILES (Fairchem UMA) ===")
 
     smiles = "C1=C[O+]=CC=C1CCCCCC"
     print(f"Optimizing {smiles} ...")
@@ -34,11 +35,12 @@ def example_optimize_from_smiles():
         config=cfg,
     )
 
-    print("✓ Optimization successful!")
+    print("  Optimization successful!")
     print(f"  Atoms: {structure.n_atoms}")
     print(f"  Final energy: {structure.energy:.6f} eV")
     print(f"  Output saved to: {output_file}")
 
+    # Alternative step-by-step approach
     print("\n--- Alternative step-by-step approach ---")
     struct2 = gpuma.smiles_to_xyz(smiles)
     struct2.comment = f"Optimized from SMILES: {smiles}"
@@ -47,7 +49,7 @@ def example_optimize_from_smiles():
     step_output = os.path.join(OUTPUT_DIR, "python_single_smiles_stepwise.xyz")
     gpuma.save_xyz_file(struct2, step_output)
 
-    print("✓ Step-by-step optimization successful!")
+    print("  Step-by-step optimization successful!")
     print(f"  Final energy: {struct2.energy:.6f} eV")
     print(f"  Output saved to: {step_output}")
 
@@ -56,12 +58,11 @@ def example_optimize_from_xyz():
     """Example 2: Optimize a molecule from an XYZ file."""
     print("\n=== Example 2: Single optimization from XYZ file ===")
 
-    input_file = "example_input_xyzs/multi_xyz_dir/input_1.xyz"
     input_file = "example_input_xyzs/butene_triplet.xyz"
     output_file = os.path.join(OUTPUT_DIR, "python_single_xyz_basic.xyz")
 
     if not os.path.exists(input_file):
-        print(f"✗ Input file {input_file} not found")
+        print(f"  Input file {input_file} not found")
         return
 
     cfg = load_config_from_file("config.json")
@@ -74,11 +75,12 @@ def example_optimize_from_xyz():
         config=cfg,
     )
 
-    print("✓ Optimization successful!")
+    print("  Optimization successful!")
     print(f"  Input: {input_file}")
     print(f"  Atoms: {structure.n_atoms}")
     print(f"  Final energy: {structure.energy:.6f} eV")
     print(f"  Output saved to: {output_file}")
+
 
 def example_optimize_from_smiles_orb():
     """Example 3: Optimize a molecule from SMILES using ORB-v3."""
@@ -87,6 +89,8 @@ def example_optimize_from_smiles_orb():
     smiles = "C1=C[O+]=CC=C1CCCCCC"
     print(f"Optimizing {smiles} with ORB-v3 ...")
 
+    # Load the ORB-specific config (sets model_type="orb",
+    # model_name="orb_v3_direct_omol")
     cfg = load_config_from_file("config_orb.json")
     cfg.optimization.multiplicity = 1
 
@@ -97,7 +101,7 @@ def example_optimize_from_smiles_orb():
         config=cfg,
     )
 
-    print("✓ ORB-v3 optimization successful!")
+    print("  ORB-v3 optimization successful!")
     print(f"  Atoms: {structure.n_atoms}")
     print(f"  Final energy: {structure.energy:.6f} eV")
     print(f"  Output saved to: {output_file}")

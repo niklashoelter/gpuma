@@ -21,7 +21,7 @@ Example (JSON, Fairchem UMA):
     "energy_convergence_criterion": null,
 
     "model_type": "fairchem",
-    "model_name": "uma-m-1p1",
+    "model_name": "uma-s-1p1",
     "model_path": null,
     "model_cache_dir": null,
     "device": "cuda",
@@ -39,8 +39,24 @@ Example (JSON, ORB-v3):
 {
   "optimization": {
     "model_type": "orb",
-    "model_name": "orb_v3",
-    "device": "cuda"
+    "model_name": "orb_v3_direct_omol",
+    "device": "cuda",
+    "d3_correction": false
+  }
+}
+```
+
+Example (JSON, ORB-v3 with D3 dispersion correction):
+
+```json
+{
+  "optimization": {
+    "model_type": "orb",
+    "model_name": "orb_v3_direct_omol",
+    "device": "cuda",
+    "d3_correction": true,
+    "d3_functional": "PBE",
+    "d3_damping": "BJ"
   }
 }
 ```
@@ -61,7 +77,7 @@ optimization:
   energy_convergence_criterion: null
 
   model_type: fairchem
-  model_name: uma-m-1p1
+  model_name: uma-s-1p1
   model_path: null
   model_cache_dir: null
   device: cuda
@@ -88,11 +104,15 @@ optimization:
   Not supported for single structure optimization.
 - `model_type`: model backend to use; one of `fairchem` (or `uma`) for Fairchem UMA
   models, or `orb` (or `orb-v3`) for ORB-v3 models (default: `fairchem`).
-  ORB-v3 requires the optional `orb-models` dependency (`pip install gpuma[orb]`).
-- `model_name`: model identifier. For Fairchem: e.g. `uma-m-1p1`. For ORB: a
-  pretrained model function name from `orb_models.forcefield.pretrained` (e.g. `orb_v3`).
-- `model_path`: local path to a Fairchem UMA model (overrides `model_name` if set;
-  not used for ORB models)
+  ORB-v3 uses the `orb-models` package (included in core dependencies).
+- `model_name`: model identifier.
+  - For **Fairchem**: e.g. `uma-s-1p1` (default). See
+    [fairchem-core](https://github.com/FAIR-Chem/fairchem) for available models.
+  - For **ORB-v3**: a pretrained model function name from
+    `orb_models.forcefield.pretrained`, e.g. `orb_v3_direct_omol` (recommended),
+    `orb_v3_conservative_inf_omat`, `orb_v3_direct_inf_omat`, etc.
+- `model_path`: local path to a Fairchem UMA model checkpoint (overrides `model_name`
+  if set; not used for ORB models)
 - `model_cache_dir`: directory to cache downloaded models (default: `~/.cache/fairchem`)
 - `device`: compute device string; one of `cpu` or `cuda`.
   Fairchem only distinguishes between CPU and CUDA; selection of specific
@@ -101,6 +121,12 @@ optimization:
 
 - `huggingface_token`: optional HF token for model access (if required)
 - `huggingface_token_file`: optional file path to read the HF token from
+- `d3_correction`: enable D3 dispersion correction for ORB models (default: `false`).
+  Wraps the model with `D3SumModel` from `orb-models`. Has no effect on Fairchem models.
+- `d3_functional`: DFT functional for D3 correction (default: `"PBE"`). Only used
+  when `d3_correction` is `true`.
+- `d3_damping`: damping scheme for D3 correction (default: `"BJ"`). Only used
+  when `d3_correction` is `true`.
 - `logging_level`: logging verbosity; e.g., `DEBUG`, `INFO`, `WARNING`
 
 See the `examples/` folder for:

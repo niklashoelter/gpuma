@@ -13,13 +13,17 @@
     "energy_convergence_criterion": null,
 
     "model_type": "orb",
-    "model_name": "orb_v3",
+    "model_name": "orb_v3_direct_omol",
     "model_path": null,
     "model_cache_dir": null,
     "device": "cuda",
 
     "huggingface_token": null,
     "huggingface_token_file": null,
+
+    "d3_correction": false,
+    "d3_functional": "PBE",
+    "d3_damping": "BJ",
 
     "logging_level": "INFO"
   }

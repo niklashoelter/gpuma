@@ -1,7 +1,14 @@
-"""Core geometry optimization module using Fairchem UMA and ORB-v3 models for GPUMA.
+"""Core geometry optimization module for GPUMA.
 
-This module contains optimization logic for single structures and batches of
-structures (e.g., conformer ensembles).
+Provides two public functions:
+
+- :func:`optimize_single_structure` — optimize a single :class:`Structure`
+  using ASE/BFGS with an ML calculator.
+- :func:`optimize_structure_batch` — optimize a list of structures, either
+  sequentially or via GPU-accelerated torch-sim batch optimization.
+
+Both Fairchem UMA and ORB-v3 backends are supported; the backend is selected
+automatically from the configuration.
 """
 
 from __future__ import annotations
@@ -15,59 +22,24 @@ from ase.optimize import BFGS
 
 from .config import Config, load_config_from_file, resolve_model_type
 from .decorators import time_it
-from .models import (
-    _device_for_torch,
-    _parse_device_string,
-    load_model_fairchem,
-    load_model_orb,
-    load_model_orb_torchsim,
-    load_model_torchsim,
-)
+from .models import _parse_device_string, load_calculator, load_torchsim_model
 from .structure import Structure
 
 if TYPE_CHECKING:
-    from fairchem.core import FAIRChemCalculator
+    pass
 
 logger = logging.getLogger(__name__)
 
-_CALCULATOR_CACHE: dict[tuple, Any] = {}
+# ---------------------------------------------------------------------------
+# Model caching
+# ---------------------------------------------------------------------------
 
 
-@functools.lru_cache(maxsize=2)
-def _load_calculator_impl(
-    model_type: str,
-    device: str,
-    model_name: str,
-    model_path: str | None,
-    model_cache_dir: str | None,
-    huggingface_token: str | None,
-    huggingface_token_file: str | None,
-) -> Any:
-    """Cached implementation of calculator loading."""
-    temp_config = Config(
-        {
-            "optimization": {
-                "model_type": model_type,
-                "device": device,
-                "model_name": model_name,
-                "model_path": model_path,
-                "model_cache_dir": model_cache_dir,
-                "huggingface_token": huggingface_token,
-                "huggingface_token_file": huggingface_token_file,
-            }
-        }
-    )
-    if model_type == "orb":
-        return load_model_orb(temp_config)
-    return load_model_fairchem(temp_config)
-
-
-def _get_cached_calculator(config: Config) -> Any:
-    """Retrieve or load a calculator based on configuration parameters."""
+def _cache_key(config: Config) -> tuple:
+    """Extract a hashable cache key from configuration parameters."""
     opt = config.optimization
-    model_type = resolve_model_type(config)
-    return _load_calculator_impl(
-        model_type,
+    return (
+        resolve_model_type(config),
         str(opt.device),
         str(opt.model_name),
         str(opt.model_path) if opt.model_path else None,
@@ -77,8 +49,26 @@ def _get_cached_calculator(config: Config) -> Any:
     )
 
 
+def _config_from_key(key: tuple) -> Config:
+    """Reconstruct a minimal :class:`Config` from a cache key tuple."""
+    model_type, device, model_name, model_path, cache_dir, hf_token, hf_token_file = key
+    return Config(
+        {
+            "optimization": {
+                "model_type": model_type,
+                "device": device,
+                "model_name": model_name,
+                "model_path": model_path,
+                "model_cache_dir": cache_dir,
+                "huggingface_token": hf_token,
+                "huggingface_token_file": hf_token_file,
+            }
+        }
+    )
+
+
 @functools.lru_cache(maxsize=2)
-def _load_model_torchsim_impl(
+def _load_calculator_cached(
     model_type: str,
     device: str,
     model_name: str,
@@ -86,38 +76,100 @@ def _load_model_torchsim_impl(
     model_cache_dir: str | None,
     hf_token: str | None,
     hf_token_file: str | None,
-):
-    """Load a torch-sim model with caching support."""
-    config_data = {
-        "optimization": {
-            "model_type": model_type,
-            "device": device,
-            "model_name": model_name,
-            "model_path": model_path,
-            "model_cache_dir": model_cache_dir,
-            "huggingface_token": hf_token,
-            "huggingface_token_file": hf_token_file,
-        }
-    }
-    cfg = Config(config_data)
-    if model_type == "orb":
-        return load_model_orb_torchsim(cfg)
-    return load_model_torchsim(cfg)
-
-
-def _get_cached_torchsim_model(config: Config):
-    """Retrieve or load a torch-sim model based on configuration parameters."""
-    opt = config.optimization
-    model_type = resolve_model_type(config)
-    return _load_model_torchsim_impl(
-        model_type,
-        str(opt.device),
-        str(opt.model_name),
-        str(opt.model_path) if opt.model_path else None,
-        str(opt.model_cache_dir) if opt.model_cache_dir else None,
-        str(opt.huggingface_token) if opt.huggingface_token else None,
-        str(opt.huggingface_token_file) if opt.huggingface_token_file else None,
+) -> Any:
+    """Cached calculator loading (hashable args required by lru_cache)."""
+    cfg = _config_from_key(
+        (model_type, device, model_name, model_path, model_cache_dir, hf_token, hf_token_file)
     )
+    return load_calculator(cfg)
+
+
+@functools.lru_cache(maxsize=2)
+def _load_torchsim_cached(
+    model_type: str,
+    device: str,
+    model_name: str,
+    model_path: str | None,
+    model_cache_dir: str | None,
+    hf_token: str | None,
+    hf_token_file: str | None,
+) -> Any:
+    """Cached torch-sim model loading (hashable args required by lru_cache)."""
+    cfg = _config_from_key(
+        (model_type, device, model_name, model_path, model_cache_dir, hf_token, hf_token_file)
+    )
+    return load_torchsim_model(cfg)
+
+
+def _get_cached_calculator(config: Config) -> Any:
+    """Return a cached ASE calculator for the given configuration."""
+    return _load_calculator_cached(*_cache_key(config))
+
+
+def _get_cached_torchsim_model(config: Config) -> Any:
+    """Return a cached torch-sim model for the given configuration."""
+    return _load_torchsim_cached(*_cache_key(config))
+
+
+# ---------------------------------------------------------------------------
+# Convergence helpers
+# ---------------------------------------------------------------------------
+
+
+def _resolve_force_criterion(config: Config) -> float:
+    """Determine the force convergence threshold for single-structure optimization.
+
+    Single-structure optimization only supports force convergence. If only an
+    energy criterion is set, a warning is logged and the default force threshold
+    (0.05 eV/A) is used.
+    """
+    force_crit = config.optimization.force_convergence_criterion
+    energy_crit = config.optimization.energy_convergence_criterion
+
+    if force_crit is not None and energy_crit is not None:
+        logger.warning(
+            "Both force and energy convergence criteria given. "
+            "For single structure optimization, the force criterion is used."
+        )
+        return float(force_crit)
+    if force_crit is not None:
+        return float(force_crit)
+    if energy_crit is not None:
+        logger.warning(
+            "Energy convergence criterion requested but only force convergence "
+            "is supported for single structure optimization. "
+            "Falling back to default force criterion (0.05)."
+        )
+    return 0.05
+
+
+def _resolve_batch_convergence(config: Config):
+    """Build a torch-sim convergence function for batch optimization.
+
+    Supports both force and energy convergence criteria. When both are
+    set, force takes precedence.
+    """
+    import torch_sim
+
+    force_crit = config.optimization.force_convergence_criterion
+    energy_crit = config.optimization.energy_convergence_criterion
+
+    if force_crit is not None and energy_crit is not None:
+        logger.warning(
+            "Both force and energy convergence criteria given. "
+            "Using force convergence criterion for batch optimization."
+        )
+        return torch_sim.generate_force_convergence_fn(force_tol=force_crit)
+    if force_crit is not None:
+        return torch_sim.generate_force_convergence_fn(force_tol=force_crit)
+    if energy_crit is not None:
+        return torch_sim.generate_energy_convergence_fn(energy_tol=energy_crit)
+    return torch_sim.generate_force_convergence_fn(force_tol=0.05)
+
+
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
 
 
 @time_it
@@ -126,67 +178,55 @@ def optimize_single_structure(
     config: Config | None = None,
     calculator: Any | None = None,
 ) -> Structure:
-    """Optimize a single :class:`Structure` using a Fairchem UMA or ORB-v3 model.
+    """Optimize a single :class:`Structure` using ASE/BFGS.
 
-    The same :class:`Structure` instance is returned with optimized coordinates
-    and energy set.
+    The same ``structure`` instance is returned with updated coordinates and
+    energy.
+
+    Parameters
+    ----------
+    structure : Structure
+        Molecular structure to optimize.
+    config : Config, optional
+        Configuration controlling the model and convergence settings.
+        Defaults to :func:`load_config_from_file` if not provided.
+    calculator : optional
+        Pre-loaded ASE calculator. If ``None``, one is loaded (and cached)
+        from the configuration.
+
+    Returns
+    -------
+    Structure
+        The input structure with optimized coordinates and energy set.
+
+    Raises
+    ------
+    RuntimeError
+        If the optimization fails for any reason.
     """
     if config is None:
         config = load_config_from_file()
-
-    symbols = structure.symbols
-    coordinates = structure.coordinates
-    charge = structure.charge
-    multiplicity = structure.multiplicity
 
     try:
         if calculator is None:
             calculator = _get_cached_calculator(config)
 
-        atoms = Atoms(symbols=symbols, positions=coordinates)
+        atoms = Atoms(symbols=structure.symbols, positions=structure.coordinates)
         atoms.calc = calculator
-        atoms.info = {"charge": charge, "spin": multiplicity}
+        atoms.info = {"charge": structure.charge, "spin": structure.multiplicity}
 
-        # Resolve convergence criteria
-        # Single structure optimization only supports force convergence.
-        # If both are given, use force (and warn).
-        # If only energy is given, fallback to force (and warn).
-        force_crit = config.optimization.force_convergence_criterion
-        energy_crit = config.optimization.energy_convergence_criterion
-
-        if force_crit is not None and energy_crit is not None:
-            logger.warning(
-                "Both force and energy convergence criteria given. "
-                "For single structure optimization, the force criterion should be used."
-            )
-            # Use force_crit as is
-        elif force_crit is None and energy_crit is not None:
-            logger.warning(
-                "Energy convergence criterion requested but only force convergence "
-                "criterion can be used for single structure optimization. "
-                "Falling back to default force criterion (0.05)."
-            )
-            force_crit = 0.05
-        elif force_crit is None:
-            # Should not happen with defaults, but safe fallback
-            force_crit = 0.05
+        fmax = _resolve_force_criterion(config)
 
         logger.info(
             "Starting single geometry optimization for structure with %d atoms",
-            len(symbols),
+            structure.n_atoms,
         )
         optimizer = BFGS(atoms, logfile=None)
-        optimizer.run(fmax=force_crit)
-        logger.info(
-            "Optimization completed after %d steps",
-            optimizer.get_number_of_steps(),
-        )
+        optimizer.run(fmax=fmax)
+        logger.info("Optimization completed after %d steps", optimizer.get_number_of_steps())
 
-        optimized_coords = atoms.get_positions().tolist()
-        potential_energy = atoms.get_potential_energy()
-
-        structure.coordinates = optimized_coords
-        structure.energy = float(potential_energy)
+        structure.coordinates = atoms.get_positions().tolist()
+        structure.energy = float(atoms.get_potential_energy())
         return structure
 
     except Exception as exc:  # pragma: no cover - defensive logging
@@ -197,19 +237,36 @@ def optimize_structure_batch(
     structures: list[Structure],
     config: Config | None = None,
 ) -> list[Structure]:
-    """Optimize a list of structures and return optimized structures with energies.
+    """Optimize a list of structures and return them with updated coordinates.
 
-    The behavior is controlled by
+    The optimization mode is controlled by
     ``config.optimization.batch_optimization_mode``:
 
-    - ``"sequential"``: Optimize each structure with ASE/BFGS and a shared
-      calculator.
-    - ``"batch"``: Use torch-sim batch optimization with a FairChem model
-      wrapper (requires GPU).
+    - ``"sequential"``: Each structure is optimized individually with
+      ASE/BFGS using a shared calculator.
+    - ``"batch"``: All structures are optimized together using torch-sim
+      GPU-accelerated batch optimization (requires GPU).
+
+    Parameters
+    ----------
+    structures : list[Structure]
+        Structures to optimize.
+    config : Config, optional
+        Configuration object. Defaults to :func:`load_config_from_file`.
+
+    Returns
+    -------
+    list[Structure]
+        Optimized structures with coordinates and energies set.
+
+    Raises
+    ------
+    ValueError
+        If structures have mismatched symbols/coordinates or are empty,
+        or if the optimization mode is unknown.
     """
     if config is None:
         config = load_config_from_file()
-
     if not structures:
         return []
 
@@ -219,98 +276,90 @@ def optimize_structure_batch(
         if struct.n_atoms == 0:
             raise ValueError(f"Structure {i}: empty structure")
 
-    force_cpu = _parse_device_string(config.optimization.device) == "cpu"
-
-    logger.info("Optimization device: %s", "CPU" if force_cpu else "GPU")
+    on_cpu = _parse_device_string(config.optimization.device) == "cpu"
     mode = str(config.optimization.batch_optimization_mode).lower()
-    if mode == "sequential" or force_cpu:
-        if not force_cpu and mode == "batch":
+
+    logger.info("Optimization device: %s", "CPU" if on_cpu else "GPU")
+
+    if mode == "sequential" or on_cpu:
+        if not on_cpu and mode == "batch":
             logger.warning(
                 "Batch optimization mode requires GPU, falling back to sequential mode on CPU.",
             )
-        return _optimize_batch_sequential(structures, config)
-    if mode == "batch" and not force_cpu:
-        return _optimize_batch_structures(structures, config)
+        return _optimize_sequential(structures, config)
+
+    if mode == "batch":
+        return _optimize_batch(structures, config)
+
     raise ValueError(
-        "Unknown optimization mode: {mode} on {device}. Use 'sequential' or "
-        "'batch', where batch is only supported on GPU."
+        f"Unknown optimization mode: {mode!r}. Use 'sequential' or 'batch' "
+        "(batch requires GPU)."
     )
 
 
+# ---------------------------------------------------------------------------
+# Internal optimization implementations
+# ---------------------------------------------------------------------------
+
+
 @time_it
-def _optimize_batch_sequential(
+def _optimize_sequential(
     structures: list[Structure],
     config: Config,
 ) -> list[Structure]:
-    """Optimize structures sequentially using single-structure optimization."""
+    """Optimize structures one-by-one using ASE/BFGS with a shared calculator."""
     calculator = _get_cached_calculator(config)
 
-    optimized_results: list[Structure] = []
     logger.info("Starting sequential optimization of %d structures", len(structures))
-
+    results: list[Structure] = []
     for i, struct in enumerate(structures):
         try:
             optimized = optimize_single_structure(struct, config, calculator)
-            optimized_results.append(optimized)
+            results.append(optimized)
         except Exception as exc:  # pragma: no cover - defensive logging
             logger.warning("Structure %d optimization failed: %s", i + 1, exc)
             continue
 
     logger.info(
         "Sequential optimization completed. %d/%d successful",
-        len(optimized_results),
+        len(results),
         len(structures),
     )
-    return optimized_results
+    return results
 
 
 @time_it
-def _optimize_batch_structures(
+def _optimize_batch(
     structures: list[Structure],
     config: Config,
 ) -> list[Structure]:
-    """Optimize structures in batches using Fairchem's batch prediction."""
+    """Optimize structures in parallel using torch-sim batch inference."""
     import torch
     import torch_sim
     from torch_sim.autobatching import InFlightAutoBatcher
+
+    from .models import _device_for_torch
 
     logger.info("Starting batch optimization of %d structures", len(structures))
 
     device = _device_for_torch(config.optimization.device)
     model = _get_cached_torchsim_model(config)
 
-    optimizer_name = getattr(config.optimization, "batch_optimizer", "fire") or "fire"
-    optimizer_name = str(optimizer_name).strip().lower()
-    if optimizer_name == "fire":
-        optimizer = torch_sim.Optimizer.fire
-    else:
-        optimizer = torch_sim.Optimizer.gradient_descent
+    # Select optimizer
+    optimizer_name = str(getattr(config.optimization, "batch_optimizer", "fire") or "fire")
+    optimizer_name = optimizer_name.strip().lower()
+    optimizer = torch_sim.Optimizer.fire if optimizer_name == "fire" else torch_sim.Optimizer.gradient_descent
 
-    # Resolve convergence criteria
-    force_crit = config.optimization.force_convergence_criterion
-    energy_crit = config.optimization.energy_convergence_criterion
+    convergence_fn = _resolve_batch_convergence(config)
 
-    if force_crit is not None and energy_crit is not None:
-        logger.warning(
-            "Both force and energy convergence criteria given. "
-            "Using force convergence criterion."
-        )
-        convergence_fn = torch_sim.generate_force_convergence_fn(force_tol=force_crit)
-    elif force_crit is not None:
-        convergence_fn = torch_sim.generate_force_convergence_fn(force_tol=force_crit)
-    elif energy_crit is not None:
-        convergence_fn = torch_sim.generate_energy_convergence_fn(energy_tol=energy_crit)
-    else:
-        # Fallback to default force criterion if neither is set (unlikely with defaults)
-        convergence_fn = torch_sim.generate_force_convergence_fn(force_tol=0.05)
-
+    # Convert structures to ASE Atoms and then to torch-sim state
     ase_structures = [
         Atoms(
-            symbols=struct.symbols,
-            positions=struct.coordinates,
-            info={"charge": struct.charge, "spin": struct.multiplicity},
+            symbols=s.symbols,
+            positions=s.coordinates,
+            info={"charge": s.charge, "spin": s.multiplicity},
         )
-        for struct in structures
+        for s in structures
     ]
 
     batched_state = torch_sim.io.atoms_to_state(
@@ -335,6 +384,7 @@ def _optimize_batch_structures(
         steps_between_swaps=5,
     )
 
+    # Extract results
     final_atoms = final_state.to_atoms()
     results: list[Structure] = []
     for i, atoms in enumerate(final_atoms):

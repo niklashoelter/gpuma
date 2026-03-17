@@ -1,5 +1,4 @@
 import logging
-from unittest.mock import patch
 
 from gpuma.logging_utils import configure_logging
 

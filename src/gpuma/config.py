@@ -45,6 +45,10 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "device": default_device,
         "huggingface_token": None,
         "huggingface_token_file": None,
+        # D3 dispersion correction (ORB models only)
+        "d3_correction": False,
+        "d3_functional": "PBE",
+        "d3_damping": "BJ",
         # Logging level control: one of "ERROR", "WARNING", "INFO", "DEBUG"
         "logging_level": "INFO",
     }

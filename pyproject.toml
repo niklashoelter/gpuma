@@ -1,7 +1,7 @@
 [project]
 name = "gpuma"
-version = "0.5.1"
-description = "GPUMA - Geometry optimization toolkit using Fairchem UMA models and Torch-Sim"
+version = "0.6.0"
+description = "GPUMA - Geometry optimization toolkit using Fairchem UMA and ORB-v3 models with Torch-Sim"
 readme = "README.md"
 requires-python = "==3.12.*"
 license = "MIT"
@@ -19,20 +19,19 @@ classifiers = [
 
 dependencies = [
   "ase==3.27.0",
-  "torch-sim-atomistic==0.5.1",
-  "fairchem-core>=2.7,<2.10",
-  "morfeus-ml>=0.7",
-  "rdkit>=2022.9.5",
-  "tables>=3.10.2",
-  "scipy<1.15.0",
-  "hf_xet",
+  "torch-sim-atomistic==0.5.2",
+  "fairchem-core==2.18.0",
+  "morfeus-ml==0.8.0",
+  "rdkit==2025.9.3",
+  "tables==3.10.2",
+  "scipy==1.17.1",
+  "hf_xet==1.2.0",
+  "pyyaml==6.0.3",
+  "orb-models==0.6.1",
+  "nvalchemi-toolkit-ops==0.2.0"
 ]
 
-
-
 [project.optional-dependencies]
-yaml = ["pyyaml>=6.0"]
-orb = ["orb-models"]
 dev = [
     "pytest>=9.0.0",
     "build>=1.2.1",
@@ -61,6 +60,15 @@ package-dir = {"" = "src"}
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["gpuma*"]
+
+[tool.uv]
+[[tool.uv.index]]
+name = "pytorch-cu126"
+url = "https://download.pytorch.org/whl/cu126"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu126" }
 
 [tool.ruff]
 line-length = 100

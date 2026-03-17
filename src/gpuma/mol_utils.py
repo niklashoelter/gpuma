@@ -65,7 +65,7 @@ def smiles_to_conformer_ensemble(
     smiles:
         Valid SMILES string representing the molecular structure.
     max_num_confs:
-        Maximum number of conformers to return (default: ``10``).
+        Maximum number of conformers to return (default: ``5``).
 
     Returns
     -------

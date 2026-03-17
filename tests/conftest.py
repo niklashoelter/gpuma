@@ -1,5 +1,6 @@
 import sys
-from unittest.mock import MagicMock, patch, Mock
+from unittest.mock import MagicMock, patch
+
 import numpy as np
 import pytest
 
@@ -191,21 +192,18 @@ except ImportError:
 try:
     import orb_models
 except ImportError:
-    orb_ff = _mock_module("orb_models.forcefield")
-    orb_pretrained = _mock_module("orb_models.forcefield.pretrained")
-    orb_calculator = _mock_module("orb_models.forcefield.calculator")
+    _mock_module("orb_models.forcefield")
+    _mock_module("orb_models.forcefield.pretrained")
+    _mock_module("orb_models.forcefield.inference")
+    orb_calculator = _mock_module("orb_models.forcefield.inference.calculator")
     orb_calculator.ORBCalculator = MagicMock()
-    orb_calculator.OrbTorchSimModel = MagicMock()
-
-# Ensure we don't spec mocks in a way that causes issues
-# The error "Cannot spec a Mock object" usually comes from autospec=True
-# We are not using it, but maybe pytest or something else is.
-# We will ensure our mocks are simple.
+    orb_torchsim = _mock_module("orb_models.forcefield.inference.orb_torchsim")
+    orb_torchsim.OrbTorchSimModel = MagicMock()
 
 # --- End Mocking ---
 
 from gpuma.structure import Structure
-from gpuma.config import Config
+
 
 @pytest.fixture
 def mock_hf_token(monkeypatch):
@@ -260,12 +258,10 @@ def mock_load_models(request):
     if "real_model" in request.keywords:
         return
 
-    with patch("gpuma.optimizer.load_model_fairchem") as mock_load_fc, \
-         patch("gpuma.optimizer._get_cached_calculator") as mock_get_cached_fc, \
-         patch("gpuma.optimizer.load_model_torchsim") as mock_load_ts, \
-         patch("gpuma.optimizer._get_cached_torchsim_model") as mock_get_cached_ts, \
-         patch("gpuma.optimizer.load_model_orb") as mock_load_orb, \
-         patch("gpuma.optimizer.load_model_orb_torchsim") as mock_load_orb_ts:
+    with patch("gpuma.optimizer.load_calculator") as mock_load_calc, \
+         patch("gpuma.optimizer._get_cached_calculator") as mock_get_cached_calc, \
+         patch("gpuma.optimizer.load_torchsim_model") as mock_load_ts, \
+         patch("gpuma.optimizer._get_cached_torchsim_model") as mock_get_cached_ts:
 
         mock_calc = MagicMock()
         mock_calc.results = {}
@@ -294,15 +290,13 @@ def mock_load_models(request):
         mock_calc.get_potential_energy.side_effect = get_potential_energy
         mock_calc.get_forces.side_effect = get_forces
 
-        mock_load_fc.return_value = mock_calc
-        mock_get_cached_fc.return_value = mock_calc
-        mock_load_orb.return_value = mock_calc
+        mock_load_calc.return_value = mock_calc
+        mock_get_cached_calc.return_value = mock_calc
 
         # Setup TorchSim model mock
         mock_ts_model = MagicMock()
-        mock_ts_model.model_name = "mock-uma"
+        mock_ts_model.model_name = "mock-model"
         mock_load_ts.return_value = mock_ts_model
         mock_get_cached_ts.return_value = mock_ts_model
-        mock_load_orb_ts.return_value = mock_ts_model
 
         yield

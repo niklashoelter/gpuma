@@ -3,7 +3,7 @@
 The CLI is provided via the command `gpuma`. For best results, create a
 config file (JSON or YAML) and reference it in all CLI calls.
 
-**Important:** For the optimatzion of very large ensembles or high-throughput workflows, using
+**Important:** For the optimization of very large ensembles or high-throughput workflows, using
 the batch optimization mode is recommended (set in the config file, see below).
 In this case, make sure to use a multi-XYZ input file or a directory of XYZ files
 and only start one GPUMA process to leverage maximum efficient GPU parallelization
@@ -48,6 +48,19 @@ gpuma config --validate examples/config.json
 # Verbose vs. quiet (set in config file)
 gpuma optimize --smiles "CCO" --output examples/example_output/ethanol_verbose.xyz --config examples/config.json
 gpuma ensemble --smiles "CCO" --conformers 3 --output examples/example_output/ethanol_ensemble_verbose.xyz --config examples/config.json
+```
+
+### Using ORB-v3 models
+
+To use ORB-v3 instead of Fairchem UMA, either set `"model_type": "orb"` in
+your config file (see `examples/config_orb.json`) or override from the CLI:
+
+```bash
+# Single optimization with ORB-v3
+gpuma --model-type orb optimize --smiles "CCO" --output output.xyz --config examples/config_orb.json
+
+# Ensemble with ORB-v3
+gpuma ensemble --smiles "CCO" --conformers 10 --output ensemble.xyz --config examples/config_orb.json
 ```
 
 **Note:**

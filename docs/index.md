@@ -6,15 +6,20 @@
 
 ---
 
-GPUMA is a minimalist Python toolkit for facile and rapid high-throughput molecular geometry optimization 
-based on the [UMA/OMol25 machine-learning interatomic potential](https://arxiv.org/abs/2505.08762).  
+GPUMA is a minimalist Python toolkit for facile and rapid high-throughput molecular geometry optimization
+based on machine-learning interatomic potentials (MLIPs).
+
+Two model backends are supported out of the box:
+
+- **Fairchem UMA** ([UMA/OMol25](https://arxiv.org/abs/2505.08762)) — the default backend.
+- **ORB-v3** ([orbital-materials/orb-models](https://github.com/orbital-materials/orb-models)) — included in core dependencies, with optional D3 dispersion correction.
 
 GPUMA is especially designed for batch optimizations of many structures (conformer ensembles, datasets) on GPU,
 ensuring efficient parallelization and maximum GPU utilization by leveraging the [torch-sim library](https://arxiv.org/abs/2508.06628).
-It wraps Fairchem UMA models and torch-sim functionality to provide both a simple command-line 
+It wraps model backends and torch-sim functionality to provide both a simple command-line
 interface (CLI) and a small but expressive Python API for single- and multi-structure optimizations.
 
-If conformer sampling is desired, GPUMA can generate conformer ensembles on the fly from SMILES strings 
+If conformer sampling is desired, GPUMA can generate conformer ensembles on the fly from SMILES strings
 using the [morfeus library](https://digital-chemistry-laboratory.github.io/morfeus/). Alternative input formats
 are described in the CLI section below.
 
@@ -22,12 +27,12 @@ Feedback and improvements are always welcome!
 
 ## Installation
 
-> ⚠️ **Required for UMA models:**</br>
+> **Required for UMA models:**</br>
 > To access the UMA models on Hugging Face, **you must provide a token** either via the `HUGGINGFACE_TOKEN` environment variable or via the config (direct token string or path to a file containing the token).
 
 ### Option 1: Install from PyPI (recommended)
 
-This installs `gpuma` together with its core dependencies. 
+This installs `gpuma` together with its core dependencies.
 At the moment, installation and tests have only been
 validated under Python 3.12; using other Python versions is currently
 considered experimental.
@@ -53,6 +58,12 @@ considered experimental.
   pip install gpuma
   ```
 
+### ORB-v3 support
+
+ORB-v3 models are included in the standard installation. To use them,
+set `"model_type": "orb"` and `"model_name": "orb_v3_direct_omol"` in your
+configuration file (see [Configuration](config.md) and `examples/config_orb.json`).
+
 
 ### Option 2: Install from source
 
@@ -77,7 +88,7 @@ Also check the examples folder in the repository for sample config files and usa
 ## CLI Usage
 
 The CLI is provided via the command `gpuma`. For best results, create a
-config file (JSON or YAML) and reference it in all CLI calls. 
+config file (JSON or YAML) and reference it in all CLI calls.
 
 Refer to the documentation for details on configuration options and CLI usage.
 
@@ -89,12 +100,14 @@ Please refer to the documentation for detailed usage examples and API reference.
 
 ## Known limitations
 
-When a run is started from SMILES, an RDKit force field (via the morfeus library) is used to generate an initial structure. Spin is not taken into account during this step, so the initial estimated geometries can be incorrect. When the UMA/Omol25 models are applied subsequently, the structure can sometimes be optimized to a maximum rather than a minimum because the model is not provided with Hessian matrices. This behavior only affects runs originating from SMILES; it does not occur with better starting geometries (e.g., when starting from XYZ files).
+When a run is started from SMILES, an RDKit force field (via the morfeus library) is used to generate an initial structure. Spin is not taken into account during this step, so the initial estimated geometries can be incorrect. When the MLIP models are applied subsequently, the structure can sometimes be optimized to a maximum rather than a minimum because the model is not provided with Hessian matrices. This behavior only affects runs originating from SMILES; it does not occur with better starting geometries (e.g., when starting from XYZ files).
 
 ## Troubleshooting
 - Missing libraries: install optional dependencies like `pyyaml` if you use YAML configs.
-- Fairchem/UMA: ensure network access for model downloads and optionally set or provide 
+- Fairchem/UMA: ensure network access for model downloads and optionally set or provide
 `huggingface_token` (e.g., via a token file) to access the UMA model family.
+- ORB-v3: set `"model_type": "orb"` in config. Enable D3 dispersion correction
+  with `"d3_correction": true` (see [Configuration](config.md)).
 
 ## License
 MIT License (see LICENSE)

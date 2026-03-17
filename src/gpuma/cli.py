@@ -1,8 +1,8 @@
 """Command Line Interface for GPUMA.
 
 This module provides a command-line interface for molecular geometry
-optimization using Fairchem UMA models. The CLI supports three main
-optimization modes:
+optimization using Fairchem UMA or ORB-v3 models.  The CLI supports
+three main optimization modes:
 
 1. Single Structure Optimization: Optimize individual molecular structures.
 2. Ensemble Optimization (SMILES): Optimize multiple conformers generated
@@ -10,8 +10,8 @@ optimization modes:
 3. Batch Optimization (Files): Optimize multiple structures from multi-XYZ
    files or directories.
 
-The interface is intentionally similar to the original one but branded and
-implemented purely for GPUMA.
+The model backend is selected via ``--model-type`` or the ``model_type``
+configuration key (``"fairchem"``/``"uma"`` or ``"orb"``/``"orb-v3"``).
 """
 
 import argparse
