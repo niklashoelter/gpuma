@@ -11,6 +11,8 @@ Example (JSON, Fairchem UMA):
   "optimization": {
     "batch_optimization_mode": "batch",
     "batch_optimizer": "fire",
+    "max_memory_padding": 0.95,
+    "steps_between_swaps": 5,
     "max_num_conformers": 20,
     "conformer_seed": 42,
 
@@ -67,6 +69,8 @@ Example (YAML):
 optimization:
   batch_optimization_mode: batch
   batch_optimizer: fire
+  max_memory_padding: 0.95
+  steps_between_swaps: 5
   max_num_conformers: 20
   conformer_seed: 42
 
@@ -92,6 +96,13 @@ optimization:
   - `sequential`: ASE/BFGS per conformer with a shared calculator
   - `batch`: torch-sim batch optimization (accelerated for larger ensembles)
 - `batch_optimizer`: optimizer for batch mode; `fire` (default) or `gradient_descent`
+- `max_memory_padding`: fraction of estimated GPU memory to use for batch optimization
+  (default: `0.95`). Lower values leave more headroom and reduce the risk of OOM errors
+  at the cost of smaller batch sizes. Useful to tune when running large models on shared
+  GPUs or when the FIRE optimizer requires significant additional memory.
+- `steps_between_swaps`: number of optimization steps between batch swaps in the
+  autobatcher (default: `5`). Lower values swap batches more frequently, which can
+  improve GPU utilization for workloads with heterogeneous structure sizes.
 - `max_num_conformers`: max number of conformers to generate from SMILES (if applicable)
 - `conformer_seed`: random seed for conformer generation (if applicable)
 - `charge`: total charge of the system (for SMILES this is inferred from the

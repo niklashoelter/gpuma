@@ -369,10 +369,17 @@ def _optimize_batch(
         dtype=torch.float64,
     )
 
+    max_memory_padding = float(
+        getattr(config.optimization, "max_memory_padding", 0.95)
+    )
+    steps_between_swaps = int(
+        getattr(config.optimization, "steps_between_swaps", 5)
+    )
+
     batcher = InFlightAutoBatcher(
         model,
         memory_scales_with="n_atoms",
-        max_memory_padding=0.95,
+        max_memory_padding=max_memory_padding,
         max_atoms_to_try=min(batched_state.n_atoms, 500_000),
     )
 
@@ -382,7 +389,7 @@ def _optimize_batch(
         optimizer=optimizer,
         convergence_fn=convergence_fn,
         autobatcher=batcher,
-        steps_between_swaps=5,
+        steps_between_swaps=steps_between_swaps,
     )
 
     # Extract results

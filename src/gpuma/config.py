@@ -27,6 +27,8 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "optimization": {
         "batch_optimization_mode": "batch",
         "batch_optimizer": "fire",
+        "max_memory_padding": 0.95,
+        "steps_between_swaps": 5,
         "max_num_conformers": 20,
         "conformer_seed": 42,
         # Default electronic structure settings
