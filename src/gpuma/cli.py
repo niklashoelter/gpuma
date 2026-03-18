@@ -360,8 +360,7 @@ def cmd_optimize(args, config: Config) -> None:
     """Handle the single-structure optimization command.
 
     This command optimizes a single molecular structure from either a SMILES
-    string or an XYZ file. The optimization uses the configured Fairchem UMA
-    model.
+    string or an XYZ file using the configured model backend.
     """
     try:
         if args.smiles:

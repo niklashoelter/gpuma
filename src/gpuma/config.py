@@ -290,34 +290,6 @@ def save_config_to_file(config: Any, filepath: str) -> None:
     _read_config_file.cache_clear()
 
 
-def get_huggingface_token(config: Config | dict[str, Any]) -> str | None:
-    """Return the HuggingFace token from config or a file, if available.
-
-    Works with either :class:`Config` or a plain dict. Checks
-    ``optimization.huggingface_token`` first, then
-    ``optimization.huggingface_token_file``.
-    """
-    if isinstance(config, Config):
-        return config.optimization.get_huggingface_token()
-
-    opt = (config or {}).get("optimization", {})
-    token = opt.get("huggingface_token")
-    if token:
-        return str(token)
-
-    token_file = opt.get("huggingface_token_file")
-    if not token_file:
-        return None
-
-    try:
-        with open(str(token_file), encoding="utf-8") as fh:
-            content = fh.read().strip()
-        return content or None
-    except OSError as e:
-        logger.warning("Could not read HuggingFace token from %s: %s", token_file, e)
-        return None
-
-
 def validate_config(config: Config) -> None:
     """Validate core optimization settings in a Config instance.
 

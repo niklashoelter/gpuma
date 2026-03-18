@@ -88,6 +88,9 @@ configuration file (see [Configuration](config.md) and `examples/config_orb.json
 git clone https://github.com/niklashoelter/gpuma.git
 cd gpuma
 
+# install PyTorch with CUDA support (pick your CUDA version at https://pytorch.org)
+pip install torch --index-url https://download.pytorch.org/whl/cu124
+
 # install using (uv) pip
 uv pip install .
 # or, without uv:

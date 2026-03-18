@@ -9,8 +9,6 @@ ensembles of conformers.
 
 from __future__ import annotations
 
-from typing import cast
-
 from .config import Config, load_config_from_file
 from .io_handler import (
     file_exists,
@@ -163,6 +161,7 @@ def optimize_ensemble_smiles(
 
     return results
 
+
 def optimize_batch_multi_xyz_file(
     input_file: str,
     output_file: str | None = None,
@@ -200,15 +199,7 @@ def optimize_batch_multi_xyz_file(
     eff_charge = int(getattr(config.optimization, "charge", 0))
     eff_mult = int(getattr(config.optimization, "multiplicity", 1))
 
-    structures = cast(
-        list[Structure],
-        read_multi_xyz(input_file, charge=eff_charge, multiplicity=eff_mult),
-    )
-    if not isinstance(structures, list) or (
-        len(structures) and not isinstance(structures[0], Structure)
-    ):
-        raise ValueError("read_multi_xyz did not return a list of Structure")
-
+    structures = read_multi_xyz(input_file, charge=eff_charge, multiplicity=eff_mult)
     results = optimize_structure_batch(structures, config)
 
     if output_file:
@@ -219,6 +210,7 @@ def optimize_batch_multi_xyz_file(
 
     return results
 
+
 def optimize_batch_xyz_directory(
     input_directory: str,
     output_file: str,
@@ -228,7 +220,7 @@ def optimize_batch_xyz_directory(
 
     This function reads multiple molecular structures from XYZ files in the specified input
     directory, optimizes each structure using the provided optimization pipeline,
-    and writes the optimized structures to XYZ files in the specified output directory.
+    and writes the optimized structures to a multi-structure XYZ output file.
 
     Args:
         input_directory (str): Path to an input directory containing XYZ files.
@@ -251,15 +243,11 @@ def optimize_batch_xyz_directory(
     eff_charge = int(getattr(config.optimization, "charge", 0))
     eff_mult = int(getattr(config.optimization, "multiplicity", 1))
 
-    structures = cast(
-        list[Structure],
-        read_xyz_directory(
-            input_directory,
-            charge=eff_charge,
-            multiplicity=eff_mult,
-        ),
+    structures = read_xyz_directory(
+        input_directory,
+        charge=eff_charge,
+        multiplicity=eff_mult,
     )
-
     results = optimize_structure_batch(structures, config)
 
     if output_file:
@@ -270,6 +258,7 @@ def optimize_batch_xyz_directory(
         save_multi_xyz(results, output_file, comments)
 
     return results
+
 
 __all__ = [
     "optimize_single_smiles",

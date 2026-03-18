@@ -52,7 +52,7 @@ def example_batch_from_multi_xyz():
     """Example 2: Batch optimize structures from a multi-structure XYZ file."""
     print("\n=== Example 2: Batch optimization from multi-XYZ file ===")
 
-    input_file = "example_input_xyzs/secondary-amines_multifile.xyz"
+    input_file = "example_input_xyzs/butene_triplet_multi.xyz"
     output_file = os.path.join(OUTPUT_DIR, "python_batch_from_multi_xyz_optimized.xyz")
 
     config = load_config_from_file("config.json")
@@ -126,13 +126,56 @@ def example_ensemble_from_smiles_orb():
     print(f"  Output saved to: {output_file}")
 
 
+def example_batch_from_multi_xyz_orb():
+    """Example 6: Batch optimize structures from a multi-XYZ file (ORB-v3)."""
+    print("\n=== Example 6: Batch optimization from multi-XYZ file (ORB-v3) ===")
+
+    input_file = "example_input_xyzs/butene_triplet_multi.xyz"
+    output_file = os.path.join(OUTPUT_DIR, "python_batch_from_multi_xyz_orb.xyz")
+
+    config = load_config_from_file("config_orb.json")
+    config.optimization.multiplicity = 3
+    results = gpuma.optimize_batch_multi_xyz_file(
+        input_file=input_file,
+        output_file=output_file,
+        config=config,
+    )
+
+    print("  ORB-v3 batch optimization from multi-XYZ successful!")
+    print(f"  Successfully optimized: {len(results)}")
+    for i, s in enumerate(results):
+        print(f"  Structure {i + 1}: {s.energy:.6f} eV")
+    print(f"  Output saved to: {output_file}")
+
+
+def example_batch_from_xyz_directory_orb():
+    """Example 7: Batch optimize structures from a directory of XYZ files (ORB-v3)."""
+    print("\n=== Example 7: Batch optimization from XYZ directory (ORB-v3) ===")
+
+    input_dir = "example_input_xyzs/multi_xyz_dir"
+    output_file = os.path.join(OUTPUT_DIR, "python_batch_from_directory_orb.xyz")
+
+    config = load_config_from_file("config_orb.json")
+    results = gpuma.optimize_batch_xyz_directory(
+        input_directory=input_dir,
+        output_file=output_file,
+        config=config,
+    )
+
+    print("  ORB-v3 batch optimization from directory successful!")
+    print(f"  Successfully optimized: {len(results)}")
+    for i, s in enumerate(results):
+        print(f"  Structure {i + 1}: {s.energy:.6f} eV")
+    print(f"  Output saved to: {output_file}")
+
+
 def example_ensemble_from_smiles_orb_sequential():
-    """Example 5: Conformer ensemble optimization (ORB-v3, sequential mode).
+    """Example 8: Conformer ensemble optimization (ORB-v3, sequential mode).
 
     Falls back to ASE/BFGS per-structure optimization.  Useful when no GPU
     is available or for small ensembles.
     """
-    print("\n=== Example 5: Ensemble optimization from SMILES (ORB-v3, sequential) ===")
+    print("\n=== Example 8: Ensemble optimization from SMILES (ORB-v3, sequential) ===")
 
     smiles = "CCC(CC)CCOOC(CC)CCOC"
     config = load_config_from_file("config_orb.json")
@@ -163,6 +206,8 @@ if __name__ == "__main__":
     example_batch_from_multi_xyz()
     example_batch_from_xyz_directory()
     example_ensemble_from_smiles_orb()
+    example_batch_from_multi_xyz_orb()
+    example_batch_from_xyz_directory_orb()
     example_ensemble_from_smiles_orb_sequential()
 
     print("\n" + "=" * 70)

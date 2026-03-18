@@ -120,13 +120,13 @@ config file (JSON or YAML) and reference it in all CLI calls (see [examples/conf
 Optimize all XYZ files in a directory (each file containing a single structure):
 
 ```bash
-gpuma optimize --config examples/config.json --xyz-dir examples/example_input_xyzs/multi_xyz_dir/
+gpuma batch --xyz-dir examples/example_input_xyzs/multi_xyz_dir/ --output output.xyz --config examples/config.json
 ```
 
 Optimize multiple structures contained in a single multi-XYZ file:
 
 ```bash
-gpuma optimize --config examples/config.json --xyz examples/example_input_xyzs/multi_xyz_file.xyz
+gpuma batch --multi-xyz examples/example_input_xyzs/multi_xyz_file.xyz --output output.xyz --config examples/config.json
 ```
 
 Refer to the [CLI documentation](docs/cli.md) for details on configuration options, supported input formats (SMILES, XYZ, directories, multi-XYZ files), and additional CLI examples.

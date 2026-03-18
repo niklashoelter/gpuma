@@ -377,6 +377,7 @@ def save_multi_xyz(
         fh.write("\n".join(lines))
         fh.write("\n")
 
+
 def file_exists(file_path: str) -> bool:
     """Check if a file exists at the given path.
 

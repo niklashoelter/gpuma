@@ -1,3 +1,5 @@
+"""Data container for molecular structures in GPUMA."""
+
 from dataclasses import dataclass, field
 from typing import Any
 

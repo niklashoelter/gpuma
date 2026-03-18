@@ -5,7 +5,6 @@ import yaml
 
 from gpuma.config import (
     Config,
-    get_huggingface_token,
     load_config_from_file,
     resolve_model_type,
     save_config_to_file,
@@ -105,7 +104,6 @@ def test_huggingface_token(tmp_path, monkeypatch):
     # Case 1: Token in config
     cfg = Config({"optimization": {"huggingface_token": "token_in_config"}})
     assert cfg.optimization.get_huggingface_token() == "token_in_config"
-    assert get_huggingface_token(cfg) == "token_in_config"
 
     # Case 2: Token in file
     token_file = tmp_path / "token.txt"
