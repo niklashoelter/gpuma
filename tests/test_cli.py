@@ -116,7 +116,7 @@ def test_cli_config_create(tmp_path):
         assert output.exists()
         # Verify new default model name
         data = json.loads(output.read_text())
-        assert data["optimization"]["model_name"] == "uma-s-1p1"
+        assert data["model"]["model_name"] == "uma-s-1p1"
 
 
 def test_cli_config_validate(tmp_path):

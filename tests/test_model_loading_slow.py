@@ -72,11 +72,11 @@ def test_load_fairchem_calculator(model_name: str):
         pytest.skip("HF_TOKEN not set — required for Fairchem model download")
 
     config = Config({
-        "optimization": {
+        "model": {
             "model_type": "fairchem",
             "model_name": model_name,
-            "device": DEVICE,
-        }
+        },
+        "technical": {"device": DEVICE},
     })
 
     calc = load_calculator(config)
@@ -103,11 +103,11 @@ def test_load_fairchem_torchsim(model_name: str):
         pytest.skip("HF_TOKEN not set — required for Fairchem model download")
 
     config = Config({
-        "optimization": {
+        "model": {
             "model_type": "fairchem",
             "model_name": model_name,
-            "device": DEVICE,
-        }
+        },
+        "technical": {"device": DEVICE},
     })
 
     model = load_torchsim_model(config)
@@ -123,11 +123,11 @@ def test_load_fairchem_torchsim(model_name: str):
 def test_load_orb_calculator(model_name: str):
     """Load an ORB calculator and run a single-point energy evaluation."""
     config = Config({
-        "optimization": {
+        "model": {
             "model_type": "orb",
             "model_name": model_name,
-            "device": DEVICE,
-        }
+        },
+        "technical": {"device": DEVICE},
     })
 
     calc = load_calculator(config)
@@ -151,11 +151,11 @@ def test_load_orb_calculator(model_name: str):
 def test_load_orb_torchsim(model_name: str):
     """Load an ORB torch-sim model and verify it is not None."""
     config = Config({
-        "optimization": {
+        "model": {
             "model_type": "orb",
             "model_name": model_name,
-            "device": DEVICE,
-        }
+        },
+        "technical": {"device": DEVICE},
     })
 
     model = load_torchsim_model(config)
@@ -171,14 +171,14 @@ def test_load_orb_torchsim(model_name: str):
 def test_load_orb_calculator_with_d3(model_name: str):
     """Load an ORB calculator with D3 correction and verify energy output."""
     config = Config({
-        "optimization": {
+        "model": {
             "model_type": "orb",
             "model_name": model_name,
-            "device": DEVICE,
             "d3_correction": True,
             "d3_functional": "PBE",
             "d3_damping": "BJ",
-        }
+        },
+        "technical": {"device": DEVICE},
     })
 
     calc = load_calculator(config)
@@ -235,11 +235,11 @@ def test_orb_calculator_on_cuda3():
     """ORB calculator on cuda:3 runs inference on the correct GPU."""
     _skip_if_gpu_missing(TARGET_GPU)
     config = Config({
-        "optimization": {
+        "model": {
             "model_type": "orb",
             "model_name": "orb_v3_direct_omol",
-            "device": f"cuda:{TARGET_GPU}",
-        }
+        },
+        "technical": {"device": f"cuda:{TARGET_GPU}"},
     })
     calc = load_calculator(config)
     assert calc is not None
@@ -256,11 +256,11 @@ def test_orb_torchsim_on_cuda3():
     """ORB torch-sim model is placed on cuda:3."""
     _skip_if_gpu_missing(TARGET_GPU)
     config = Config({
-        "optimization": {
+        "model": {
             "model_type": "orb",
             "model_name": "orb_v3_direct_omol",
-            "device": f"cuda:{TARGET_GPU}",
-        }
+        },
+        "technical": {"device": f"cuda:{TARGET_GPU}"},
     })
     model = load_torchsim_model(config)
     assert model is not None
@@ -276,11 +276,11 @@ def test_fairchem_calculator_on_cuda3():
     if not _has_hf_token():
         pytest.skip("HF_TOKEN not set")
     config = Config({
-        "optimization": {
+        "model": {
             "model_type": "fairchem",
             "model_name": "uma-s-1p1",
-            "device": f"cuda:{TARGET_GPU}",
-        }
+        },
+        "technical": {"device": f"cuda:{TARGET_GPU}"},
     })
     calc = load_calculator(config)
     assert calc is not None
@@ -302,11 +302,11 @@ def test_fairchem_torchsim_on_cuda3():
     if not _has_hf_token():
         pytest.skip("HF_TOKEN not set")
     config = Config({
-        "optimization": {
+        "model": {
             "model_type": "fairchem",
             "model_name": "uma-s-1p1",
-            "device": f"cuda:{TARGET_GPU}",
-        }
+        },
+        "technical": {"device": f"cuda:{TARGET_GPU}"},
     })
     model = load_torchsim_model(config)
     assert model is not None
@@ -323,11 +323,11 @@ def test_invalid_gpu_index_fallback_orb(caplog):
     num_gpus = torch.cuda.device_count()
     bad_index = num_gpus + 5  # guaranteed to not exist
     config = Config({
-        "optimization": {
+        "model": {
             "model_type": "orb",
             "model_name": "orb_v3_direct_omol",
-            "device": f"cuda:{bad_index}",
-        }
+        },
+        "technical": {"device": f"cuda:{bad_index}"},
     })
     calc = load_calculator(config)
     assert calc is not None
@@ -348,11 +348,11 @@ def test_invalid_gpu_index_fallback_fairchem(caplog):
     num_gpus = torch.cuda.device_count()
     bad_index = num_gpus + 5
     config = Config({
-        "optimization": {
+        "model": {
             "model_type": "fairchem",
             "model_name": "uma-s-1p1",
-            "device": f"cuda:{bad_index}",
-        }
+        },
+        "technical": {"device": f"cuda:{bad_index}"},
     })
     calc = load_calculator(config)
     assert calc is not None

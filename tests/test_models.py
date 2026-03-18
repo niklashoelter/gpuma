@@ -157,11 +157,11 @@ def test_config_with_cuda3_orb(mock_hf_token):
     with patch("torch.cuda.is_available", return_value=True), \
          patch("torch.cuda.device_count", return_value=4):
         config = Config({
-            "optimization": {
+            "model": {
                 "model_type": "orb",
                 "model_name": "orb_v3_direct_omol",
-                "device": "cuda:3",
-            }
+            },
+            "technical": {"device": "cuda:3"},
         })
         with patch("gpuma.models._load_orb_calculator") as mock_orb:
             mock_orb.return_value = MagicMock()
@@ -175,11 +175,11 @@ def test_config_with_cuda3_fairchem(mock_hf_token):
          patch("torch.cuda.device_count", return_value=4), \
          patch("torch.cuda.set_device"):
         config = Config({
-            "optimization": {
+            "model": {
                 "model_type": "fairchem",
                 "model_name": "uma-s-1p1",
-                "device": "cuda:3",
-            }
+            },
+            "technical": {"device": "cuda:3"},
         })
         with patch("gpuma.models._load_fairchem_calculator") as mock_fc:
             mock_fc.return_value = MagicMock()
@@ -193,7 +193,7 @@ def test_config_with_cuda3_fairchem(mock_hf_token):
 
 
 def test_load_calculator_fairchem(mock_hf_token):
-    config = Config({"optimization": {"model_type": "fairchem", "model_name": "uma-s-1p1"}})
+    config = Config({"model": {"model_type": "fairchem", "model_name": "uma-s-1p1"}})
 
     try:
         import fairchem.core as _  # noqa: F401
@@ -217,7 +217,7 @@ def test_load_calculator_fairchem_from_path(mock_hf_token, tmp_path):
     model_file = tmp_path / "model.pt"
     model_file.touch()
 
-    config = Config({"optimization": {"model_path": str(model_file)}})
+    config = Config({"model": {"model_path": str(model_file)}})
 
     try:
         import fairchem.core as _  # noqa: F401
@@ -237,7 +237,7 @@ def test_load_calculator_fairchem_from_path(mock_hf_token, tmp_path):
 
 
 def test_load_torchsim_model_fairchem(mock_hf_token):
-    config = Config({"optimization": {"model_type": "fairchem", "model_name": "uma-s-1p1"}})
+    config = Config({"model": {"model_type": "fairchem", "model_name": "uma-s-1p1"}})
 
     try:
         import torch_sim.models.fairchem as _  # noqa: F401
@@ -257,7 +257,7 @@ def test_load_torchsim_model_fairchem_from_path(mock_hf_token, tmp_path):
     model_file = tmp_path / "model.pt"
     model_file.touch()
 
-    config = Config({"optimization": {"model_path": str(model_file)}})
+    config = Config({"model": {"model_path": str(model_file)}})
 
     try:
         import torch_sim.models.fairchem as _  # noqa: F401
@@ -280,7 +280,7 @@ def test_load_torchsim_model_fairchem_from_path(mock_hf_token, tmp_path):
 
 def test_load_calculator_orb():
     config = Config({
-        "optimization": {
+        "model": {
             "model_type": "orb",
             "model_name": "orb_v3_direct_omol",
         }
@@ -307,7 +307,7 @@ def test_load_calculator_orb():
 def test_load_calculator_orb_invalid_name():
     """Invalid model name should raise ValueError."""
     config = Config({
-        "optimization": {
+        "model": {
             "model_type": "orb",
             "model_name": "nonexistent_model",
         }
@@ -324,7 +324,7 @@ def test_load_calculator_orb_invalid_name():
 def test_load_calculator_orb_d3():
     """D3 correction config should be forwarded to _load_orb_pretrained."""
     config = Config({
-        "optimization": {
+        "model": {
             "model_type": "orb",
             "model_name": "orb_v3_direct_omol",
             "d3_correction": True,
@@ -341,7 +341,7 @@ def test_load_calculator_orb_d3():
 
 def test_load_torchsim_model_orb():
     config = Config({
-        "optimization": {
+        "model": {
             "model_type": "orb",
             "model_name": "orb_v3_direct_omol",
         }
@@ -356,7 +356,7 @@ def test_load_torchsim_model_orb():
 
 def test_load_torchsim_model_orb_missing_package():
     config = Config({
-        "optimization": {
+        "model": {
             "model_type": "orb",
             "model_name": "orb_v3_direct_omol",
         }
@@ -376,7 +376,7 @@ def test_load_torchsim_model_orb_missing_package():
 
 def test_model_cache_creation_failure(mock_hf_token, caplog):
     config = Config({
-        "optimization": {
+        "model": {
             "model_cache_dir": "/invalid/path/cache",
             "model_name": "uma-s-1p1",
         }
@@ -400,7 +400,7 @@ def test_model_cache_creation_failure(mock_hf_token, caplog):
 
 def test_model_path_not_exists(mock_hf_token):
     config = Config({
-        "optimization": {
+        "model": {
             "model_path": "/non/existent/path",
             "model_name": "fallback",
         }
@@ -422,7 +422,7 @@ def test_model_path_not_exists(mock_hf_token):
 
 
 def test_missing_model_name(mock_hf_token):
-    config = Config({"optimization": {"model_name": ""}})
+    config = Config({"model": {"model_name": ""}})
 
     with pytest.raises(ValueError, match="Model name must be specified"):
         load_calculator(config)
@@ -430,7 +430,7 @@ def test_missing_model_name(mock_hf_token):
 
 def test_hf_token_set_from_config(monkeypatch):
     token = "my_token"
-    config = Config({"optimization": {"huggingface_token": token, "model_name": "test"}})
+    config = Config({"model": {"huggingface_token": token, "model_name": "test"}})
 
     monkeypatch.delenv("HF_TOKEN", raising=False)
 
@@ -446,7 +446,7 @@ def test_hf_token_set_from_config(monkeypatch):
 
 def test_load_calculator_dispatches_fairchem(mock_hf_token):
     """Verify load_calculator calls the Fairchem backend for model_type='fairchem'."""
-    config = Config({"optimization": {"model_type": "fairchem", "model_name": "uma-s-1p1"}})
+    config = Config({"model": {"model_type": "fairchem", "model_name": "uma-s-1p1"}})
 
     with patch("gpuma.models._load_fairchem_calculator") as mock_fc:
         mock_fc.return_value = MagicMock()
@@ -456,7 +456,7 @@ def test_load_calculator_dispatches_fairchem(mock_hf_token):
 
 def test_load_calculator_dispatches_orb(mock_hf_token):
     """Verify load_calculator calls the ORB backend for model_type='orb'."""
-    config = Config({"optimization": {"model_type": "orb", "model_name": "orb_v3_direct_omol"}})
+    config = Config({"model": {"model_type": "orb", "model_name": "orb_v3_direct_omol"}})
 
     with patch("gpuma.models._load_orb_calculator") as mock_orb:
         mock_orb.return_value = MagicMock()
@@ -466,7 +466,7 @@ def test_load_calculator_dispatches_orb(mock_hf_token):
 
 def test_load_torchsim_dispatches_fairchem(mock_hf_token):
     """Verify load_torchsim_model calls the Fairchem backend."""
-    config = Config({"optimization": {"model_type": "uma", "model_name": "uma-s-1p1"}})
+    config = Config({"model": {"model_type": "uma", "model_name": "uma-s-1p1"}})
 
     with patch("gpuma.models._load_fairchem_torchsim") as mock_fc:
         mock_fc.return_value = MagicMock()
@@ -477,7 +477,7 @@ def test_load_torchsim_dispatches_fairchem(mock_hf_token):
 def test_load_torchsim_dispatches_orb(mock_hf_token):
     """Verify load_torchsim_model calls the ORB backend."""
     config = Config({
-        "optimization": {"model_type": "orb-v3", "model_name": "orb_v3_direct_omol"}
+        "model": {"model_type": "orb-v3", "model_name": "orb_v3_direct_omol"}
     })
 
     with patch("gpuma.models._load_orb_torchsim") as mock_orb:

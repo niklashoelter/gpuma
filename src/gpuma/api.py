@@ -143,7 +143,7 @@ def optimize_ensemble_smiles(
     if config is None:
         config = load_config_from_file()
     multiplicity = int(getattr(config.optimization, "multiplicity", 1))
-    num_conformers = int(getattr(config.optimization, "max_num_conformers", 10))
+    num_conformers = int(getattr(config.conformer_generation, "max_num_conformers", 20))
     conformers = smiles_to_ensemble(smiles, num_conformers, multiplicity)
     if not isinstance(conformers, list) or (
         len(conformers) and not isinstance(conformers[0], Structure)

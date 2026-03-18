@@ -29,7 +29,7 @@ def example_ensemble_from_smiles():
 
     smiles = "CCC(CC)CCOOC(CC)CCOC"
     config = default_config
-    config.optimization.max_num_conformers = 50
+    config.conformer_generation.max_num_conformers = 50
     config.optimization.force_convergence_criterion = 5e-1
     print(f"Generating conformers for {smiles} and optimizing...")
 
@@ -106,7 +106,7 @@ def example_ensemble_from_smiles_orb():
 
     smiles = "CCC(CC)CCOOC(CC)CCOC"
     config = load_config_from_file("config_orb.json")
-    config.optimization.max_num_conformers = 50
+    config.conformer_generation.max_num_conformers = 50
     config.optimization.force_convergence_criterion = 5e-1
     # batch mode is the default in config_orb.json
     print(f"Generating conformers for {smiles} and optimizing with ORB-v3 (batch)...")
@@ -179,7 +179,7 @@ def example_ensemble_from_smiles_orb_sequential():
 
     smiles = "CCC(CC)CCOOC(CC)CCOC"
     config = load_config_from_file("config_orb.json")
-    config.optimization.max_num_conformers = 10
+    config.conformer_generation.max_num_conformers = 10
     config.optimization.batch_optimization_mode = "sequential"
     print(f"Generating conformers for {smiles} and optimizing with ORB-v3 (sequential)...")
 

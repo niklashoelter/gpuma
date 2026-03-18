@@ -96,6 +96,12 @@ gpuma batch --xyz-dir examples/example_input_xyzs/multi_xyz_dir/ --output batch_
   `Atoms.info = {"charge": charge, "spin": multiplicity}` and are written to
   the XYZ comments as `Charge: ... | Multiplicity: ...`.
 
+The config file is organized into four sections: `optimization` (batch
+settings, convergence, charge/multiplicity), `model` (backend, name,
+tokens, D3), `conformer_generation` (conformer count, seed), and
+`technical` (device, memory padding, logging).
+See [Configuration](config.md) for details.
+
 You can control the compute device globally in the config or from the CLI with `--device` (which overrides the config).
 Accepted values are `cpu`, `cuda` (default GPU), or `cuda:N` to select a specific GPU (e.g. `cuda:0`, `cuda:1`).
 If the requested GPU index does not exist, GPUMA falls back to `cuda:0` with a warning.

@@ -34,15 +34,16 @@ logger = logging.getLogger(__name__)
 
 def _cache_key(config: Config) -> tuple:
     """Extract a hashable cache key from configuration parameters."""
-    opt = config.optimization
+    mdl = config.model
+    tech = config.technical
     return (
         resolve_model_type(config),
-        str(opt.device),
-        str(opt.model_name),
-        str(opt.model_path) if opt.model_path else None,
-        str(opt.model_cache_dir) if opt.model_cache_dir else None,
-        str(opt.huggingface_token) if opt.huggingface_token else None,
-        str(opt.huggingface_token_file) if opt.huggingface_token_file else None,
+        str(tech.device),
+        str(mdl.model_name),
+        str(mdl.model_path) if mdl.model_path else None,
+        str(mdl.model_cache_dir) if mdl.model_cache_dir else None,
+        str(mdl.huggingface_token) if mdl.huggingface_token else None,
+        str(mdl.huggingface_token_file) if mdl.huggingface_token_file else None,
     )
 
 
@@ -51,15 +52,17 @@ def _config_from_key(key: tuple) -> Config:
     model_type, device, model_name, model_path, cache_dir, hf_token, hf_token_file = key
     return Config(
         {
-            "optimization": {
+            "model": {
                 "model_type": model_type,
-                "device": device,
                 "model_name": model_name,
                 "model_path": model_path,
                 "model_cache_dir": cache_dir,
                 "huggingface_token": hf_token,
                 "huggingface_token_file": hf_token_file,
-            }
+            },
+            "technical": {
+                "device": device,
+            },
         }
     )
 
@@ -273,7 +276,7 @@ def optimize_structure_batch(
         if struct.n_atoms == 0:
             raise ValueError(f"Structure {i}: empty structure")
 
-    on_cpu = _parse_device_string(config.optimization.device) == "cpu"
+    on_cpu = _parse_device_string(config.technical.device) == "cpu"
     mode = str(config.optimization.batch_optimization_mode).lower()
 
     logger.info("Optimization device: %s", "CPU" if on_cpu else "GPU")
@@ -339,7 +342,7 @@ def _optimize_batch(
 
     logger.info("Starting batch optimization of %d structures", len(structures))
 
-    device = _device_for_torch(config.optimization.device)
+    device = _device_for_torch(config.technical.device)
     model = _get_cached_torchsim_model(config)
 
     # Select optimizer
@@ -370,10 +373,10 @@ def _optimize_batch(
     )
 
     max_memory_padding = float(
-        getattr(config.optimization, "max_memory_padding", 0.95)
+        getattr(config.technical, "max_memory_padding", 0.95)
     )
     steps_between_swaps = int(
-        getattr(config.optimization, "steps_between_swaps", 5)
+        getattr(config.optimization, "steps_between_swaps", 3)
     )
 
     batcher = InFlightAutoBatcher(

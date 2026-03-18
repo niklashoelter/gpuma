@@ -21,7 +21,7 @@ def test_optimize_single_smiles(tmp_path):
 def test_optimize_single_smiles_orb(tmp_path):
     """Single SMILES optimization with ORB backend."""
     output_file = tmp_path / "out.xyz"
-    cfg = Config({"optimization": {"model_type": "orb", "model_name": "orb_v3_direct_omol"}})
+    cfg = Config({"model": {"model_type": "orb", "model_name": "orb_v3_direct_omol"}})
     res = optimize_single_smiles("C", output_file=str(output_file), config=cfg)
 
     assert isinstance(res, Structure)
@@ -58,11 +58,13 @@ def test_optimize_ensemble_smiles_orb(tmp_path):
     """Ensemble optimization with ORB backend (sequential)."""
     output_file = tmp_path / "ensemble_orb.xyz"
     cfg = Config({
-        "optimization": {
+        "model": {
             "model_type": "orb",
             "model_name": "orb_v3_direct_omol",
+        },
+        "optimization": {
             "batch_optimization_mode": "sequential",
-        }
+        },
     })
 
     results = optimize_ensemble_smiles("C", output_file=str(output_file), config=cfg)

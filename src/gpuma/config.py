@@ -27,33 +27,33 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "optimization": {
         "batch_optimization_mode": "batch",
         "batch_optimizer": "fire",
-        "max_memory_padding": 0.95,
-        "steps_between_swaps": 5,
-        "max_num_conformers": 20,
-        "conformer_seed": 42,
-        # Default electronic structure settings
-        # Charge and multiplicity can be overridden via CLI for XYZ inputs
-        # and via config or CLI for SMILES multiplicities.
         "charge": 0,
         "multiplicity": 1,
-        # Convergence criteria
         "force_convergence_criterion": 5e-2,
         "energy_convergence_criterion": None,
+        "steps_between_swaps": 3,
+    },
+    "model": {
         "model_type": "fairchem",
         "model_name": "uma-s-1p1",
         "model_path": None,
-        # Optional local model cache directory; can be overridden by user config
         "model_cache_dir": None,
-        "device": default_device,
         "huggingface_token": None,
         "huggingface_token_file": None,
         # D3 dispersion correction (ORB models only)
         "d3_correction": False,
         "d3_functional": "PBE",
         "d3_damping": "BJ",
-        # Logging level control: one of "ERROR", "WARNING", "INFO", "DEBUG"
+    },
+    "conformer_generation": {
+        "max_num_conformers": 20,
+        "conformer_seed": 42,
+    },
+    "technical": {
+        "device": default_device,
+        "max_memory_padding": 0.95,
         "logging_level": "INFO",
-    }
+    },
 }
 
 
@@ -91,10 +91,10 @@ def resolve_model_type(config: Config | dict[str, Any]) -> str:
     Works with either :class:`Config` or a plain dict.
     """
     if isinstance(config, Config):
-        raw = str(getattr(config.optimization, "model_type", "fairchem")).strip().lower()
+        raw = str(getattr(config.model, "model_type", "fairchem")).strip().lower()
     else:
         raw = str(
-            (config or {}).get("optimization", {}).get("model_type", "fairchem")
+            (config or {}).get("model", {}).get("model_type", "fairchem")
         ).strip().lower()
     canonical = _MODEL_TYPE_ALIASES.get(raw)
     if canonical is None:
@@ -185,8 +185,8 @@ class Config:
     Example:
     -------
     >>> cfg = load_config_from_file()
-    >>> print(cfg.optimization.logging_level)
-    >>> cfg.optimization.device = "cuda"
+    >>> print(cfg.technical.logging_level)
+    >>> cfg.technical.device = "cuda"
     >>> save_config_to_file(cfg, "config.json")
 
     """
@@ -209,6 +209,21 @@ class Config:
     def optimization(self) -> _Section:
         """Return the optimization section of the configuration."""
         return _Section(self._data, ["optimization"])
+
+    @property
+    def model(self) -> _Section:
+        """Return the model section of the configuration."""
+        return _Section(self._data, ["model"])
+
+    @property
+    def conformer_generation(self) -> _Section:
+        """Return the conformer generation section of the configuration."""
+        return _Section(self._data, ["conformer_generation"])
+
+    @property
+    def technical(self) -> _Section:
+        """Return the technical section of the configuration."""
+        return _Section(self._data, ["technical"])
 
     def to_dict(self) -> dict[str, Any]:
         """Return a deep copy of the underlying configuration dictionary."""
@@ -293,15 +308,19 @@ def save_config_to_file(config: Any, filepath: str) -> None:
 
 
 def validate_config(config: Config) -> None:
-    """Validate core optimization settings in a Config instance.
+    """Validate core configuration settings in a Config instance.
 
-    Checks basic types and value ranges for commonly used options.
+    Checks basic types and value ranges for commonly used options across
+    the ``optimization``, ``model``, ``conformer_generation``, and
+    ``technical`` sections.
     Raises ValueError if an invalid value is found.
     """
     opt = config.optimization
+    mdl = config.model
+    tech = config.technical
 
     # Model type must be a known value
-    raw_model_type = str(getattr(opt, "model_type", "fairchem")).strip().lower()
+    raw_model_type = str(getattr(mdl, "model_type", "fairchem")).strip().lower()
     if raw_model_type not in VALID_MODEL_TYPES:
         raise ValueError(
             f"Unknown model_type {raw_model_type!r}. Must be one of: {sorted(VALID_MODEL_TYPES)}"
@@ -346,7 +365,7 @@ def validate_config(config: Config) -> None:
             ) from exc
 
     # Device must be cpu, cuda or cuda:N
-    dev = str(getattr(opt, "device", default_device) or "").strip().lower()
+    dev = str(getattr(tech, "device", default_device) or "").strip().lower()
     if not dev:
         raise ValueError("Device string in config cannot be empty")
     if dev != "cpu" and not dev.startswith("cuda"):

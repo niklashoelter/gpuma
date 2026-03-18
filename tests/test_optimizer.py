@@ -35,7 +35,10 @@ def test_optimize_batch_gpu_fallback(sample_structure):
     # if mode == "sequential" or force_cpu: ...
 
     # Let's mock device to be cpu
-    config = Config({"optimization": {"batch_optimization_mode": "batch", "device": "cpu"}})
+    config = Config({
+        "optimization": {"batch_optimization_mode": "batch"},
+        "technical": {"device": "cpu"},
+    })
 
     # Should fallback to sequential
     with patch("gpuma.optimizer._optimize_sequential") as mock_seq:
@@ -44,7 +47,10 @@ def test_optimize_batch_gpu_fallback(sample_structure):
 
 def test_optimize_batch_call(sample_structure):
     # Test that batch mode calls _optimize_batch when device is cuda
-    config = Config({"optimization": {"batch_optimization_mode": "batch", "device": "cuda"}})
+    config = Config({
+        "optimization": {"batch_optimization_mode": "batch"},
+        "technical": {"device": "cuda"},
+    })
 
     with patch("gpuma.optimizer._parse_device_string", return_value="cuda"), \
          patch("gpuma.optimizer._optimize_batch") as mock_batch:
@@ -54,7 +60,10 @@ def test_optimize_batch_call(sample_structure):
 
 def test_optimize_batch_implementation(sample_structure):
     # Test the actual implementation of _optimize_batch with mocked torchsim
-    config = Config({"optimization": {"batch_optimization_mode": "batch", "device": "cuda"}})
+    config = Config({
+        "optimization": {"batch_optimization_mode": "batch"},
+        "technical": {"device": "cuda"},
+    })
 
     with patch("gpuma.optimizer._parse_device_string", return_value="cuda"), \
          patch("torch.cuda.is_available", return_value=True):
@@ -120,17 +129,16 @@ def test_optimize_single_structure_convergence_warnings(sample_structure, caplog
 
 def test_optimize_single_structure_orb(sample_structure):
     """ORB model_type should work the same as fairchem for single structure."""
-    config = Config({"optimization": {"model_type": "orb", "model_name": "orb_v3_direct_omol"}})
+    config = Config({"model": {"model_type": "orb", "model_name": "orb_v3_direct_omol"}})
     optimized = optimize_single_structure(sample_structure, config)
     assert optimized.energy == -50.0
 
 
 def test_optimize_sequential_orb(sample_structure):
-    config = Config({"optimization": {
-        "model_type": "orb",
-        "model_name": "orb_v3_direct_omol",
-        "batch_optimization_mode": "sequential",
-    }})
+    config = Config({
+        "optimization": {"batch_optimization_mode": "sequential"},
+        "model": {"model_type": "orb", "model_name": "orb_v3_direct_omol"},
+    })
     results = optimize_structure_batch([sample_structure], config)
     assert len(results) == 1
     assert results[0].energy == -50.0
@@ -138,12 +146,11 @@ def test_optimize_sequential_orb(sample_structure):
 
 def test_optimize_batch_orb_calls_batch(sample_structure):
     """Batch mode with ORB should route to _optimize_batch."""
-    config = Config({"optimization": {
-        "model_type": "orb",
-        "model_name": "orb_v3_direct_omol",
-        "batch_optimization_mode": "batch",
-        "device": "cuda",
-    }})
+    config = Config({
+        "optimization": {"batch_optimization_mode": "batch"},
+        "model": {"model_type": "orb", "model_name": "orb_v3_direct_omol"},
+        "technical": {"device": "cuda"},
+    })
 
     with patch("gpuma.optimizer._parse_device_string", return_value="cuda"), \
          patch("gpuma.optimizer._optimize_batch") as mock_batch:

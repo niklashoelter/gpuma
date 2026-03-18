@@ -434,9 +434,9 @@ def cmd_ensemble(args, config: Config) -> None:
                 "to neutral singlet (charge=0, multiplicity=1).",
             )
 
-        num_conf = args.conformers or config.optimization.max_num_conformers
+        num_conf = args.conformers or config.conformer_generation.max_num_conformers
         logger.info("Generating %d conformers for SMILES: %s", num_conf, args.smiles)
-        config.optimization.max_num_conformers = num_conf
+        config.conformer_generation.max_num_conformers = num_conf
 
         optimized_conformers = optimize_ensemble_smiles(
             smiles=args.smiles,
@@ -536,7 +536,7 @@ def cmd_generate(args, config: Config) -> None:  # pylint: disable=unused-argume
     optimization.
     """
     try:
-        num_conf = args.conformers or config.optimization.max_num_conformers
+        num_conf = args.conformers or config.conformer_generation.max_num_conformers
         logger.info(
             "Generating %d conformers for SMILES (no optimization): %s",
             num_conf,
@@ -569,21 +569,21 @@ def cmd_config(args, config: Config) -> None:
 def _apply_global_verbosity_flags(config: Config, verbose: bool, quiet: bool) -> None:
     """Apply global verbosity CLI flags to the configuration in-place."""
     if verbose:
-        config.optimization.logging_level = "DEBUG"
+        config.technical.logging_level = "DEBUG"
     elif quiet:
-        config.optimization.logging_level = "ERROR"
+        config.technical.logging_level = "ERROR"
 
 
 def _apply_device_override(config: Config, device) -> None:
     """Apply a global device override if provided via CLI."""
     if device:
-        config.optimization.device = device
+        config.technical.device = device
 
 
 def _apply_model_type_override(config: Config, model_type) -> None:
     """Apply a global model-type override if provided via CLI."""
     if model_type:
-        config.optimization.model_type = model_type
+        config.model.model_type = model_type
 
 
 def main(argv=None) -> int:
@@ -614,7 +614,7 @@ def main(argv=None) -> int:
     _apply_model_type_override(config, getattr(args, "model_type", None))
 
     # Configure logging
-    logging_level = _level_from_string(config.optimization.logging_level)
+    logging_level = _level_from_string(config.technical.logging_level)
     configure_logging(logging_level)
 
     if not args.command:

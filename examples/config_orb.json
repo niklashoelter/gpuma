@@ -3,30 +3,46 @@
 
     "batch_optimization_mode": "batch",
     "batch_optimizer": "fire",
-    "max_memory_padding": 0.95,
-    "steps_between_swaps": 5,
-    "max_num_conformers": 20,
-    "conformer_seed": 42,
 
     "charge": 0,
     "multiplicity": 1,
 
     "force_convergence_criterion": 5e-2,
     "energy_convergence_criterion": null,
+    "steps_between_swaps": 3
+
+  },
+
+  "model": {
 
     "model_type": "orb",
     "model_name": "orb_v3_direct_omol",
+
     "model_path": null,
     "model_cache_dir": null,
-    "device": "cuda:3",
 
     "huggingface_token": null,
     "huggingface_token_file": null,
 
     "d3_correction": false,
     "d3_functional": "PBE",
-    "d3_damping": "BJ",
+    "d3_damping": "BJ"
+
+  },
+
+  "conformer_generation": {
+
+    "max_num_conformers": 20,
+    "conformer_seed": 42
+
+  },
+
+  "technical": {
+
+    "device": "cuda:3",
+    "max_memory_padding": 0.95,
 
     "logging_level": "INFO"
+
   }
 }

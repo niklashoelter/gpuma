@@ -77,8 +77,9 @@ considered experimental.
 ### ORB-v3 support
 
 ORB-v3 models are included in the standard installation. To use them,
-set `"model_type": "orb"` and `"model_name": "orb_v3_direct_omol"` in your
-configuration file (see [Configuration](config.md) and `examples/config_orb.json`).
+set `"model_type": "orb"` and `"model_name": "orb_v3_direct_omol"` in the
+`model` section of your configuration file (see [Configuration](config.md)
+and `examples/config_orb.json`).
 
 
 ### Option 2: Install from source
@@ -125,8 +126,9 @@ When a run is started from SMILES, an RDKit force field (via the morfeus library
 - Missing libraries: install optional dependencies like `pyyaml` if you use YAML configs.
 - Fairchem/UMA: ensure network access for model downloads and optionally set or provide
 `huggingface_token` (e.g., via a token file) to access the UMA model family.
-- ORB-v3: set `"model_type": "orb"` in config. Enable D3 dispersion correction
-  with `"d3_correction": true` (see [Configuration](config.md)).
+- ORB-v3: set `"model_type": "orb"` in the `model` section of your config.
+  Enable D3 dispersion correction with `"d3_correction": true`
+  (see [Configuration](config.md)).
 
 ## License
 MIT License (see LICENSE)
