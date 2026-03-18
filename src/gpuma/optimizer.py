@@ -346,8 +346,7 @@ def _optimize_batch(
     model = _get_cached_torchsim_model(config)
 
     # Select optimizer
-    optimizer_name = str(getattr(config.optimization, "batch_optimizer", "fire") or "fire")
-    optimizer_name = optimizer_name.strip().lower()
+    optimizer_name = str(getattr(config.optimization, "batch_optimizer", "fire")).strip().lower()
     optimizer = (
         torch_sim.Optimizer.fire
         if optimizer_name == "fire"

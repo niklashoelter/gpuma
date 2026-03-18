@@ -23,7 +23,7 @@ def _to_symbol_list(elements) -> list[str]:
     try:
         if hasattr(elements, "tolist"):
             elements = elements.tolist()
-    except Exception:  # pragma: no cover - defensive
+    except (AttributeError, TypeError):  # pragma: no cover - defensive
         pass
 
     symbols: list[str] = []
@@ -45,14 +45,17 @@ def _to_coord_list(coords) -> list[tuple[float, float, float]]:
     try:
         if hasattr(coords, "tolist"):
             coords = coords.tolist()
-    except Exception:  # pragma: no cover - defensive
+    except (AttributeError, TypeError):  # pragma: no cover - defensive
         pass
     return [(float(row[0]), float(row[1]), float(row[2])) for row in coords]
 
 
 @time_it
 def smiles_to_conformer_ensemble(
-    smiles: str, max_num_confs: int = 5, multiplicity: int = 1
+    smiles: str,
+    max_num_confs: int = 5,
+    multiplicity: int = 1,
+    seed: int | None = None,
 ) -> list[Structure]:
     """Generate multiple conformers from a SMILES string.
 
@@ -68,6 +71,10 @@ def smiles_to_conformer_ensemble(
         Maximum number of conformers to return (default: ``5``).
     multiplicity:
         Spin multiplicity to set on all generated conformers (default: ``1``).
+    seed:
+        Optional random seed for reproducible conformer generation. Sets both
+        the Python and NumPy random seeds before calling the conformer
+        generator.
 
     Returns
     -------
@@ -96,6 +103,14 @@ def smiles_to_conformer_ensemble(
     try:
         from morfeus.conformer import ConformerEnsemble  # type: ignore
         from rdkit import Chem
+
+        if seed is not None:
+            import random
+
+            import numpy as np
+
+            random.seed(seed)
+            np.random.seed(seed)
 
         mol = Chem.MolFromSmiles(smiles)
         if mol is None:

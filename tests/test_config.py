@@ -168,3 +168,49 @@ def test_resolve_model_type_invalid():
 def test_validate_config_invalid_model_type():
     with pytest.raises(ValueError, match="Unknown model_type"):
         Config({"model": {"model_type": "nonexistent"}})
+
+
+# --- conformer_generation section ---
+
+
+def test_conformer_generation_defaults():
+    cfg = Config()
+    assert cfg.conformer_generation.max_num_conformers == 20
+    assert cfg.conformer_generation.conformer_seed == 42
+
+
+def test_conformer_generation_override():
+    cfg = Config({"conformer_generation": {"max_num_conformers": 50, "conformer_seed": 123}})
+    assert cfg.conformer_generation.max_num_conformers == 50
+    assert cfg.conformer_generation.conformer_seed == 123
+
+
+def test_conformer_generation_to_dict():
+    cfg = Config()
+    d = cfg.to_dict()
+    assert d["conformer_generation"]["max_num_conformers"] == 20
+    assert d["conformer_generation"]["conformer_seed"] == 42
+
+
+# --- technical section ---
+
+
+def test_technical_defaults():
+    cfg = Config()
+    assert cfg.technical.max_memory_padding == 0.95
+    assert cfg.technical.logging_level == "INFO"
+    # device is dynamic (cuda or cpu), just check it's set
+    assert cfg.technical.device in ("cuda", "cpu")
+
+
+def test_technical_override():
+    cfg = Config({"technical": {"max_memory_padding": 0.5, "logging_level": "DEBUG"}})
+    assert cfg.technical.max_memory_padding == 0.5
+    assert cfg.technical.logging_level == "DEBUG"
+
+
+def test_technical_to_dict():
+    cfg = Config()
+    d = cfg.to_dict()
+    assert d["technical"]["max_memory_padding"] == 0.95
+    assert d["technical"]["logging_level"] == "INFO"

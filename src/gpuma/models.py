@@ -120,7 +120,7 @@ def _device_for_torch(device: str) -> torch.device:
         return torch.device("cpu")
     try:
         return torch.device(normalized)
-    except Exception:
+    except (RuntimeError, ValueError):
         logger.warning("Invalid CUDA device '%s'; falling back to 'cpu'.", device)
         return torch.device("cpu")
 

@@ -144,7 +144,9 @@ def optimize_ensemble_smiles(
         config = load_config_from_file()
     multiplicity = int(getattr(config.optimization, "multiplicity", 1))
     num_conformers = int(getattr(config.conformer_generation, "max_num_conformers", 20))
-    conformers = smiles_to_ensemble(smiles, num_conformers, multiplicity)
+    seed_val = getattr(config.conformer_generation, "conformer_seed", None)
+    seed = int(seed_val) if seed_val is not None else None
+    conformers = smiles_to_ensemble(smiles, num_conformers, multiplicity, seed=seed)
     if not isinstance(conformers, list) or (
         len(conformers) and not isinstance(conformers[0], Structure)
     ):

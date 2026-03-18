@@ -307,6 +307,7 @@ def smiles_to_ensemble(
     smiles_string: str,
     max_num_confs: int,
     multiplicity: int | None = None,
+    seed: int | None = None,
 ) -> list[Structure]:
     """Generate conformer ensemble from SMILES.
 
@@ -318,6 +319,8 @@ def smiles_to_ensemble(
         Maximum number of conformers to generate.
     multiplicity:
         Optional spin multiplicity to set on the structures (default: ``None``).
+    seed:
+        Optional random seed for reproducible conformer generation.
 
     Returns
     -------
@@ -329,7 +332,9 @@ def smiles_to_ensemble(
         raise ValueError("SMILES string cannot be empty or None")
 
     mult = int(multiplicity) if multiplicity is not None else 1
-    structs = _smiles_to_ensemble_util(smiles_string.strip(), max_num_confs, multiplicity=mult)
+    structs = _smiles_to_ensemble_util(
+        smiles_string.strip(), max_num_confs, multiplicity=mult, seed=seed,
+    )
     return structs
 
 
