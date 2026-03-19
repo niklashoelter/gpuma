@@ -25,6 +25,7 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
+from typing import Any
 
 import torch
 
@@ -260,7 +261,7 @@ def load_torchsim_model(config: Config):
 # ---------------------------------------------------------------------------
 
 
-def _load_fairchem_calculator(config: Config):
+def _load_fairchem_calculator(config: Config) -> Any:
     """Load a ``FAIRChemCalculator`` from a pretrained UMA model."""
     from fairchem.core import FAIRChemCalculator, pretrained_mlip  # type: ignore
 
@@ -280,7 +281,7 @@ def _load_fairchem_calculator(config: Config):
     return FAIRChemCalculator(predict_unit=predictor, task_name="omol")
 
 
-def _load_fairchem_torchsim(config: Config):
+def _load_fairchem_torchsim(config: Config) -> Any:
     """Load a ``FairChemModel`` for torch-sim batch optimization."""
     from torch_sim.models.fairchem import FairChemModel  # type: ignore
 
@@ -308,8 +309,8 @@ def _load_fairchem_torchsim(config: Config):
 # ---------------------------------------------------------------------------
 
 
-def _load_orb_pretrained(config: Config):
-    """Load a pretrained ORB model and return ``(orbff, atoms_adapter)``.
+def _load_orb_pretrained(config: Config) -> tuple[Any, Any, str]:
+    """Load a pretrained ORB model and return ``(orbff, atoms_adapter, device)``.
 
     If ``config.model.d3_correction`` is ``True``, the model is
     wrapped with D3 dispersion correction via ``D3SumModel``.
@@ -328,15 +329,14 @@ def _load_orb_pretrained(config: Config):
     orbff, atoms_adapter = loader(device=device)
 
     # Optionally wrap with D3 dispersion correction
-    use_d3 = getattr(config.model, "d3_correction", False)
-    if use_d3:
+    if config.model.d3_correction:
         from orb_models.forcefield.inference.d3_model import (  # type: ignore
             AlchemiDFTD3,
             D3SumModel,
         )
 
-        functional = str(getattr(config.model, "d3_functional", "PBE"))
-        damping = str(getattr(config.model, "d3_damping", "BJ"))
+        functional = str(config.model.d3_functional)
+        damping = str(config.model.d3_damping)
         logger.info(
             "Applying D3 dispersion correction (functional=%s, damping=%s)",
             functional,
@@ -347,7 +347,7 @@ def _load_orb_pretrained(config: Config):
     return orbff, atoms_adapter, device
 
 
-def _load_orb_calculator(config: Config):
+def _load_orb_calculator(config: Config) -> Any:
     """Load an ``ORBCalculator`` from a pretrained ORB-v3 model."""
     try:
         from orb_models.forcefield.inference.calculator import ORBCalculator  # type: ignore
@@ -361,7 +361,7 @@ def _load_orb_calculator(config: Config):
     return ORBCalculator(orbff, atoms_adapter=atoms_adapter, device=device)
 
 
-def _load_orb_torchsim(config: Config):
+def _load_orb_torchsim(config: Config) -> Any:
     """Load an ``OrbTorchSimModel`` for torch-sim batch optimization."""
     try:
         from orb_models.forcefield.inference.orb_torchsim import OrbTorchSimModel  # type: ignore

@@ -62,8 +62,9 @@ if __name__ == "__main__":
     print("GPUMA - Large-Scale Batch Optimization Examples")
     print("=" * 70)
 
+    example_large_batch_orb()
     example_large_batch_fairchem()
-    # example_large_batch_orb()
+
 
     print("\n" + "=" * 70)
     print("Examples completed! Check the generated XYZ files.")

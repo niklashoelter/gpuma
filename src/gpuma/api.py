@@ -53,8 +53,7 @@ def optimize_single_smiles(
     if config is None:
         config = load_config_from_file()
 
-    multiplicity = getattr(config.optimization, "multiplicity", 1)
-    structure = smiles_to_xyz(smiles, multiplicity=multiplicity)
+    structure = smiles_to_xyz(smiles, multiplicity=config.optimization.multiplicity)
 
     if not isinstance(structure, Structure):
         raise ValueError("smiles_to_xyz did not return a Structure")
@@ -98,9 +97,11 @@ def optimize_single_xyz_file(
     if config is None:
         config = load_config_from_file()
 
-    eff_charge = int(getattr(config.optimization, "charge", 0))
-    eff_mult = int(getattr(config.optimization, "multiplicity", 1))
-    structure = read_xyz(input_file, charge=eff_charge, multiplicity=eff_mult)
+    structure = read_xyz(
+        input_file,
+        charge=int(config.optimization.charge),
+        multiplicity=int(config.optimization.multiplicity),
+    )
     if not isinstance(structure, Structure):
         raise ValueError("read_xyz did not return a Structure")
     structure.comment = f"Optimized from: {input_file}"
@@ -142,10 +143,9 @@ def optimize_ensemble_smiles(
     """
     if config is None:
         config = load_config_from_file()
-    multiplicity = int(getattr(config.optimization, "multiplicity", 1))
-    num_conformers = int(getattr(config.conformer_generation, "max_num_conformers", 20))
-    seed_val = getattr(config.conformer_generation, "conformer_seed", None)
-    seed = int(seed_val) if seed_val is not None else None
+    multiplicity = int(config.optimization.multiplicity)
+    num_conformers = int(config.conformer_generation.max_num_conformers)
+    seed = int(config.conformer_generation.conformer_seed)
     conformers = smiles_to_ensemble(smiles, num_conformers, multiplicity, seed=seed)
     if not isinstance(conformers, list) or (
         len(conformers) and not isinstance(conformers[0], Structure)
@@ -198,10 +198,11 @@ def optimize_batch_multi_xyz_file(
     if config is None:
         config = load_config_from_file()
 
-    eff_charge = int(getattr(config.optimization, "charge", 0))
-    eff_mult = int(getattr(config.optimization, "multiplicity", 1))
-
-    structures = read_multi_xyz(input_file, charge=eff_charge, multiplicity=eff_mult)
+    structures = read_multi_xyz(
+        input_file,
+        charge=int(config.optimization.charge),
+        multiplicity=int(config.optimization.multiplicity),
+    )
     results = optimize_structure_batch(structures, config)
 
     if output_file:
@@ -242,13 +243,10 @@ def optimize_batch_xyz_directory(
     if config is None:
         config = load_config_from_file()
 
-    eff_charge = int(getattr(config.optimization, "charge", 0))
-    eff_mult = int(getattr(config.optimization, "multiplicity", 1))
-
     structures = read_xyz_directory(
         input_directory,
-        charge=eff_charge,
-        multiplicity=eff_mult,
+        charge=int(config.optimization.charge),
+        multiplicity=int(config.optimization.multiplicity),
     )
     results = optimize_structure_batch(structures, config)
 

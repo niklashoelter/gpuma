@@ -35,7 +35,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     },
     "model": {
         "model_type": "fairchem",
-        "model_name": "uma-s-1p1",
+        "model_name": "uma-s-1p2",
         "model_path": None,
         "model_cache_dir": None,
         "huggingface_token": None,
@@ -280,7 +280,8 @@ def load_config_from_file(filepath: str = "config.json") -> Config:
     if user_cfg is not None and not isinstance(user_cfg, dict):
         raise ValueError("Configuration file must contain a JSON/YAML object at the root")
 
-    cfg = Config.from_dict(copy.deepcopy(user_cfg))
+    # Config.__init__ deep-merges via _deep_merge, so no need to deepcopy here
+    cfg = Config.from_dict(user_cfg)
     validate_config(cfg)
     return cfg
 

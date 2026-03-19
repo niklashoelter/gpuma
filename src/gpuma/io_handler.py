@@ -163,27 +163,36 @@ def read_multi_xyz(file_path: str, charge: int = 0, multiplicity: int = 1) -> li
                 coordinates: list[tuple[float, float, float]] = []
 
                 valid = True
-                for _ in range(num_atoms):
+                for atom_idx in range(num_atoms):
                     try:
                         atom_line = next(line_iterator)
                     except StopIteration:
+                        logger.warning(
+                            "Structure '%s': unexpected end of file at atom %d/%d, skipping",
+                            comment, atom_idx + 1, num_atoms,
+                        )
                         valid = False
                         break
 
-                    if not valid:
-                        continue
-
                     parts = atom_line.split()
                     if len(parts) < 4:
+                        logger.warning(
+                            "Structure '%s': malformed atom line %d, skipping structure",
+                            comment, atom_idx + 1,
+                        )
                         valid = False
-                        continue
+                        break
 
                     symbol = parts[0]
                     try:
                         x, y, z = float(parts[1]), float(parts[2]), float(parts[3])
                     except ValueError:
+                        logger.warning(
+                            "Structure '%s': invalid coordinates at atom %d, skipping structure",
+                            comment, atom_idx + 1,
+                        )
                         valid = False
-                        continue
+                        break
                     symbols.append(symbol)
                     coordinates.append((x, y, z))
 

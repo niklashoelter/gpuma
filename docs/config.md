@@ -31,7 +31,7 @@ Unknown fields are preserved. **Always use a config file for CLI and API calls.*
 
   "model": {
     "model_type": "fairchem",
-    "model_name": "uma-s-1p1",
+    "model_name": "uma-s-1p2",
 
     "model_path": null,
     "model_cache_dir": null,
@@ -105,7 +105,7 @@ optimization:
 
 model:
   model_type: fairchem
-  model_name: uma-s-1p1
+  model_name: uma-s-1p2
 
   model_path: null
   model_cache_dir: null
@@ -148,7 +148,7 @@ technical:
 | Parameter | Default | Description |
 |---|---|---|
 | `model_type` | `"fairchem"` | Backend: `"fairchem"` / `"uma"` or `"orb"` / `"orb-v3"` |
-| `model_name` | `"uma-s-1p1"` | Model identifier (see [Available Models](#available-models)) |
+| `model_name` | `"uma-s-1p2"` | Model identifier (see [Available Models](#available-models)) |
 | `model_path` | `null` | Local checkpoint path (Fairchem only; overrides `model_name`) |
 | `model_cache_dir` | `null` | Directory for cached model downloads |
 | `huggingface_token` | `null` | HuggingFace token for model access |
@@ -184,8 +184,8 @@ technical:
 
 | Model Name | Description |
 |---|---|
-| `uma-s-1p2` | UMA small, version 1.2 |
-| `uma-s-1p1` | UMA small, version 1.1 (default) |
+| `uma-s-1p2` | UMA small, version 1.2 (default) |
+| `uma-s-1p1` | UMA small, version 1.1 |
 | `uma-m-1p1` | UMA medium, version 1.1 |
 
 > Fairchem UMA models require a HuggingFace token for download.

@@ -347,7 +347,7 @@ def _optimize_batch(
     model = _get_cached_torchsim_model(config)
 
     # Select optimizer
-    optimizer_name = str(getattr(config.optimization, "batch_optimizer", "fire")).strip().lower()
+    optimizer_name = str(config.optimization.batch_optimizer).strip().lower()
     optimizer = (
         torch_sim.Optimizer.fire
         if optimizer_name == "fire"
@@ -357,8 +357,10 @@ def _optimize_batch(
     convergence_fn = _resolve_batch_convergence(config)
 
     # Convert structures to ASE Atoms and then to torch-sim state.
-    # For molecular (non-periodic) systems, set a bounding box cell so that
-    # models relying on cell-list neighbor lists (e.g. ORB) don't overflow.
+    # For molecular (non-periodic) systems we must set a non-zero bounding-box
+    # cell.  ORB's nvalchemiops cell-list neighbor list overflows (int64) when
+    # the cell matrix is all-zeros because it computes grid dimensions from the
+    # cell.  PBC remains False — the cell is only used for allocation sizing.
     import numpy as np
 
     ase_structures = []
@@ -381,21 +383,13 @@ def _optimize_batch(
         dtype=torch.float64,
     )
 
-    max_memory_padding = float(
-        getattr(config.technical, "max_memory_padding", 0.95)
-    )
-    memory_scaling_factor = float(
-        getattr(config.technical, "memory_scaling_factor", 1.6)
-    )
+    max_memory_padding = float(config.technical.max_memory_padding)
+    memory_scaling_factor = float(config.technical.memory_scaling_factor)
     # Use the model's own recommendation for memory scaling metric
     # (Fairchem → "n_atoms", ORB → "n_atoms_x_density")
     memory_scales_with = getattr(model, "memory_scales_with", "n_atoms_x_density")
-    max_atoms_to_try = int(
-        getattr(config.technical, "max_atoms_to_try", 100_000)
-    )
-    steps_between_swaps = int(
-        getattr(config.optimization, "steps_between_swaps", 3)
-    )
+    max_atoms_to_try = int(config.technical.max_atoms_to_try)
+    steps_between_swaps = int(config.optimization.steps_between_swaps)
 
     effective_max_atoms = min(batched_state.n_atoms, max_atoms_to_try)
     with timed_block("Autobatcher setup") as t_batcher:

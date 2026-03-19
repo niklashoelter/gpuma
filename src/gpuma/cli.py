@@ -356,6 +356,12 @@ UTILITY COMMANDS:
     return parser
 
 
+def _cli_override(args, attr: str, config_val: int) -> int:
+    """Return CLI arg if provided, otherwise the config value."""
+    cli_val = getattr(args, attr, None)
+    return int(cli_val) if cli_val is not None else int(config_val)
+
+
 def cmd_optimize(args, config: Config) -> None:
     """Handle the single-structure optimization command.
 
@@ -364,13 +370,7 @@ def cmd_optimize(args, config: Config) -> None:
     """
     try:
         if args.smiles:
-            # charge is derived from SMILES; multiplicity can be overridden via config or CLI
-            eff_mult = int(
-                args.multiplicity
-                if hasattr(args, "multiplicity") and args.multiplicity is not None
-                else getattr(config.optimization, "multiplicity", 1)
-            )
-            # write back to config so optimize_single_smiles/smiles_to_xyz see it
+            eff_mult = _cli_override(args, "multiplicity", config.optimization.multiplicity)
             config.optimization.multiplicity = eff_mult
             logger.info(
                 "Converting SMILES '%s' to 3D coordinates and optimizing (multiplicity=%d)...",
@@ -383,16 +383,8 @@ def cmd_optimize(args, config: Config) -> None:
                 config=config,
             )
         else:
-            eff_charge = int(
-                args.charge
-                if hasattr(args, "charge") and args.charge is not None
-                else getattr(config.optimization, "charge", 0)
-            )
-            eff_mult = int(
-                args.multiplicity
-                if hasattr(args, "multiplicity") and args.multiplicity is not None
-                else getattr(config.optimization, "multiplicity", 1)
-            )
+            eff_charge = _cli_override(args, "charge", config.optimization.charge)
+            eff_mult = _cli_override(args, "multiplicity", config.optimization.multiplicity)
             logger.info(
                 "Reading and optimizing structure from %s (charge=%d, multiplicity=%d)",
                 args.xyz,
@@ -462,17 +454,9 @@ def cmd_ensemble(args, config: Config) -> None:
 def cmd_batch(args, config: Config) -> None:
     """Handle batch optimization from files (multi-XYZ or directory)."""
     try:
-        eff_charge = int(
-            args.charge
-            if hasattr(args, "charge") and args.charge is not None
-            else getattr(config.optimization, "charge", 0)
-        )
+        eff_charge = _cli_override(args, "charge", config.optimization.charge)
         config.optimization.charge = eff_charge
-        eff_mult = int(
-            args.multiplicity
-            if hasattr(args, "multiplicity") and args.multiplicity is not None
-            else getattr(config.optimization, "multiplicity", 1)
-        )
+        eff_mult = _cli_override(args, "multiplicity", config.optimization.multiplicity)
         config.optimization.multiplicity = eff_mult
 
         if args.multi_xyz:
@@ -513,11 +497,12 @@ def cmd_batch(args, config: Config) -> None:
         sys.exit(1)
 
 
-def cmd_convert(args, config: Config | None = None) -> None:  # pylint: disable=unused-argument
+def cmd_convert(args, config: Config) -> None:
     """Handle the SMILES to XYZ conversion command.
 
     This command generates a single 3D structure from SMILES without running
-    any optimization.
+    any optimization.  The ``config`` parameter is accepted for interface
+    consistency but is not used.
     """
     try:
         logger.info("Converting SMILES '%s' to XYZ without optimization", args.smiles)

@@ -15,7 +15,7 @@ def test_config_initialization():
     cfg = Config()
     # Check default values
     assert cfg.optimization.charge == 0
-    assert cfg.model.model_name == "uma-s-1p1"
+    assert cfg.model.model_name == "uma-s-1p2"
 
 def test_config_override():
     data = {"optimization": {"charge": 1, "new_key": "value"}}

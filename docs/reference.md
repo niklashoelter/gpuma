@@ -124,3 +124,19 @@ Lower-level functions used by the high-level API.
       show_root_heading: true
       show_root_full_path: false
       heading_level: 3
+
+## Utilities
+
+Timing decorators and context managers for profiling.
+
+::: gpuma.decorators.time_it
+    options:
+      show_root_heading: true
+      show_root_full_path: false
+      heading_level: 3
+
+::: gpuma.decorators.timed_block
+    options:
+      show_root_heading: true
+      show_root_full_path: false
+      heading_level: 3

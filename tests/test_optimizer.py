@@ -1,8 +1,11 @@
 import logging
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from gpuma.config import Config
 from gpuma.optimizer import optimize_single_structure, optimize_structure_batch
+from gpuma.structure import Structure
 
 
 def test_optimize_single_structure(sample_structure):
@@ -172,3 +175,28 @@ def test_optimization_summary_logged(sample_structure, caplog):
     assert "Success rate:" in caplog.text
     assert "Total time:" in caplog.text
     assert "Energy min:" in caplog.text
+
+
+def test_optimize_batch_empty_list():
+    """Empty input returns empty output without error."""
+    config = Config()
+    assert optimize_structure_batch([], config) == []
+
+
+def test_optimize_batch_mismatched_coords():
+    """Mismatched symbols/coordinates raises ValueError."""
+    bad = Structure(
+        symbols=["C", "H"],
+        coordinates=[(0, 0, 0)],  # 1 coord for 2 symbols
+        charge=0,
+        multiplicity=1,
+    )
+    with pytest.raises(ValueError, match="symbols/coords length mismatch"):
+        optimize_structure_batch([bad])
+
+
+def test_optimize_batch_empty_structure():
+    """Empty structure (0 atoms) raises ValueError."""
+    empty = Structure(symbols=[], coordinates=[], charge=0, multiplicity=1)
+    with pytest.raises(ValueError, match="empty structure"):
+        optimize_structure_batch([empty])
