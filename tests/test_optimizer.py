@@ -1,3 +1,4 @@
+import logging
 from unittest.mock import MagicMock, patch
 
 from gpuma.config import Config
@@ -156,3 +157,18 @@ def test_optimize_batch_orb_calls_batch(sample_structure):
          patch("gpuma.optimizer._optimize_batch") as mock_batch:
         optimize_structure_batch([sample_structure], config)
         mock_batch.assert_called()
+
+
+def test_optimization_summary_logged(sample_structure, caplog):
+    """Verify the optimization summary is logged after a batch run."""
+    config = Config({"optimization": {"batch_optimization_mode": "sequential"}})
+
+    with caplog.at_level(logging.INFO, logger="gpuma.optimizer"):
+        optimize_structure_batch([sample_structure], config)
+
+    assert "GPUMA Optimization Summary" in caplog.text
+    assert "Structures input:    1" in caplog.text
+    assert "Structures output:   1" in caplog.text
+    assert "Success rate:" in caplog.text
+    assert "Total time:" in caplog.text
+    assert "Energy min:" in caplog.text

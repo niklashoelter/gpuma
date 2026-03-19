@@ -12,7 +12,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 import gpuma
-from gpuma.config import default_config, load_config_from_file
+from gpuma.config import Config, load_config_from_file
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "example_output")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -28,7 +28,7 @@ def example_ensemble_from_smiles():
     print("=== Example 1: Ensemble optimization from SMILES (Fairchem UMA) ===")
 
     smiles = "CCC(CC)CCOOC(CC)CCOC"
-    config = default_config
+    config = Config()
     config.conformer_generation.max_num_conformers = 50
     config.optimization.force_convergence_criterion = 5e-1
     print(f"Generating conformers for {smiles} and optimizing...")
