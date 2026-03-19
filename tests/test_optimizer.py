@@ -163,7 +163,7 @@ def test_optimization_summary_logged(sample_structure, caplog):
     """Verify the optimization summary is logged after a batch run."""
     config = Config({"optimization": {"batch_optimization_mode": "sequential"}})
 
-    with caplog.at_level(logging.INFO, logger="gpuma.optimizer"):
+    with caplog.at_level(logging.INFO, logger="gpuma.logging_utils"):
         optimize_structure_batch([sample_structure], config)
 
     assert "GPUMA Optimization Summary" in caplog.text

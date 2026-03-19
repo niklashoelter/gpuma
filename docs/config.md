@@ -49,6 +49,8 @@ Unknown fields are preserved. **Always use a config file for CLI and API calls.*
     "device": "cuda",
     "max_memory_padding": 0.95,
     "memory_scaling_factor": 1.6,
+    "memory_scales_with": "auto",
+    "max_atoms_to_try": 10000,
 
     "logging_level": "INFO"
   }
@@ -119,6 +121,8 @@ technical:
   device: cuda
   max_memory_padding: 0.95
   memory_scaling_factor: 1.6
+  memory_scales_with: auto
+  max_atoms_to_try: 10000
 
   logging_level: INFO
 ```
@@ -167,6 +171,8 @@ technical:
 | `device` | `"cuda"` | `"cpu"`, `"cuda"`, or `"cuda:N"` (e.g. `"cuda:0"`). Falls back to `cuda:0` if the requested index doesn't exist |
 | `max_memory_padding` | `0.95` | Fraction of GPU memory to use for batch optimization. Lower = more headroom |
 | `memory_scaling_factor` | `1.6` | Factor to multiply batch size by during autobatcher calibration. Larger = faster calibration, smaller = more accurate limit. Must be > 1 |
+| `memory_scales_with` | `"auto"` | Metric for autobatcher memory estimation. `"auto"` reads the model's recommendation (Fairchem → `"n_atoms"`, ORB → `"n_atoms_x_density"`). Manual overrides: `"n_atoms"`, `"n_atoms_x_density"`, `"n_edges"` |
+| `max_atoms_to_try` | `10000` | Maximum atoms for autobatcher calibration probe. Lower values prevent overflow in ORB's neighbor list for molecular systems |
 | `logging_level` | `"INFO"` | Logging verbosity: `"DEBUG"`, `"INFO"`, `"WARNING"`, `"ERROR"` |
 
 > You can also control the GPU with the `CUDA_VISIBLE_DEVICES` environment variable.

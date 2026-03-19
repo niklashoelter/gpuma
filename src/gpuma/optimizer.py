@@ -22,6 +22,7 @@ from ase.optimize import BFGS
 
 from .config import Config, load_config_from_file, resolve_model_type
 from .decorators import timed_block
+from .logging_utils import log_optimization_summary
 from .models import _parse_device_string, load_calculator, load_torchsim_model
 from .structure import Structure
 
@@ -295,7 +296,7 @@ def optimize_structure_batch(
                 "(batch requires GPU)."
             )
 
-    _log_optimization_summary(structures, results, tb.elapsed, mode, config)
+    log_optimization_summary(structures, results, tb.elapsed, mode, config)
     return results
 
 
@@ -355,15 +356,24 @@ def _optimize_batch(
 
     convergence_fn = _resolve_batch_convergence(config)
 
-    # Convert structures to ASE Atoms and then to torch-sim state
-    ase_structures = [
-        Atoms(
+    # Convert structures to ASE Atoms and then to torch-sim state.
+    # For molecular (non-periodic) systems, set a bounding box cell so that
+    # models relying on cell-list neighbor lists (e.g. ORB) don't overflow.
+    import numpy as np
+
+    ase_structures = []
+    for s in structures:
+        atoms = Atoms(
             symbols=s.symbols,
             positions=s.coordinates,
             info={"charge": s.charge, "spin": s.multiplicity},
         )
-        for s in structures
-    ]
+        if not any(atoms.pbc):
+            pos = np.array(s.coordinates)
+            lengths = pos.max(axis=0) - pos.min(axis=0) + 20.0
+            atoms.cell = np.diag(lengths)
+            atoms.center()
+        ase_structures.append(atoms)
 
     batched_state = torch_sim.io.atoms_to_state(
         ase_structures,
@@ -377,24 +387,35 @@ def _optimize_batch(
     memory_scaling_factor = float(
         getattr(config.technical, "memory_scaling_factor", 1.6)
     )
+    # Use model's own recommendation unless the user explicitly overrides
+    cfg_scales_with = config.technical.get("memory_scales_with", "auto")
+    if cfg_scales_with == "auto":
+        memory_scales_with = getattr(model, "memory_scales_with", "n_atoms_x_density")
+    else:
+        memory_scales_with = str(cfg_scales_with).strip().lower()
+    max_atoms_to_try = int(
+        getattr(config.technical, "max_atoms_to_try", 100_000)
+    )
     steps_between_swaps = int(
         getattr(config.optimization, "steps_between_swaps", 3)
     )
 
+    effective_max_atoms = min(batched_state.n_atoms, max_atoms_to_try)
     with timed_block("Autobatcher setup") as t_batcher:
         batcher = InFlightAutoBatcher(
             model,
-            memory_scales_with="n_atoms",
+            memory_scales_with=memory_scales_with,
             memory_scaling_factor=memory_scaling_factor,
             max_memory_padding=max_memory_padding,
-            max_atoms_to_try=min(batched_state.n_atoms, 500_000),
+            max_atoms_to_try=effective_max_atoms,
         )
     logger.debug(
-        "Autobatcher params: max_memory_padding=%.2f, memory_scaling_factor=%.2f, "
-        "max_atoms=%d, steps_between_swaps=%d",
+        "Autobatcher params: memory_scales_with=%s, max_memory_padding=%.2f, "
+        "memory_scaling_factor=%.2f, max_atoms=%d, steps_between_swaps=%d",
+        memory_scales_with,
         max_memory_padding,
         memory_scaling_factor,
-        min(batched_state.n_atoms, 500_000),
+        effective_max_atoms,
         steps_between_swaps,
     )
 
@@ -429,69 +450,3 @@ def _optimize_batch(
         )
         results.append(struct)
     return results
-
-
-# ---------------------------------------------------------------------------
-# Optimization summary
-# ---------------------------------------------------------------------------
-
-
-def _log_optimization_summary(
-    input_structures: list[Structure],
-    results: list[Structure],
-    total_time: float,
-    mode: str,
-    config: Config,
-) -> None:
-    """Log a summary of the optimization run."""
-    n_input = len(input_structures)
-    n_output = len(results)
-    energies = [s.energy for s in results if s.energy is not None]
-    atom_counts = [s.n_atoms for s in results]
-
-    model_name = getattr(config.model, "model_name", "unknown")
-    model_type = resolve_model_type(config)
-    device = str(config.technical.device)
-
-    lines = [
-        "",
-        "=" * 60,
-        "  GPUMA Optimization Summary",
-        "=" * 60,
-        f"  Model:               {model_type} / {model_name}",
-        f"  Device:              {device}",
-        f"  Mode:                {mode}",
-        "-" * 60,
-        f"  Structures input:    {n_input}",
-        f"  Structures output:   {n_output}",
-    ]
-    if n_input > 0:
-        lines.append(
-            f"  Success rate:        {n_output}/{n_input}"
-            f" ({100 * n_output / n_input:.1f}%)"
-        )
-    lines.append(f"  Total time:          {total_time:.2f} sec")
-    if n_output > 0:
-        lines.append(f"  Avg time/structure:  {total_time / n_output:.3f} sec")
-        lines.append(f"  Throughput:          {n_output / total_time:.1f} structures/sec")
-    if atom_counts:
-        lines.append(
-            f"  Atoms per structure: {min(atom_counts)}-{max(atom_counts)}"
-            f" (avg {sum(atom_counts) / len(atom_counts):.1f})"
-        )
-        total_atoms = sum(atom_counts)
-        lines.append(f"  Total atoms:         {total_atoms}")
-        if total_time > 0:
-            lines.append(f"  Atom throughput:     {total_atoms / total_time:.0f} atoms/sec")
-    if energies:
-        mean_e = sum(energies) / len(energies)
-        lines.extend([
-            "-" * 60,
-            f"  Energy min:          {min(energies):.4f} eV",
-            f"  Energy max:          {max(energies):.4f} eV",
-            f"  Energy mean:         {mean_e:.4f} eV",
-            f"  Energy spread:       {max(energies) - min(energies):.4f} eV",
-        ])
-    lines.extend(["=" * 60, ""])
-
-    logger.info("\n".join(lines))

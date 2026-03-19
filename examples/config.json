@@ -38,6 +38,8 @@
     "device": "cuda:0",
     "max_memory_padding": 0.95,
     "memory_scaling_factor": 1.6,
+    "memory_scales_with": "auto",
+    "max_atoms_to_try": 10000,
 
     "logging_level": "INFO"
 
