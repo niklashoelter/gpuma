@@ -356,11 +356,9 @@ def _optimize_batch(
 
     convergence_fn = _resolve_batch_convergence(config)
 
-    # Convert structures to ASE Atoms and then to torch-sim state.
-    # For molecular (non-periodic) systems we must set a non-zero bounding-box
-    # cell.  ORB's nvalchemiops cell-list neighbor list overflows (int64) when
-    # the cell matrix is all-zeros because it computes grid dimensions from the
-    # cell.  PBC remains False — the cell is only used for allocation sizing.
+    # Convert structures to ASE Atoms.  A non-zero bounding-box cell is set
+    # because ORB's nvalchemiops cell-list neighbor list overflows when the
+    # cell matrix is all-zeros.  PBC remains False.
     import numpy as np
 
     ase_structures = []
@@ -370,11 +368,9 @@ def _optimize_batch(
             positions=s.coordinates,
             info={"charge": s.charge, "spin": s.multiplicity},
         )
-        if not any(atoms.pbc):
-            pos = np.array(s.coordinates)
-            lengths = pos.max(axis=0) - pos.min(axis=0) + 20.0
-            atoms.cell = np.diag(lengths)
-            atoms.center()
+        pos = np.array(s.coordinates)
+        atoms.cell = np.diag(pos.max(axis=0) - pos.min(axis=0) + 20.0)
+        atoms.center()
         ase_structures.append(atoms)
 
     batched_state = torch_sim.io.atoms_to_state(
@@ -385,11 +381,15 @@ def _optimize_batch(
 
     max_memory_padding = float(config.technical.max_memory_padding)
     memory_scaling_factor = float(config.technical.memory_scaling_factor)
-    # Use the model's own recommendation for memory scaling metric
-    # (Fairchem → "n_atoms", ORB → "n_atoms_x_density")
-    memory_scales_with = getattr(model, "memory_scales_with", "n_atoms_x_density")
     max_atoms_to_try = int(config.technical.max_atoms_to_try)
     steps_between_swaps = int(config.optimization.steps_between_swaps)
+
+    # Use the model's own recommendation when it declares one (e.g. Fairchem
+    # sets "n_atoms" which is accurate for fixed-neighbor models).  For models
+    # that default to "n_atoms_x_density" (e.g. ORB), override to "n_edges"
+    # which gives accurate estimates for diverse molecular batches.
+    model_metric = getattr(model, "memory_scales_with", "n_atoms_x_density")
+    memory_scales_with = "n_edges" if model_metric == "n_atoms_x_density" else model_metric
 
     effective_max_atoms = min(batched_state.n_atoms, max_atoms_to_try)
     with timed_block("Autobatcher setup") as t_batcher:
@@ -400,15 +400,19 @@ def _optimize_batch(
             max_memory_padding=max_memory_padding,
             max_atoms_to_try=effective_max_atoms,
         )
-    logger.debug(
-        "Autobatcher params: memory_scales_with=%s, max_memory_padding=%.2f, "
-        "memory_scaling_factor=%.2f, max_atoms=%d, steps_between_swaps=%d",
-        memory_scales_with,
-        max_memory_padding,
-        memory_scaling_factor,
-        effective_max_atoms,
-        steps_between_swaps,
-    )
+        # Pre-calibrate: estimate max_memory_scaler once so that both the
+        # BinningAutoBatcher (FIRE init) and InFlightAutoBatcher (optimization)
+        # reuse the same value without redundant GPU probing.
+        batcher.load_states(batched_state)
+        logger.debug(
+            "Autobatcher params: memory_scales_with=%s, max_memory_scaler=%.0f, "
+            "max_memory_padding=%.2f, max_atoms=%d, steps_between_swaps=%d",
+            memory_scales_with,
+            batcher.max_memory_scaler,
+            max_memory_padding,
+            effective_max_atoms,
+            steps_between_swaps,
+        )
 
     with timed_block("Batch optimization") as t_opt:
         final_state = torch_sim.optimize(

@@ -16,7 +16,7 @@
   "model": {
 
     "model_type": "fairchem",
-    "model_name": "uma-s-1p2",
+    "model_name": "uma-m-1p1",
 
     "model_path": null,
     "model_cache_dir": "/mnt/share/models/cache",
@@ -36,9 +36,9 @@
   "technical": {
 
     "device": "cuda:0",
+
     "max_memory_padding": 0.95,
     "memory_scaling_factor": 1.6,
-
     "max_atoms_to_try": 100000,
 
     "logging_level": "INFO"

@@ -217,6 +217,6 @@ These model names are also available programmatically as
 See the `examples/` folder for:
 - Single optimization (`example_single_optimization.py`)
 - Ensemble / batch optimization (`example_ensemble_optimization.py`)
-- Large-scale batch optimization (`example_ensemble_large.py`)
+- Large-scale batch optimization (`large_batches_benchmark.py`)
 
 The example configs are sanitized (no tokens in plain text).
