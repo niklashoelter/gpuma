@@ -167,10 +167,10 @@ def print_summary(rows: list[dict]) -> None:
         print(
             f"  {r['model']:<35s} "
             f"{optim:>10s}"
-            f"{fc_str:>8s}"
-            f"{r['structures_output']:>4d}/{r['structures_input']:<4d}"
-            f"{r['total_time_sec']:>10.1f}"
-            f"{rate:>10.1f}"
+            f" {fc_str:>8s}"
+            f" {r['structures_output']:>4d}/{r['structures_input']:<4d}"
+            f" {r['total_time_sec']:>10.1f}"
+            f" {rate:>10.1f}"
         )
     print(f"{'=' * 90}")
 
