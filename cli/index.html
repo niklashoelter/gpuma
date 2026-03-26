@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../logo_round.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
     
     
       
@@ -338,6 +338,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Command Line Interface
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -354,6 +372,47 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#gpuma-smiles-shorthand" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        gpuma smiles shorthand
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-orb-v3-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using ORB-v3 models
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -433,6 +492,36 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#gpuma-smiles-shorthand" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        gpuma smiles shorthand
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-orb-v3-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using ORB-v3 models
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -454,7 +543,7 @@
 <h1 id="cli-usage">CLI Usage</h1>
 <p>The CLI is provided via the command <code>gpuma</code>. For best results, create a
 config file (JSON or YAML) and reference it in all CLI calls.</p>
-<p><strong>Important:</strong> For the optimatzion of very large ensembles or high-throughput workflows, using
+<p><strong>Important:</strong> For the optimization of very large ensembles or high-throughput workflows, using
 the batch optimization mode is recommended (set in the config file, see below).
 In this case, make sure to use a multi-XYZ input file or a directory of XYZ files
 and only start one GPUMA process to leverage maximum efficient GPU parallelization
@@ -497,6 +586,26 @@ and avoid runtime overhead for model initialization and memory estimation.</p>
 </span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>gpuma<span class="w"> </span>optimize<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">&quot;CCO&quot;</span><span class="w"> </span>--output<span class="w"> </span>examples/example_output/ethanol_verbose.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config.json
 </span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>gpuma<span class="w"> </span>ensemble<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">&quot;CCO&quot;</span><span class="w"> </span>--conformers<span class="w"> </span><span class="m">3</span><span class="w"> </span>--output<span class="w"> </span>examples/example_output/ethanol_ensemble_verbose.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config.json
 </span></code></pre></div>
+<h3 id="gpuma-smiles-shorthand"><code>gpuma smiles</code> shorthand</h3>
+<p>The <code>gpuma smiles</code> command is a shorthand for single-structure optimization
+directly from a SMILES string (equivalent to <code>gpuma optimize --smiles</code>):</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>gpuma<span class="w"> </span>smiles<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">&quot;CCO&quot;</span><span class="w"> </span>--output<span class="w"> </span>examples/example_output/ethanol_opt.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config.json
+</span></code></pre></div>
+<h3 id="using-orb-v3-models">Using ORB-v3 models</h3>
+<p>To use ORB-v3 instead of Fairchem UMA, either set <code>"model_type": "orb"</code> in
+your config file (see <code>examples/config_orb.json</code>) or override from the CLI:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Single optimization with ORB-v3</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>gpuma<span class="w"> </span>--model-type<span class="w"> </span>orb<span class="w"> </span>optimize<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">&quot;CCO&quot;</span><span class="w"> </span>--output<span class="w"> </span>output.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config_orb.json
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Ensemble with ORB-v3</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>gpuma<span class="w"> </span>ensemble<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">&quot;CCO&quot;</span><span class="w"> </span>--conformers<span class="w"> </span><span class="m">10</span><span class="w"> </span>--output<span class="w"> </span>ensemble.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config_orb.json
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># Batch optimization from a multi-XYZ file with ORB-v3</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>gpuma<span class="w"> </span>batch<span class="w"> </span>--multi-xyz<span class="w"> </span>examples/example_input_xyzs/multi_xyz_file.xyz<span class="w"> </span>--output<span class="w"> </span>batch_orb.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config_orb.json
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="c1"># Batch optimization from a directory of XYZ files with ORB-v3</span>
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>gpuma<span class="w"> </span>batch<span class="w"> </span>--xyz-dir<span class="w"> </span>examples/example_input_xyzs/multi_xyz_dir/<span class="w"> </span>--output<span class="w"> </span>batch_dir_orb.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config_orb.json
+</span></code></pre></div>
 <p><strong>Note:</strong>
 - If <code>--config</code> is not specified, <code>config.json</code> in the current directory is loaded by default.
 - Direct CLI flags are supported, but using a config file is preferred for all workflows.
@@ -515,16 +624,21 @@ and avoid runtime overhead for model initialization and memory estimation.</p>
   <code>Atoms.info = {"charge": charge, "spin": multiplicity}</code> and are written to
   the XYZ comments as <code>Charge: ... | Multiplicity: ...</code>.</li>
 </ul>
+<p>The config file is organized into four sections: <code>optimization</code> (batch
+settings, convergence, charge/multiplicity), <code>model</code> (backend, name,
+tokens, D3), <code>conformer_generation</code> (conformer count, seed), and
+<code>technical</code> (device, memory padding, logging).
+See <a href="../config/">Configuration</a> for details.</p>
 <p>You can control the compute device globally in the config or from the CLI with <code>--device</code> (which overrides the config).
-Accepted values are <code>cpu</code> for CPU-only execution and <code>cuda</code> to enable GPU acceleration.</p>
-<p><strong>GPU selection:</strong> Fairchem currently does not support selecting a specific GPU
-via the <code>device</code> argument. To target particular GPUs you should set the
-<code>CUDA_VISIBLE_DEVICES</code> environment variable before calling <code>gpuma</code>, e.g.:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># use only GPU 1</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>gpuma<span class="w"> </span>optimize<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">&quot;C=C&quot;</span><span class="w"> </span>--output<span class="w"> </span>examples/example_output/ethylene_opt_gpu1.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config.json
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># use GPUs 1,2,3</span>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">1</span>,2,3<span class="w"> </span>gpuma<span class="w"> </span>batch<span class="w"> </span>--xyz-dir<span class="w"> </span>examples/multi_xyz_dir/<span class="w"> </span>--output<span class="w"> </span>examples/example_output/optimized_dir_gpu123.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config.json
+Accepted values are <code>cpu</code>, <code>cuda</code> (default GPU), or <code>cuda:N</code> to select a specific GPU (e.g. <code>cuda:0</code>, <code>cuda:1</code>).
+If the requested GPU index does not exist, GPUMA falls back to <code>cuda:0</code> with a warning.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># use GPU 1 explicitly</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>gpuma<span class="w"> </span>--device<span class="w"> </span>cuda:1<span class="w"> </span>optimize<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">&quot;C=C&quot;</span><span class="w"> </span>--output<span class="w"> </span>output.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config.json
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># or set it in the config file: &quot;device&quot;: &quot;cuda:3&quot;</span>
+</span></code></pre></div>
+<p>Alternatively, you can use the <code>CUDA_VISIBLE_DEVICES</code> environment variable to control GPU visibility:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>gpuma<span class="w"> </span>optimize<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">&quot;C=C&quot;</span><span class="w"> </span>--output<span class="w"> </span>output.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config.json
 </span></code></pre></div>
 
 

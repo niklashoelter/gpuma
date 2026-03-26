@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="logo_round.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
     
     
       
@@ -329,6 +329,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#orb-v3-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ORB-v3 support
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#option-2-install-from-source" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -603,6 +614,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#orb-v3-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ORB-v3 support
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#option-2-install-from-source" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -710,58 +732,87 @@
 </div>
 
 <hr />
-<p>GPUMA is a minimalist Python toolkit for facile and rapid high-throughput molecular geometry optimization 
-based on the <a href="https://arxiv.org/abs/2505.08762">UMA/OMol25 machine-learning interatomic potential</a>.  </p>
+<p>GPUMA is a minimalist Python toolkit for facile and rapid high-throughput molecular geometry optimization
+based on machine-learning interatomic potentials (MLIPs).</p>
+<p>Two model backends are supported out of the box:</p>
+<ul>
+<li><strong>Fairchem UMA</strong> (<a href="https://arxiv.org/abs/2505.08762">UMA/OMol25</a>) — the default backend.</li>
+<li><strong>ORB-v3</strong> (<a href="https://github.com/orbital-materials/orb-models">orbital-materials/orb-models</a>) — included in core dependencies, with optional D3 dispersion correction.</li>
+</ul>
 <p>GPUMA is especially designed for batch optimizations of many structures (conformer ensembles, datasets) on GPU,
 ensuring efficient parallelization and maximum GPU utilization by leveraging the <a href="https://arxiv.org/abs/2508.06628">torch-sim library</a>.
-It wraps Fairchem UMA models and torch-sim functionality to provide both a simple command-line 
+It wraps model backends and torch-sim functionality to provide both a simple command-line
 interface (CLI) and a small but expressive Python API for single- and multi-structure optimizations.</p>
-<p>If conformer sampling is desired, GPUMA can generate conformer ensembles on the fly from SMILES strings 
+<p>If conformer sampling is desired, GPUMA can generate conformer ensembles on the fly from SMILES strings
 using the <a href="https://digital-chemistry-laboratory.github.io/morfeus/">morfeus library</a>. Alternative input formats
 are described in the CLI section below.</p>
 <p>Feedback and improvements are always welcome!</p>
 <h2 id="installation">Installation</h2>
 <blockquote>
-<p>⚠️ <strong>Required for UMA models:</strong></br>
+<p><strong>Required for UMA models:</strong></br>
 To access the UMA models on Hugging Face, <strong>you must provide a token</strong> either via the <code>HUGGINGFACE_TOKEN</code> environment variable or via the config (direct token string or path to a file containing the token).</p>
 </blockquote>
 <h3 id="option-1-install-from-pypi-recommended">Option 1: Install from PyPI (recommended)</h3>
-<p>This installs <code>gpuma</code> together with its core dependencies. 
+<p>This installs <code>gpuma</code> together with all dependencies (including both the
+Fairchem UMA and ORB-v3 backends).
 At the moment, installation and tests have only been
 validated under Python 3.12; using other Python versions is currently
 considered experimental.</p>
+<blockquote>
+<p><strong>GPU support:</strong> By default, <code>pip install</code> may pull a CPU-only build of
+PyTorch (especially on Windows). To enable GPU acceleration, install
+PyTorch with CUDA <strong>before</strong> installing GPUMA. Visit
+<a href="https://pytorch.org/get-started/locally/">pytorch.org/get-started</a> to
+get the install command for your platform and CUDA version, e.g.:
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>torch<span class="w"> </span>--index-url<span class="w"> </span>https://download.pytorch.org/whl/cu124
+</span></code></pre></div></p>
+</blockquote>
 <ul>
 <li>
 <p><strong>Using a <code>uv</code> virtual environment</strong>
-  <div class="language-powershell highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c"># create and activate a fresh environment</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">uv</span> <span class="n">venv</span> <span class="p">.</span><span class="n">venv</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c"># activate the environment</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c"># install gpuma from PyPI inside the environment</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">uv</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">gpuma</span>
+  <div class="language-powershell highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c"># create and activate a fresh environment</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">uv</span> <span class="n">venv</span> <span class="p">.</span><span class="n">venv</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c"># activate the environment</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c"># install PyTorch with CUDA support (pick your CUDA version at https://pytorch.org)</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">uv</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">torch</span> <span class="p">-</span><span class="n">-index-url</span> <span class="n">https</span><span class="p">://</span><span class="n">download</span><span class="p">.</span><span class="n">pytorch</span><span class="p">.</span><span class="n">org</span><span class="p">/</span><span class="n">whl</span><span class="p">/</span><span class="n">cu124</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="c"># install gpuma from PyPI inside the environment</span>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="n">uv</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">gpuma</span>
 </span></code></pre></div></p>
 </li>
 <li>
 <p><strong>Using a <code>conda</code> environment</strong>
-  <div class="language-powershell highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c"># create and activate a fresh environment with Python 3.12</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">conda</span> <span class="n">create</span> <span class="n">-n</span> <span class="n">gpuma-py312</span> <span class="n">python</span><span class="p">=</span><span class="n">3</span><span class="p">.</span><span class="n">12</span>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">conda</span> <span class="n">activate</span> <span class="n">gpuma-py312</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c"># install gpuma from PyPI inside the environment</span>
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="n">pip</span> <span class="n">install</span> <span class="n">gpuma</span>
+  <div class="language-powershell highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c"># create and activate a fresh environment with Python 3.12</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">conda</span> <span class="n">create</span> <span class="n">-n</span> <span class="n">gpuma-py312</span> <span class="n">python</span><span class="p">=</span><span class="n">3</span><span class="p">.</span><span class="n">12</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">conda</span> <span class="n">activate</span> <span class="n">gpuma-py312</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="c"># install PyTorch with CUDA support (pick your CUDA version at https://pytorch.org)</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">pip</span> <span class="n">install</span> <span class="n">torch</span> <span class="p">-</span><span class="n">-index-url</span> <span class="n">https</span><span class="p">://</span><span class="n">download</span><span class="p">.</span><span class="n">pytorch</span><span class="p">.</span><span class="n">org</span><span class="p">/</span><span class="n">whl</span><span class="p">/</span><span class="n">cu124</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="c"># install gpuma from PyPI inside the environment</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="n">pip</span> <span class="n">install</span> <span class="n">gpuma</span>
 </span></code></pre></div></p>
 </li>
 </ul>
+<h3 id="orb-v3-support">ORB-v3 support</h3>
+<p>ORB-v3 models are included in the standard installation. To use them,
+set <code>"model_type": "orb"</code> and <code>"model_name": "orb_v3_direct_omol"</code> in the
+<code>model</code> section of your configuration file (see <a href="config/">Configuration</a>
+and <code>examples/config_orb.json</code>).</p>
 <h3 id="option-2-install-from-source">Option 2: Install from source</h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># clone the repository</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/niklashoelter/gpuma.git
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nb">cd</span><span class="w"> </span>gpuma
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="c1"># install using (uv) pip</span>
-</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>.
-</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># or, without uv:</span>
-</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>pip<span class="w"> </span>install<span class="w"> </span>.
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># clone the repository</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/niklashoelter/gpuma.git
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="nb">cd</span><span class="w"> </span>gpuma
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="c1"># install PyTorch with CUDA support (pick your CUDA version at https://pytorch.org)</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>pip<span class="w"> </span>install<span class="w"> </span>torch<span class="w"> </span>--index-url<span class="w"> </span>https://download.pytorch.org/whl/cu124
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="c1"># install using (uv) pip</span>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>.
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="c1"># or, without uv:</span>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>pip<span class="w"> </span>install<span class="w"> </span>.
 </span></code></pre></div>
 <h2 id="documentation">Documentation</h2>
 <p>Full documentation is available at <a href="https://niklashoelter.github.io/gpuma/">https://niklashoelter.github.io/gpuma/</a>.</p>
@@ -769,18 +820,21 @@ considered experimental.</p>
 <p>Also check the examples folder in the repository for sample config files and usage examples.</p>
 <h2 id="cli-usage">CLI Usage</h2>
 <p>The CLI is provided via the command <code>gpuma</code>. For best results, create a
-config file (JSON or YAML) and reference it in all CLI calls. </p>
+config file (JSON or YAML) and reference it in all CLI calls.</p>
 <p>Refer to the documentation for details on configuration options and CLI usage.</p>
 <h2 id="python-api">Python API</h2>
 <p>A minimalistic and high-level Python API is provided for easy integration into custom scripts and workflows.</p>
 <p>Please refer to the documentation for detailed usage examples and API reference.</p>
 <h2 id="known-limitations">Known limitations</h2>
-<p>When a run is started from SMILES, an RDKit force field (via the morfeus library) is used to generate an initial structure. Spin is not taken into account during this step, so the initial estimated geometries can be incorrect. When the UMA/Omol25 models are applied subsequently, the structure can sometimes be optimized to a maximum rather than a minimum because the model is not provided with Hessian matrices. This behavior only affects runs originating from SMILES; it does not occur with better starting geometries (e.g., when starting from XYZ files).</p>
+<p>When a run is started from SMILES, an RDKit force field (via the morfeus library) is used to generate an initial structure. Spin is not taken into account during this step, so the initial estimated geometries can be incorrect. When the MLIP models are applied subsequently, the structure can sometimes be optimized to a maximum rather than a minimum because the model is not provided with Hessian matrices. This behavior only affects runs originating from SMILES; it does not occur with better starting geometries (e.g., when starting from XYZ files).</p>
 <h2 id="troubleshooting">Troubleshooting</h2>
 <ul>
 <li>Missing libraries: install optional dependencies like <code>pyyaml</code> if you use YAML configs.</li>
-<li>Fairchem/UMA: ensure network access for model downloads and optionally set or provide 
+<li>Fairchem/UMA: ensure network access for model downloads and optionally set or provide
 <code>huggingface_token</code> (e.g., via a token file) to access the UMA model family.</li>
+<li>ORB-v3: set <code>"model_type": "orb"</code> in the <code>model</code> section of your config.
+  Enable D3 dispersion correction with <code>"d3_correction": true</code>
+  (see <a href="config/">Configuration</a>).</li>
 </ul>
 <h2 id="license">License</h2>
 <p>MIT License (see LICENSE)</p>
