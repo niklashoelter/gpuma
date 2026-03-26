@@ -1,224 +1,57 @@
-import sys
-from unittest.mock import MagicMock, patch
+"""Shared test fixtures for GPUMA.
 
-import numpy as np
+No mocking — all fixtures use real packages and models.
+ORB-v3 is the default test backend (no HuggingFace token required).
+Fairchem tests are skipped when HF_TOKEN is not set.
+"""
+
+import gc
+import os
+from pathlib import Path
+
 import pytest
+import torch
 
-# --- Mocking Heavy Dependencies ---
+from gpuma.config import Config
+from gpuma.structure import Structure
 
-def _mock_module(name):
-    """Mocks a module and registers it in sys.modules."""
-    parts = name.split('.')
-    for i in range(1, len(parts) + 1):
-        subname = ".".join(parts[:i])
-        if subname not in sys.modules:
-            sys.modules[subname] = MagicMock()
-            if i > 1:
-                parent_name = ".".join(parts[:i-1])
-                child_name = parts[i-1]
-                setattr(sys.modules[parent_name], child_name, sys.modules[subname])
-    return sys.modules[name]
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
 
-# Mock Torch
-try:
-    import torch  # noqa: F401
-except ImportError:
-    if "torch" not in sys.modules:
-        torch_mock = MagicMock()
+DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-        class MockDevice:
-            def __init__(self, arg):
-                if isinstance(arg, str):
-                    if ":" in arg:
-                        self.type, idx = arg.split(":")
-                        self.index = int(idx)
-                    else:
-                        self.type = arg
-                        self.index = None
-                else:
-                    self.type = "cpu"
-                    self.index = None
+TEST_DATA_DIR = Path(__file__).resolve().parent.parent / "examples" / "example_input_xyzs"
+SINGLE_XYZ = TEST_DATA_DIR / "single_xyz_file.xyz"
+MULTI_XYZ = TEST_DATA_DIR / "multi_xyz_file.xyz"
+SMALL_BATCH_XYZ = TEST_DATA_DIR / "many_structures_small.xyz"
+MULTI_XYZ_DIR = TEST_DATA_DIR / "multi_xyz_dir"
+BUTENE_SINGLET_XYZ = TEST_DATA_DIR / "butene_singlet.xyz"
+BUTENE_TRIPLET_XYZ = TEST_DATA_DIR / "butene_triplet.xyz"
+BUTENE_TRIPLET_MULTI_XYZ = TEST_DATA_DIR / "butene_triplet_multi.xyz"
 
-            def __eq__(self, other):
-                if isinstance(other, MockDevice):
-                    return self.type == other.type and self.index == other.index
-                return False
 
-            def __repr__(self):
-                return f"device(type='{self.type}', index={self.index})"
+def has_hf_token() -> bool:
+    """Check whether a HuggingFace token is available."""
+    return bool(os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_TOKEN"))
 
-        torch_mock.device = MockDevice
 
-        torch_mock.cuda = MagicMock()
-        torch_mock.cuda.is_available.return_value = False
-        torch_mock.float64 = "float64"
+requires_gpu = pytest.mark.skipif(
+    not torch.cuda.is_available(), reason="CUDA not available"
+)
 
-        def mock_tensor_factory(*args, **kwargs):
-            m = MagicMock()
-            m.to.return_value = m
-            m.item.return_value = 0.0
-            return m
-        torch_mock.zeros = MagicMock(side_effect=mock_tensor_factory)
-        torch_mock.tensor = MagicMock(side_effect=mock_tensor_factory)
-        sys.modules["torch"] = torch_mock
+requires_hf_token = pytest.mark.skipif(
+    not has_hf_token(), reason="HF_TOKEN not set — required for Fairchem models"
+)
 
-# Mock ASE
-try:
-    import ase
-except ImportError:
-    ase = _mock_module("ase")
 
-    def mock_atoms_factory(*args, **kwargs):
-        atoms = MagicMock()
-        atoms.calc = None
-
-        positions_arg = kwargs.get('positions')
-        symbols_arg = kwargs.get('symbols')
-
-        n_atoms = 5
-        if positions_arg is not None:
-            n_atoms = len(positions_arg)
-        elif symbols_arg is not None:
-            n_atoms = len(symbols_arg)
-
-        def get_potential_energy(*args, **kwargs):
-            if atoms.calc:
-                return atoms.calc.get_potential_energy(atoms)
-            return 0.0
-
-        def get_forces(*args, **kwargs):
-            if atoms.calc:
-                return atoms.calc.get_forces(atoms)
-            return np.zeros((len(atoms), 3))
-
-        atoms.get_potential_energy.side_effect = get_potential_energy
-        atoms.get_forces.side_effect = get_forces
-
-        def get_positions():
-            return np.zeros((n_atoms, 3))
-
-        atoms.get_positions.side_effect = get_positions
-        atoms.get_chemical_symbols.return_value = ["X"] * n_atoms
-        atoms.__len__.return_value = n_atoms
-
-        return atoms
-
-    ase.Atoms = MagicMock(side_effect=mock_atoms_factory)
-    ase_optimize = _mock_module("ase.optimize")
-    ase_optimize.BFGS = MagicMock()
-    ase_optimize.FIRE = MagicMock()
-    ase_optimize.LBFGS = MagicMock()
-
-    ase_data = _mock_module("ase.data")
-    dummy_symbols = ["X"] + ["H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne"] * 20
-    ase_data.chemical_symbols = dummy_symbols
-    _mock_module("ase.io")
-
-# Mock Fairchem
-try:
-    import fairchem.core  # noqa: F401
-except ImportError:
-    fairchem_core = _mock_module("fairchem.core")
-    fairchem_core.FAIRChemCalculator = MagicMock()
-    fairchem_core.pretrained_mlip = MagicMock()
-
-# Mock RDKit
-try:
-    from rdkit import Chem  # noqa: F401
-except ImportError:
-    rdkit_chem = _mock_module("rdkit.Chem")
-
-    def mock_mol_from_smiles(smiles):
-        m = MagicMock()
-        m._smiles = smiles
-        return m
-
-    rdkit_chem.MolFromSmiles = MagicMock(side_effect=mock_mol_from_smiles)
-    rdkit_chem.AddHs = MagicMock(side_effect=lambda m: m)
-    rdkit_chem.GetFormalCharge = MagicMock(return_value=0)
-
-# Mock Morfeus
-try:
-    from morfeus import conformer  # noqa: F401
-except ImportError:
-    morfeus_conformer = _mock_module("morfeus.conformer")
-
-    class MockConformerEnsemble:
-        def __init__(self, *args, **kwargs):
-            self._conformers = []
-            self.multiplicity = 1
-
-        def __iter__(self):
-            return iter(self._conformers)
-
-        def prune_rmsd(self):
-            pass
-
-        def sort(self):
-            pass
-
-        @classmethod
-        def from_rdkit(cls, mol):
-            ens = cls()
-            class MockConformer:
-                def __init__(self, smiles):
-                    if smiles == "CCCC":
-                        # Butane: 4 C, 10 H
-                        self.elements = ["C"] * 4 + ["H"] * 10
-                        self.coordinates = [[0.0, 0.0, 0.0]] * 14
-                    else:
-                        self.elements = ["C", "H", "H", "H", "H"]
-                        self.coordinates = [
-                            [0.0, 0.0, 0.0],
-                            [1.0, 0.0, 0.0],
-                            [0.0, 1.0, 0.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, -1.0],
-                        ]
-
-            smiles = getattr(mol, "_smiles", "")
-            conf = MockConformer(smiles)
-            ens._conformers = [conf]
-            return ens
-
-    morfeus_conformer.ConformerEnsemble = MockConformerEnsemble
-
-# Mock TorchSim
-try:
-    import torch_sim
-except ImportError:
-    _mock_module("torch_sim.models.fairchem")
-    _mock_module("torch_sim.autobatching")
-    _mock_module("torch_sim.io")
-
-    torch_sim = sys.modules["torch_sim"]
-    torch_sim.models.fairchem.FairChemModel = MagicMock()
-    torch_sim.autobatching.InFlightAutoBatcher = MagicMock()
-    torch_sim.io.atoms_to_state = MagicMock()
-
-# Mock orb_models
-try:
-    import orb_models  # noqa: F401
-except ImportError:
-    _mock_module("orb_models.forcefield")
-    _mock_module("orb_models.forcefield.pretrained")
-    _mock_module("orb_models.forcefield.inference")
-    orb_calculator = _mock_module("orb_models.forcefield.inference.calculator")
-    orb_calculator.ORBCalculator = MagicMock()
-    orb_torchsim = _mock_module("orb_models.forcefield.inference.orb_torchsim")
-    orb_torchsim.OrbTorchSimModel = MagicMock()
-
-# --- End Mocking ---
-
-from gpuma.structure import Structure  # noqa: E402
+# ---------------------------------------------------------------------------
+# Structure fixtures
+# ---------------------------------------------------------------------------
 
 
 @pytest.fixture
-def mock_hf_token(monkeypatch):
-    monkeypatch.setenv("HF_TOKEN", "fake_token")
-
-@pytest.fixture
-def sample_structure():
+def methane():
     return Structure(
         symbols=["C", "H", "H", "H", "H"],
         coordinates=[
@@ -233,79 +66,102 @@ def sample_structure():
         comment="Methane",
     )
 
-@pytest.fixture
-def sample_xyz_content():
-    return """5
-Methane
-C 0.000000 0.000000 0.000000
-H 0.630000 0.630000 0.630000
-H -0.630000 -0.630000 0.630000
-H -0.630000 0.630000 -0.630000
-H 0.630000 -0.630000 -0.630000
-"""
 
 @pytest.fixture
-def sample_multi_xyz_content():
-    return """3
-Water
-O 0.000000 0.000000 0.000000
-H 0.757000 0.586000 0.000000
-H -0.757000 0.586000 0.000000
-5
-Methane
-C 0.000000 0.000000 0.000000
-H 0.630000 0.630000 0.630000
-H -0.630000 -0.630000 0.630000
-H -0.630000 0.630000 -0.630000
-H 0.630000 -0.630000 -0.630000
-"""
+def ethanol():
+    return Structure(
+        symbols=["C", "C", "O", "H", "H", "H", "H", "H", "H"],
+        coordinates=[
+            (-0.047, 0.536, 0.000),
+            (-1.268, -0.376, 0.000),
+            (1.139, -0.227, 0.000),
+            (-0.045, 1.163, 0.891),
+            (-0.045, 1.163, -0.891),
+            (-1.307, -0.998, 0.891),
+            (-1.307, -0.998, -0.891),
+            (-2.149, 0.259, 0.000),
+            (1.960, 0.286, 0.000),
+        ],
+        charge=0,
+        multiplicity=1,
+        comment="Ethanol",
+    )
 
-@pytest.fixture(autouse=True)
-def mock_load_models(request):
-    """Automatically mock model loading functions to prevent network access."""
-    if "real_model" in request.keywords:
-        yield
-        return
 
-    with patch("gpuma.optimizer.load_calculator") as mock_load_calc, \
-         patch("gpuma.optimizer._get_cached_calculator") as mock_get_cached_calc, \
-         patch("gpuma.optimizer.load_torchsim_model") as mock_load_ts, \
-         patch("gpuma.optimizer._get_cached_torchsim_model") as mock_get_cached_ts:
+# ---------------------------------------------------------------------------
+# Config fixtures
+# ---------------------------------------------------------------------------
 
-        mock_calc = MagicMock()
-        mock_calc.results = {}
 
-        def calculate(atoms=None, properties=None, system_changes=None):
-            if properties is None:
-                properties = ['energy']
-            mock_calc.results['energy'] = -50.0
-            if atoms:
-                mock_calc.results['forces'] = np.zeros((len(atoms), 3))
-            else:
-                mock_calc.results['forces'] = np.zeros((1, 3))
+@pytest.fixture
+def orb_config():
+    """ORB config for batch tests — no HF token needed."""
+    return Config({
+        "optimization": {
+            "batch_optimization_mode": "batch",
+            "force_convergence_criterion": 0.5,
+        },
+        "model": {
+            "model_type": "orb",
+            "model_name": "orb_v3_direct_omol",
+        },
+        "technical": {
+            "device": DEVICE,
+            "max_atoms_to_try": 1000,
+        },
+    })
 
-        mock_calc.calculate = calculate
 
-        def get_potential_energy(atoms=None, force_consistent=False):
-            if atoms:
-                calculate(atoms)
-            return mock_calc.results.get('energy', -50.0)
+@pytest.fixture
+def orb_sequential_config():
+    """ORB config for sequential (CPU-safe) optimization."""
+    return Config({
+        "optimization": {
+            "batch_optimization_mode": "sequential",
+            "force_convergence_criterion": 0.5,
+        },
+        "model": {
+            "model_type": "orb",
+            "model_name": "orb_v3_direct_omol",
+        },
+        "technical": {
+            "device": DEVICE,
+        },
+    })
 
-        def get_forces(atoms=None):
-            if atoms:
-                calculate(atoms)
-            return mock_calc.results.get('forces', np.zeros((len(atoms), 3)))
 
-        mock_calc.get_potential_energy.side_effect = get_potential_energy
-        mock_calc.get_forces.side_effect = get_forces
+# ---------------------------------------------------------------------------
+# Session-scoped model fixtures (loaded once, reused across all tests)
+# ---------------------------------------------------------------------------
 
-        mock_load_calc.return_value = mock_calc
-        mock_get_cached_calc.return_value = mock_calc
 
-        # Setup TorchSim model mock
-        mock_ts_model = MagicMock()
-        mock_ts_model.model_name = "mock-model"
-        mock_load_ts.return_value = mock_ts_model
-        mock_get_cached_ts.return_value = mock_ts_model
+@pytest.fixture(scope="session")
+def orb_calculator():
+    """Real ORB ASE calculator, loaded once per session."""
+    from gpuma.models import load_calculator
 
-        yield
+    config = Config({
+        "model": {"model_type": "orb", "model_name": "orb_v3_direct_omol"},
+        "technical": {"device": DEVICE},
+    })
+    calc = load_calculator(config)
+    yield calc
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+
+@pytest.fixture(scope="session")
+def orb_torchsim_model():
+    """Real ORB torch-sim model, loaded once per session."""
+    from gpuma.models import load_torchsim_model
+
+    config = Config({
+        "model": {"model_type": "orb", "model_name": "orb_v3_direct_omol"},
+        "technical": {"device": DEVICE},
+    })
+    model = load_torchsim_model(config)
+    yield model
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()

@@ -52,9 +52,11 @@ class timed_block:
         self._level = level
 
     def __enter__(self):
+        """Start the timer and return ``self`` for attribute access."""
         self._start = perf_counter()
         return self
 
     def __exit__(self, *exc_info):
+        """Stop the timer, store elapsed time, and log the result."""
         self.elapsed = perf_counter() - self._start
         logger.log(self._level, "%s took %.2f sec", self.name, self.elapsed)
