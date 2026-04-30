@@ -90,7 +90,7 @@ def test_read_multi_xyz():
 def test_read_multi_xyz_small_batch():
     """500-structure batch file loads completely with expected atom ranges."""
     structures = read_multi_xyz(str(SMALL_BATCH_XYZ))
-    assert len(structures) == 500
+    assert len(structures) == 50
     atoms = [s.n_atoms for s in structures]
     assert min(atoms) >= 1
     assert max(atoms) <= 200

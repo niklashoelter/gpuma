@@ -40,9 +40,11 @@ MODELS = [
 ]
 #D3_VARIANTS  = [("off", False), ("on", True)]            # PBE/BJ when on
 D3_VARIANTS  = [("on", True)]            # PBE/BJ when on
-OPTIMIZERS   = ["fire", "gradient_descent", "lbfgs", "bfgs"]
-FCONV        = [5e-1, 1e-1, 5e-2]
-SWAPS        = [1, 3, 5]
+#OPTIMIZERS   = ["fire", "gradient_descent", "lbfgs", "bfgs"]
+OPTIMIZERS   = ["fire"]
+#FCONV        = [5e-1, 1e-1, 5e-2]
+FCONV        = [1e-1]
+SWAPS        = [1, 3, 5, 10]
 MSCALE       = [1.25, 1.50, 1.75]
 
 
@@ -61,6 +63,7 @@ def build_config(model, d3_on, optimizer, fconv, swaps, mscale):
     cfg.technical.max_memory_padding   = 0.95
     cfg.technical.memory_scaling_factor = mscale
     cfg.technical.max_atoms_to_try     = 100_000
+    cfg.technical.devide = "cuda:3"
     return cfg
 
 
