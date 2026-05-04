@@ -56,8 +56,8 @@ considered experimental.
 
 - **Using a `uv` virtual environment**
   ```powershell
-  # create and activate a fresh environment
-  uv venv .venv
+  # create and activate a fresh environment (Python 3.12)
+  uv venv .venv --python 3.12
 
   # activate the environment
 
