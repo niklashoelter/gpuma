@@ -59,15 +59,6 @@ pip install gpuma
   pip install gpuma
   ```
 
-### ORB-v3 model support
-
-ORB-v3 models are included in the standard `gpuma` installation. To use them,
-set `"model_type": "orb"` and `"model_name": "orb_v3_direct_omol"` in your
-configuration file (see [Configuration](config.md) and `examples/config_orb.json`).
-
-D3 dispersion correction can be enabled by setting `"d3_correction": true` in
-the config.  This is supported for **both** ORB-v3 and Fairchem/UMA models.
-
 > ⚠️ **Required for UMA models:**</br>
 > To access the UMA models on Hugging Face, **you must provide a token** either via the `HUGGINGFACE_TOKEN` environment variable or via the config (direct token string or path to a file containing the token).
 

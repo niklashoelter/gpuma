@@ -4,6 +4,14 @@
   <img src="docs/logo_bg.png" alt="GPUMA Logo"/>
 </div>
 
+<p align="center">
+  <a href="https://github.com/niklashoelter/gpuma/actions/workflows/python-app.yml"><img src="https://img.shields.io/github/actions/workflow/status/niklashoelter/gpuma/python-app.yml?branch=master&label=tests" alt="CI status"/></a>
+  <a href="https://pypi.org/project/gpuma/"><img src="https://img.shields.io/pypi/v/gpuma" alt="PyPI version"/></a>
+  <a href="https://pypi.org/project/gpuma/"><img src="https://img.shields.io/pypi/pyversions/gpuma" alt="Python versions"/></a>
+  <a href="https://niklashoelter.github.io/gpuma/"><img src="https://img.shields.io/badge/docs-online-brightgreen" alt="Documentation"/></a>
+  <a href="LICENSE.md"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License: MIT"/></a>
+</p>
+
 ---
 
 GPUMA is a minimalist Python toolkit for facile and rapid high-throughput molecular geometry optimization
@@ -28,9 +36,6 @@ are described in the CLI section below.
 Feedback and improvements are always welcome!
 
 ## Installation
-
-> **Required for UMA models:**</br>
-> To access the UMA models on Hugging Face, **you must provide a token** either via the `HUGGINGFACE_TOKEN` environment variable or via the config (direct token string or path to a file containing the token).
 
 ### Option 1: Install from PyPI (recommended)
 
@@ -112,6 +117,9 @@ Also check the [examples/](examples) folder in the repository for sample config 
 - [examples/example_single_optimization.py](examples/example_single_optimization.py) – single-structure optimization from Python
 - [examples/example_ensemble_optimization.py](examples/example_ensemble_optimization.py) – ensemble/multi-structure optimization from Python
 - [examples/example_dispersion.py](examples/example_dispersion.py) – DFT-D3(BJ) correction with both backends (single + batch)
+
+> **Required for UMA models:**</br>
+> To access the UMA models on Hugging Face, **you must provide a token** either via the `HUGGINGFACE_TOKEN` environment variable or via the config (direct token string or path to a file containing the token).
 
 ## CLI Usage
 
