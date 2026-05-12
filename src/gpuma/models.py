@@ -174,6 +174,27 @@ def _setup_fairchem_device(device: str) -> str:
     return "cuda"
 
 
+def _setup_orb_device(device: str) -> None:
+    """Prepare the CUDA device for the ORB backend.
+
+    ORB's pretrained loaders and ``OrbTorchSimModel`` default-resolve a
+    bare ``"cuda"`` string (or no device at all) to ``cuda:0`` via
+    :func:`torch.device`, regardless of what GPU index the caller
+    requested. When a specific GPU index is requested (e.g. ``"cuda:1"``),
+    this function calls :func:`torch.cuda.set_device` so that any later
+    internal ``.to("cuda")`` calls inside orb-models pick the correct GPU.
+
+    No-op for CPU / non-CUDA targets.
+    """
+    normalized = _parse_device_string(device)
+    if not normalized.startswith("cuda"):
+        return
+    if ":" in normalized:
+        idx = int(normalized.split(":")[1])
+        torch.cuda.set_device(idx)
+        logger.info("Selected GPU %d for ORB backend.", idx)
+
+
 # ---------------------------------------------------------------------------
 # Shared helpers
 # ---------------------------------------------------------------------------
@@ -484,6 +505,10 @@ def _load_orb_pretrained(config: Config) -> tuple[Any, Any, str]:
 
     model_name, _ = _verify_model_name_and_cache_dir(config)
     device = _parse_device_string(str(config.technical.device))
+    # orb-models default-resolves bare "cuda" to cuda:0 inside its loaders
+    # and inside OrbTorchSimModel.__init__; pin the active CUDA device so
+    # those internal .to("cuda") calls pick the correct GPU index.
+    _setup_orb_device(device)
 
     loader = getattr(pretrained, model_name, None)
     if loader is None:
@@ -507,7 +532,12 @@ def _load_orb_pretrained(config: Config) -> tuple[Any, Any, str]:
             functional,
             damping,
         )
-        orbff = D3SumModel(orbff, AlchemiDFTD3(functional=functional, damping=damping))
+        orbff = D3SumModel(
+            orbff,
+            AlchemiDFTD3(functional=functional, damping=damping).to(
+                _device_for_torch(device)
+            ),
+        )
 
     return orbff, atoms_adapter, device
 
@@ -536,5 +566,5 @@ def _load_orb_torchsim(config: Config) -> Any:
             "Install it with: pip install gpuma"
         ) from exc
 
-    orbff, atoms_adapter, _ = _load_orb_pretrained(config)
-    return OrbTorchSimModel(orbff, atoms_adapter)
+    orbff, atoms_adapter, device = _load_orb_pretrained(config)
+    return OrbTorchSimModel(orbff, atoms_adapter, device=device)
