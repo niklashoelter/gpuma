@@ -87,7 +87,7 @@ For any code other than 0, read
   than the default `fire` and at least as accurate. Avoid `bfgs`, which is
   slower than `fire`.
 - **Dispersion.** Leave `model.d3_correction` off for UMA and the ORB OMol
-  models. They are trained on ωB97M-V, which already includes dispersion.
+  models. Their training data (ωB97M-D4rev or ωB97M-V) already includes dispersion.
 - **Charge and spin.** A SMILES string carries its own charge. For XYZ input,
   set `optimization.charge` and `optimization.multiplicity` or pass `--charge`
   and `--multiplicity`. A batch applies one charge and multiplicity to every

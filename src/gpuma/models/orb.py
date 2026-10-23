@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from ..config import Config
+from ..config import Config, warn_d3_double_counting
 from .base import _verify_model_name_and_cache_dir
 from .device import _device_for_torch, _parse_device_string, _setup_orb_device
 
@@ -45,6 +45,8 @@ def _load_orb_pretrained(config: Config) -> tuple[Any, Any, str]:
             AlchemiDFTD3,
             D3SumModel,
         )
+
+        warn_d3_double_counting(config)
 
         functional = str(config.model.d3_functional)
         damping = str(config.model.d3_damping)

@@ -22,6 +22,9 @@ from .dispersion import _FairchemD3Calculator, _build_d3_dispersion_model
 
 logger = logging.getLogger(__name__)
 
+# fairchem's default compiles for one composition and falls back at the next molecule.
+_INFERENCE_SETTINGS = "batch"
+
 
 def _load_fairchem_calculator(config: Config) -> Any:
     """Load a ``FAIRChemCalculator`` from a pretrained UMA model.
@@ -37,11 +40,13 @@ def _load_fairchem_calculator(config: Config) -> Any:
 
     model_path = _verify_model_path(config)
     if model_path:
-        predictor = pretrained_mlip.load_predict_unit(path=model_path, device=backend_device)
+        predictor = pretrained_mlip.load_predict_unit(
+            path=model_path, device=backend_device, inference_settings=_INFERENCE_SETTINGS
+        )
         calc = FAIRChemCalculator(predict_unit=predictor, task_name="omol")
     else:
         model_name, model_cache_dir = _verify_model_name_and_cache_dir(config)
-        kwargs: dict = {"device": backend_device}
+        kwargs: dict = {"device": backend_device, "inference_settings": _INFERENCE_SETTINGS}
         if model_cache_dir:
             kwargs["cache_dir"] = str(model_cache_dir)
         predictor = pretrained_mlip.get_predict_unit(model_name, **kwargs)

@@ -21,8 +21,9 @@ Supported backends
   ``sevenn`` package's ``sevenn.torchsim``/``sevenn.calculator``
   integrations (:mod:`gpuma.models.sevennet`).
 
-DFT-D3(BJ) dispersion correction can be enabled for the ORB and Fairchem
-backends via ``config.model.d3_correction = True``.  ORB models use
+DFT-D3(BJ) dispersion correction can be enabled for all backends via
+``config.model.d3_correction = True``, except for ``uma-s-1p2p1-ft-d4rev``,
+which already includes dispersion.  ORB models use
 orb-models' native ``D3SumModel``; Fairchem/UMA models are layered with
 torch-sim's ``D3DispersionModel`` (added in torch-sim 0.6.0) via
 ``SumModel`` for the batch path and via a thin ASE wrapper for the

@@ -23,6 +23,8 @@ logger = logging.getLogger(__name__)
 #: Fairchem UMA model names accepted by ``fairchem.core.pretrained_mlip``.
 AVAILABLE_FAIRCHEM_MODELS: tuple[str, ...] = (
     "uma-s-1p2",
+    "uma-s-1p2p1",
+    "uma-s-1p2p1-ft-d4rev",
     "uma-s-1p1",
     "uma-m-1p1",
 )

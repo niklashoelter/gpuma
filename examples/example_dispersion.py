@@ -25,7 +25,10 @@ For each backend this script runs:
 1. A *single-structure* optimization with D3 off vs. on (same SMILES).
 2. A *batch* optimization of an ensemble of conformers with D3 off vs. on.
 
-The reported energies show the D3 contribution.
+The reported energies show the D3 contribution. This only demonstrates the
+mechanics: UMA and ORB OMol are trained on data that already includes
+dispersion, so gpuma logs a double-counting warning here, and the default
+``uma-s-1p2p1-ft-d4rev`` rejects D3. Use D3 for models trained without it.
 """
 
 import os
@@ -53,6 +56,8 @@ def _build_config(
     """Build a Config for ``backend`` with D3 toggled and the requested mode."""
     config_file = "config.json" if backend == "fairchem" else "config_orb.json"
     cfg = load_config_from_file(config_file)
+    if backend == "fairchem":
+        cfg.model.model_name = "uma-s-1p2p1"
     cfg.model.d3_correction = d3
     if d3:
         cfg.model.d3_functional = "PBE"

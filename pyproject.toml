@@ -19,8 +19,9 @@ classifiers = [
 
 dependencies = [
   "ase==3.27.0",
+  "torch==2.13.0",
   "torch-sim-atomistic==0.6.2",
-  "fairchem-core==2.18.0",
+  "fairchem-core==2.24.0",
   "morfeus-ml==0.8.0",
   "rdkit==2026.3.1",
   "tables==3.11.1",
@@ -28,7 +29,7 @@ dependencies = [
   "hf_xet==1.2.0",
   "pyyaml==6.0.3",
   "orb-models==0.6.1",
-  "nvalchemi-toolkit-ops==0.4.0",
+  "nvalchemi-toolkit-ops==0.5.0",
   "warp-lang==1.17.0",
   "sevenn[torchsim]==0.13.0",
   "nvmolkit==0.5.1"
@@ -36,15 +37,16 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=9.0.0",
-    "build>=1.2.1",
-    "twine>=5.0.0",
-    "pip-tools>=7.5.2",
-    "ruff>=0.14.14",
-    "mkdocs>=1.6.1",
-    "mkdocs-material>=9.7.1",
-    "mkdocstrings[python]>=1.0.2",
-    "mkdocs-llmstxt>=0.3.0"
+    "pytest==9.1.1",
+    "build==1.6.1",
+    "twine==6.2.0",
+    "pip-tools==7.6.2",
+    "ruff==0.17.2",
+    "mkdocs==1.6.1",
+    "mkdocs-material==9.7.7",
+    "mkdocstrings[python]==1.0.8",
+    "mkdocstrings-python==2.0.10",
+    "mkdocs-llmstxt==0.5.1"
 ]
 
 [project.urls]
@@ -55,7 +57,7 @@ Documentation = "https://niklashoelter.github.io/gpuma/"
 gpuma = "gpuma.cli:main"
 
 [build-system]
-requires = ["setuptools>=61", "wheel"]
+requires = ["setuptools==80.10.2", "wheel==0.48.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]

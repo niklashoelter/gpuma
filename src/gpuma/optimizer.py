@@ -430,6 +430,7 @@ def _optimize_batch(
 ) -> list[Structure | None]:
     """Optimize structures in parallel using torch-sim batch inference."""
     import torch
+    import torch._inductor.config as inductor_config
     import torch_sim
     from torch_sim.autobatching import InFlightAutoBatcher
     from torch_sim.typing import SystemExtras
@@ -509,34 +510,37 @@ def _optimize_batch(
         steps_between_swaps,
     )
 
-    # A job that fits runs as one batch, so the probe is skipped. Otherwise
-    # torch_sim.optimize probes on the OptimState itself; no load_states() here,
-    # which would pin the ceiling to the bare SimState.
-    with timed_block("Memory estimation"):
-        batcher.max_memory_scaler = _whole_job_memory_scaler(batched_state, model, batcher)
+    # torch 2.13 tunes pointwise kernels at run time and, on a nearly full GPU, copies
+    # their buffers to pinned host memory; that allocation can fail and crash the probe.
+    with inductor_config.patch({"triton.autotune_pointwise": False}):
+        # A job that fits runs as one batch, so the probe is skipped. Otherwise
+        # torch_sim.optimize probes on the OptimState itself; no load_states() here,
+        # which would pin the ceiling to the bare SimState.
+        with timed_block("Memory estimation"):
+            batcher.max_memory_scaler = _whole_job_memory_scaler(batched_state, model, batcher)
 
-    with timed_block("Optimization"):
-        observation = _reporting._observe_criterion(batcher, len(structures), convergence_fn)
-        observer = None
-        if observation is not None:
-            observer, convergence_fn = observation
-        try:
-            final_state = torch_sim.optimize(
-                system=batched_state,
-                model=model,
-                optimizer=optimizer,
-                convergence_fn=convergence_fn,
-                autobatcher=batcher,
-                steps_between_swaps=steps_between_swaps,
-            )
-        except BaseException:
+        with timed_block("Optimization"):
+            observation = _reporting._observe_criterion(batcher, len(structures), convergence_fn)
+            observer = None
+            if observation is not None:
+                observer, convergence_fn = observation
+            try:
+                final_state = torch_sim.optimize(
+                    system=batched_state,
+                    model=model,
+                    optimizer=optimizer,
+                    convergence_fn=convergence_fn,
+                    autobatcher=batcher,
+                    steps_between_swaps=steps_between_swaps,
+                )
+            except BaseException:
+                _reporting._finish_criterion(
+                    observer, False, config, optimizer_name, _DEFAULT_FORCE_CRITERION
+                )
+                raise
             _reporting._finish_criterion(
-                observer, False, config, optimizer_name, _DEFAULT_FORCE_CRITERION
+                observer, True, config, optimizer_name, _DEFAULT_FORCE_CRITERION
             )
-            raise
-        _reporting._finish_criterion(
-            observer, True, config, optimizer_name, _DEFAULT_FORCE_CRITERION
-        )
 
     # Extract results
     final_atoms = final_state.to_atoms()

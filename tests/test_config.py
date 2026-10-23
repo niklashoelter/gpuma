@@ -11,6 +11,7 @@ from gpuma.config import (
     load_config_from_file,
     resolve_model_type,
     save_config_to_file,
+    warn_d3_double_counting,
 )
 
 
@@ -18,7 +19,7 @@ def test_config_initialization():
     """Default Config has correct initial values."""
     cfg = Config()
     assert cfg.optimization.charge == 0
-    assert cfg.model.model_name == "uma-s-1p2"
+    assert cfg.model.model_name == "uma-s-1p2p1-ft-d4rev"
 
 
 def test_config_override():
@@ -422,3 +423,54 @@ def test_cache_key_covers_fields_added_later():
                             "some_future_knob": "xyz"},
                   "technical": {"device": "cpu"}})
     assert _config_from_key(_cache_key(cfg)).model.get("some_future_knob") == "xyz"
+
+
+def test_d3_rejected_for_dispersion_included_model():
+    """D3 on the d4rev model, which already includes dispersion, is an error."""
+    with pytest.raises(ValueError, match="already includes dispersion"):
+        Config({"model": {"model_name": "uma-s-1p2p1-ft-d4rev", "d3_correction": True}})
+
+
+def test_d3_off_allowed_for_dispersion_included_model():
+    """The d4rev model loads fine with D3 off."""
+    cfg = Config({"model": {"model_name": "uma-s-1p2p1-ft-d4rev"}})
+    assert cfg.model.d3_correction is False
+
+
+@pytest.mark.parametrize(
+    ("model_type", "model_name", "warns"),
+    [
+        ("fairchem", "uma-s-1p2p1", True),
+        ("orb", "orb_v3_direct_omol", True),
+        ("orb", "orb_v3_direct_20_omat", False),
+        ("sevennet", "7net-0", False),
+        ("fairchem", "uma-s-1p2p1-ft-r2scan", False),
+    ],
+)
+def test_d3_double_counting_warning(caplog, model_type, model_name, warns):
+    """Only ωB97M-V-trained UMA and ORB omol models warn about D3."""
+    cfg = Config({"model": {"model_type": model_type, "model_name": model_name}})
+    with caplog.at_level("WARNING", logger="gpuma.config"):
+        warn_d3_double_counting(cfg)
+    assert ("counts dispersion twice" in caplog.text) is warns
+
+
+@pytest.mark.parametrize(
+    "model",
+    [
+        {"model_type": "sevennet", "d3_correction": True},
+        {"model_type": "orb", "d3_correction": True},
+        {"model_type": "fairchem", "model_path": "/ckpt.pt", "d3_correction": True},
+    ],
+)
+def test_d3_allowed_when_default_name_does_not_apply(model):
+    """The d4rev default name doesn't block D3 for other backends or local checkpoints."""
+    assert Config({"model": model}).model.d3_correction is True
+
+
+def test_d3_warning_skips_local_checkpoint(caplog):
+    """A local checkpoint has no known training data, so there is no D3 warning."""
+    cfg = Config({"model": {"model_type": "fairchem", "model_path": "/ckpt.pt"}})
+    with caplog.at_level("WARNING", logger="gpuma.config"):
+        warn_d3_double_counting(cfg)
+    assert "counts dispersion twice" not in caplog.text

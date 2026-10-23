@@ -204,7 +204,7 @@ class TestCliConfig:
         assert cfg_file.exists()
         with open(cfg_file) as f:
             data = json.load(f)
-        assert data["model"]["model_name"] == "uma-s-1p2"
+        assert data["model"]["model_name"] == "uma-s-1p2p1-ft-d4rev"
 
     def test_config_validate(self, tmp_path):
         """config --validate accepts a valid config file."""

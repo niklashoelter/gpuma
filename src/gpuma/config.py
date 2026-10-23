@@ -34,7 +34,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     },
     "model": {
         "model_type": "fairchem",
-        "model_name": "uma-s-1p2",
+        "model_name": "uma-s-1p2p1-ft-d4rev",
         "model_path": None,
         "model_cache_dir": None,
         # SevenNet multi-modal fidelity selector (only used by model_type
@@ -44,7 +44,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "model_modal": None,
         "huggingface_token": None,
         "huggingface_token_file": None,
-        # D3 dispersion correction (supported for both ORB and Fairchem/UMA)
+        # D3 dispersion correction: off by default, rejected for uma-s-1p2p1-ft-d4rev
         "d3_correction": False,
         "d3_functional": "PBE",
         "d3_damping": "BJ",
@@ -96,6 +96,43 @@ VALID_BATCH_OPTIMIZERS: frozenset[str] = frozenset(
 
 # n_atoms_x_density is excluded: it divides by a bounding box, meaningless for molecules.
 VALID_MEMORY_SCALES_WITH: frozenset[str] = frozenset({"auto", "n_atoms", "n_edges"})
+
+# UMA models whose training labels include dispersion; D3 on top counts it twice.
+DISPERSION_INCLUDED_MODELS: frozenset[str] = frozenset({"uma-s-1p2p1-ft-d4rev"})
+WB97MV_UMA_MODELS: frozenset[str] = frozenset(
+    {"uma-s-1p1", "uma-s-1p2", "uma-s-1p2p1", "uma-m-1p1"}
+)
+
+
+def _named_model(config: Config) -> tuple[str, str]:
+    """Return ``(model_type, model_name)``; the name is empty for a local checkpoint."""
+    model_type = resolve_model_type(config)
+    if config.model.get("model_path"):
+        return model_type, ""
+    return model_type, str(config.model.get("model_name") or "").strip()
+
+
+def check_d3_allowed(config: Config) -> None:
+    """Raise if D3 is requested for a model that already includes dispersion."""
+    model_type, name = _named_model(config)
+    if (
+        config.model.get("d3_correction")
+        and model_type == "fairchem"
+        and name in DISPERSION_INCLUDED_MODELS
+    ):
+        raise ValueError(f"{name} already includes dispersion; set model.d3_correction to false")
+
+
+def warn_d3_double_counting(config: Config) -> None:
+    """Warn when D3 is added to a model trained on ωB97M-V, whose labels include dispersion."""
+    model_type, name = _named_model(config)
+    if (model_type == "fairchem" and name in WB97MV_UMA_MODELS) or (
+        model_type == "orb" and name.endswith("_omol")
+    ):
+        logger.warning(
+            "D3 on %s counts dispersion twice: its ωB97M-V training data already includes it",
+            name,
+        )
 
 
 def resolve_model_type(config: Config | dict[str, Any]) -> str:
@@ -349,6 +386,8 @@ def validate_config(config: Config) -> None:
         raise ValueError(
             f"Unknown model_type {raw_model_type!r}. Must be one of: {sorted(VALID_MODEL_TYPES)}"
         )
+
+    check_d3_allowed(config)
 
     # Batch optimizer must be a known value; a missing one means "fire"
     raw_optimizer = str(getattr(opt, "batch_optimizer", "fire") or "fire").strip().lower()

@@ -233,7 +233,7 @@ def test_dry_run_unknown_model_name_exit_3(tmp_path, monkeypatch, capsys):
             "--dry-run", "--json"]
     assert main(argv) == 3
     message = json.loads(capsys.readouterr().out)["error"]["message"]
-    assert "uma-s-1p2" in message and "orb_v3_direct_omol" in message
+    assert "uma-s-1p2p1-ft-d4rev" in message and "orb_v3_direct_omol" in message
 
 
 def test_library_value_error_is_runtime_failure(tmp_path, monkeypatch, capsys):

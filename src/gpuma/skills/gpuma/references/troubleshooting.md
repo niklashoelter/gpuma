@@ -8,7 +8,7 @@ read the end of the log (stderr).
 | Symptom | Cause | Fix |
 | --- | --- | --- |
 | Exit 3, `Unknown batch_optimizer` or another unknown value | Misspelled config value | Use a value listed by `gpuma config --schema` |
-| Exit 3, `CUDA is not available` | Not on a GPU node, or a broken GPU driver | Run `gpuma doctor`; work on the GPU node |
+| Exit 3, `CUDA is not available` | Not on a GPU node, a broken GPU driver, or a torch build for a newer CUDA than the driver supports | Run `gpuma doctor`; work on the GPU node; if it says the driver is too old, tell the user and show its reinstall hint |
 | Exit 3, `Requested GPU ... but only N GPU(s) are visible` | Wrong device index | Use `recommended_device` from `gpuma doctor --json` |
 | Exit 3, `Invalid SMILES` | SMILES does not parse | Check the SMILES with the user |
 | Exit 3, file not found | Wrong input path | Check the path; paths are relative to the working directory |

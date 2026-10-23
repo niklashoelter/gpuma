@@ -30,7 +30,7 @@ Unknown fields are preserved. **Always use a config file for CLI and API calls.*
 
   "model": {
     "model_type": "fairchem",
-    "model_name": "uma-s-1p2",
+    "model_name": "uma-s-1p2p1-ft-d4rev",
     "model_modal": null,
 
     "model_path": null,
@@ -98,6 +98,12 @@ For multi-modal checkpoints such as `7net-omni` or `7net-mf-ompa`, a
 
 ## D3 Dispersion Correction
 
+D3 is off by default and adds GPU memory per batch; enable it only for models
+trained without dispersion. `uma-s-1p2p1-ft-d4rev` already includes dispersion
+and rejects D3. The other UMA models and the ORB `*_omol` models are trained on
+ωB97M-V, which also includes it, so gpuma logs a warning when D3 is enabled for
+them.
+
 DFT-D3(BJ) dispersion correction is supported for the ORB-v3,
 Fairchem/UMA, and SevenNet backends.  Internally ORB uses orb-models' native
 ``D3SumModel`` and Fairchem uses torch-sim's ``D3DispersionModel``
@@ -109,24 +115,8 @@ single-structure path).
 ```json
 {
   "model": {
-    "model_type": "orb",
-    "model_name": "orb_v3_direct_omol",
-
-    "d3_correction": true,
-    "d3_functional": "PBE",
-    "d3_damping": "BJ"
-  },
-  "technical": {
-    "device": "cuda"
-  }
-}
-```
-
-```json
-{
-  "model": {
-    "model_type": "fairchem",
-    "model_name": "uma-s-1p2",
+    "model_type": "sevennet",
+    "model_name": "7net-0",
 
     "d3_correction": true,
     "d3_functional": "PBE",
@@ -153,7 +143,7 @@ optimization:
 
 model:
   model_type: fairchem
-  model_name: uma-s-1p2
+  model_name: uma-s-1p2p1-ft-d4rev
   model_modal: null
 
   model_path: null
@@ -202,13 +192,13 @@ technical:
 | Parameter | Default | Description |
 |---|---|---|
 | `model_type` | `"fairchem"` | Backend: `"fairchem"` / `"uma"`, `"orb"` / `"orb-v3"`, or `"sevennet"` / `"7net"` |
-| `model_name` | `"uma-s-1p2"` | Model identifier (see [Available Models](#available-models)) |
+| `model_name` | `"uma-s-1p2p1-ft-d4rev"` | Model identifier (see [Available Models](#available-models)) |
 | `model_modal` | `null` | SevenNet multi-modal fidelity selector. Valid values depend on the checkpoint (`7net-omni`: e.g. `"omol25_high"`, `"omol25_low"`, `"spice"`, `"qcml"`; `7net-mf-ompa`: `"mpa"`, `"omat24"`). Required for multi-modal checkpoints; ignored by single-modal checkpoints and by other backends |
 | `model_path` | `null` | Local checkpoint path (Fairchem and SevenNet; overrides `model_name`) |
 | `model_cache_dir` | `null` | Directory for cached model downloads |
 | `huggingface_token` | `null` | HuggingFace token for model access |
 | `huggingface_token_file` | `null` | File path to read the HF token from |
-| `d3_correction` | `false` | Enable D3 dispersion correction. Supported for the ORB, Fairchem/UMA, and SevenNet backends |
+| `d3_correction` | `false` | Enable D3 dispersion correction. Supported for the ORB, Fairchem/UMA, and SevenNet backends; rejected for `uma-s-1p2p1-ft-d4rev` |
 | `d3_functional` | `"PBE"` | DFT functional for D3 correction (ORB/Fairchem use the orb-models BJ-damping table; SevenNet uses its own native D3) |
 | `d3_damping` | `"BJ"` | Damping scheme for D3 correction (`"BJ"` or `"BJM"`) |
 
@@ -243,7 +233,9 @@ Before calibration, torch-sim measures every system's neighbor-list edge count s
 
 | Model Name | Description |
 |---|---|
-| `uma-s-1p2` | UMA small, version 1.2 (default) |
+| `uma-s-1p2p1-ft-d4rev` | UMA small 1.2.1 fine-tuned on ωB97M-D4rev (default); includes dispersion, so D3 is rejected |
+| `uma-s-1p2p1` | UMA small, version 1.2.1 |
+| `uma-s-1p2` | UMA small, version 1.2 |
 | `uma-s-1p1` | UMA small, version 1.1 |
 | `uma-m-1p1` | UMA medium, version 1.1 |
 
@@ -286,7 +278,7 @@ instead be supplied via `model_path`.
 | `7net-omni-i8` | SevenNet Omni i8 (multi-modal) |
 | `7net-omni-i12` | SevenNet Omni i12 (multi-modal) |
 
-> D3 dispersion correction can be enabled for any ORB, Fairchem/UMA, or SevenNet model with `d3_correction: true`.
+> D3 dispersion correction can be enabled for any ORB, Fairchem/UMA, or SevenNet model with `d3_correction: true`, except `uma-s-1p2p1-ft-d4rev`. gpuma warns when it is enabled for UMA or ORB `*_omol` models.
 
 These model names are also available programmatically as
 `gpuma.AVAILABLE_FAIRCHEM_MODELS`, `gpuma.AVAILABLE_ORB_MODELS`, and

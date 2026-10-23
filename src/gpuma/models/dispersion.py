@@ -13,7 +13,7 @@ from typing import Any
 
 import torch
 
-from ..config import Config
+from ..config import Config, check_d3_allowed, warn_d3_double_counting
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +33,8 @@ def _build_d3_dispersion_model(
     from orb_models.forcefield.inference.d3_model import AlchemiDFTD3  # type: ignore
     from torch_sim.models.dispersion import D3DispersionModel  # type: ignore
 
+    check_d3_allowed(config)
+    warn_d3_double_counting(config)
     functional = str(config.model.d3_functional)
     damping = str(config.model.d3_damping)
     coeffs = AlchemiDFTD3.get_d3_coefficients(functional, damping)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""End-to-end workflow benchmark for GPUMA 0.7.0.
+"""End-to-end workflow benchmark for GPUMA.
 
-Exercises the *entire* pipeline introduced/expanded in 0.7.0:
+Exercises the *entire* pipeline:
 
     SMILES  --(nvMolKit GPU / morfeus CPU conformer generation)-->  conformers
             --(torch-sim batch optimization)-->  optimized structures
@@ -9,7 +9,7 @@ Exercises the *entire* pipeline introduced/expanded in 0.7.0:
 across three dataset sizes (small / medium / large SMILES sets) and all model
 backends that make sense for isolated molecules:
 
-  - uma-s-1p2               (Fairchem UMA, omol)
+  - uma-s-1p2p1-ft-d4rev    (Fairchem UMA, omol, default model)
   - orb_v3_direct_omol      (ORB-v3)
   - orb_v3_conservative_omol(ORB-v3)
   - 7net-0                  (SevenNet)   <- one SevenNet model
@@ -58,14 +58,16 @@ class ModelChoice:
 
 MODELS = [
     ModelChoice("uma-s-1p2",            "config.json",     "fairchem", "uma-s-1p2"),
+    ModelChoice("uma-s-1p2p1",          "config.json",     "fairchem", "uma-s-1p2p1"),
+    ModelChoice("uma-s-1p2p1-d4rev",    "config.json",     "fairchem", "uma-s-1p2p1-ft-d4rev"),
     ModelChoice("uma-m-1p1",            "config.json",     "fairchem", "uma-m-1p1"),
     ModelChoice("orb-v3-direct",        "config_orb.json", "orb",      "orb_v3_direct_omol"),
     ModelChoice("orb-v3-conservative",  "config_orb.json", "orb",      "orb_v3_conservative_omol"),
     ModelChoice("7net-0",               "config.json",     "sevennet", "7net-0"),
 ]
 
-# Default example set excludes the heavy uma-m-1p1 model; pass --models to include it.
-DEFAULT_MODEL_LABELS = ["uma-s-1p2", "orb-v3-direct", "orb-v3-conservative", "7net-0"]
+# Default set: the default UMA model plus ORB and SevenNet; pass --models for the others.
+DEFAULT_MODEL_LABELS = ["uma-s-1p2p1-d4rev", "orb-v3-direct", "orb-v3-conservative", "7net-0"]
 
 # (label, smiles file, conformers per molecule) -> aims for ~50 / ~1000 / ~4000 structures
 DATASETS = [

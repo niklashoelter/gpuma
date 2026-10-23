@@ -17,14 +17,18 @@ By default, `pip install` may pull a **CPU-only** build of PyTorch
 CUDA **before** installing GPUMA.
 
 Visit [pytorch.org/get-started](https://pytorch.org/get-started/locally/)
-to get the install command matching your platform and CUDA version, e.g.:
+to get the install command matching your platform and CUDA version. Keep
+`torch==2.13.0`, which gpuma pins, and only change the `cuXXX` index, e.g.:
 
 ```bash
-pip install torch --index-url https://download.pytorch.org/whl/cu124
+pip install torch==2.13.0 --index-url https://download.pytorch.org/whl/cu126
 ```
 
-Then install GPUMA — pip will see that a CUDA-enabled PyTorch is already
-present and will not replace it:
+The `cu126` build runs on NVIDIA drivers from 525 on. The default PyPI build of
+torch 2.13 targets CUDA 13 and needs driver 580 or newer.
+
+Then install GPUMA. pip keeps the installed torch 2.13.0; any other torch
+version is replaced by the default PyPI build:
 
 ```bash
 pip install gpuma
@@ -32,6 +36,14 @@ pip install gpuma
 
 This pulls in all model backends (Fairchem UMA, ORB-v3, and SevenNet) as
 core dependencies — there is no separate optional extra to install.
+
+### Pinned dependencies
+
+Every dependency in `pyproject.toml` is pinned to the exact version gpuma is
+tested with (`==`, no ranges), including torch, fairchem-core, torch-sim, the
+`dev` extra and the build backend. Installing gpuma into an environment that
+already holds other versions of these packages replaces them, so use a fresh
+environment.
 
 ### GPU conformer embedding
 
@@ -53,8 +65,8 @@ installs and the CPU backend is used.
 
   # activate the environment
 
-  # install PyTorch with CUDA support (pick your CUDA version at https://pytorch.org)
-  uv pip install torch --index-url https://download.pytorch.org/whl/cu124
+  # install PyTorch 2.13.0 with CUDA support (keep the version, pick the cuXXX index for your driver)
+  uv pip install torch==2.13.0 --index-url https://download.pytorch.org/whl/cu126
 
   # install gpuma from PyPI inside the environment
   uv pip install gpuma
@@ -66,8 +78,8 @@ installs and the CPU backend is used.
   conda create -n gpuma-py312 python=3.12
   conda activate gpuma-py312
 
-  # install PyTorch with CUDA support (pick your CUDA version at https://pytorch.org)
-  pip install torch --index-url https://download.pytorch.org/whl/cu124
+  # install PyTorch 2.13.0 with CUDA support (keep the version, pick the cuXXX index for your driver)
+  pip install torch==2.13.0 --index-url https://download.pytorch.org/whl/cu126
 
   # install gpuma from PyPI inside the environment
   pip install gpuma
@@ -83,11 +95,14 @@ installs and the CPU backend is used.
 git clone https://github.com/niklashoelter/gpuma.git
 cd gpuma
 
-# install PyTorch with CUDA support (pick your CUDA version at https://pytorch.org)
-pip install torch --index-url https://download.pytorch.org/whl/cu124
+# install PyTorch 2.13.0 with CUDA support (keep the version, pick the cuXXX index for your driver)
+pip install torch==2.13.0 --index-url https://download.pytorch.org/whl/cu126
 
 # install using (uv) pip
 uv pip install .
 # or, without uv:
 pip install .
+
+# for development: tests, linting and docs tools, all pinned
+uv pip install -e ".[dev]"
 ```

@@ -26,11 +26,11 @@ jobs:
         cache: 'pip'
     - name: Install dependencies and package
       run: |
-        python -m pip install --upgrade pip setuptools wheel
-        pip install -U flake8 pytest
-        
+        python -m pip install pip==26.2.2 setuptools==80.10.2 wheel==0.48.0
+        pip install flake8==7.4.1 pytest==9.1.1
+
         # install this package (pulls dependencies from pyproject.toml)
-        pip install -e .[yaml]
+        pip install -e .
 
     - name: Lint with flake8
       run: |
@@ -41,7 +41,7 @@ jobs:
         pytest -q
     - name: Build package
       run: |
-        pip install build twine
+        pip install build==1.6.1 twine==6.2.0
         python -m build
     - name: Check package description
       run: |

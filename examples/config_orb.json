@@ -23,7 +23,7 @@
     "huggingface_token": null,
     "huggingface_token_file": null,
 
-    "d3_correction": true,
+    "d3_correction": false,
     "d3_functional": "PBE",
     "d3_damping": "BJ"
 

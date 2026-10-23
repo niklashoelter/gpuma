@@ -23,7 +23,8 @@ Three model backends are supported out of the box:
 - **ORB-v3** ([orbital-materials/orb-models](https://github.com/orbital-materials/orb-models)).
 - **SevenNet** ([SevenNet](https://github.com/MDIL-SNU/SevenNet)), including multi-modal checkpoints such as `7net-omni`.
 
-All three backends support optional DFT-D3(BJ) dispersion correction.
+All three backends support optional DFT-D3(BJ) dispersion correction. It is off by
+default and rejected for the default `uma-s-1p2p1-ft-d4rev`, which already includes dispersion.
 
 GPUMA is especially designed for batch optimizations of many structures (conformer ensembles, datasets) on GPU,
 ensuring efficient parallelization and maximum GPU utilization by leveraging the [torch-sim library](https://arxiv.org/abs/2508.06628).
@@ -45,7 +46,8 @@ Feedback and improvements are always welcome!
 
 This installs `gpuma` together with all dependencies (including the
 Fairchem UMA, ORB-v3, and SevenNet backends, as well as the nvMolKit GPU
-conformer-embedding backend).
+conformer-embedding backend). Every dependency is pinned to the exact tested
+version, so install gpuma into a fresh environment.
 At the moment, installation and tests have only been
 validated under Python 3.12; using other Python versions is currently
 considered experimental.
@@ -54,10 +56,12 @@ considered experimental.
 > PyTorch (especially on Windows). To enable GPU acceleration, install
 > PyTorch with CUDA **before** installing GPUMA. Visit
 > [pytorch.org/get-started](https://pytorch.org/get-started/locally/) to
-> get the install command for your platform and CUDA version, e.g.:
+> get the install command for your platform and CUDA version. Keep
+> `torch==2.13.0`, which gpuma pins, and only change the `cuXXX` index, e.g.:
 > ```bash
-> pip install torch --index-url https://download.pytorch.org/whl/cu124
+> pip install torch==2.13.0 --index-url https://download.pytorch.org/whl/cu126
 > ```
+> The `cu126` build runs on drivers from 525 on; the default PyPI build needs driver 580 or newer.
 
 - **Using a `uv` virtual environment**
   ```powershell
@@ -66,8 +70,8 @@ considered experimental.
 
   # activate the environment
 
-  # install PyTorch with CUDA support (pick your CUDA version at https://pytorch.org)
-  uv pip install torch --index-url https://download.pytorch.org/whl/cu124
+  # install PyTorch 2.13.0 with CUDA support (keep the version, pick the cuXXX index for your driver)
+  uv pip install torch==2.13.0 --index-url https://download.pytorch.org/whl/cu126
 
   # install gpuma from PyPI inside the environment
   uv pip install gpuma
@@ -79,8 +83,8 @@ considered experimental.
   conda create -n gpuma-py312 python=3.12
   conda activate gpuma-py312
 
-  # install PyTorch with CUDA support (pick your CUDA version at https://pytorch.org)
-  pip install torch --index-url https://download.pytorch.org/whl/cu124
+  # install PyTorch 2.13.0 with CUDA support (keep the version, pick the cuXXX index for your driver)
+  pip install torch==2.13.0 --index-url https://download.pytorch.org/whl/cu126
 
   # install gpuma from PyPI inside the environment
   pip install gpuma
@@ -103,8 +107,8 @@ considered experimental.
 git clone https://github.com/niklashoelter/gpuma.git
 cd gpuma
 
-# install PyTorch with CUDA support (pick your CUDA version at https://pytorch.org)
-pip install torch --index-url https://download.pytorch.org/whl/cu124
+# install PyTorch 2.13.0 with CUDA support (keep the version, pick the cuXXX index for your driver)
+pip install torch==2.13.0 --index-url https://download.pytorch.org/whl/cu126
 
 # install using (uv) pip
 uv pip install .
@@ -128,7 +132,7 @@ Using a configuration file is highly recommended for reproducibility and ease of
 
 Also check the [examples/](examples) folder in the repository for sample config files and usage examples:
 - [examples/config.json](examples/config.json) – Fairchem UMA configuration
-- [examples/config_orb.json](examples/config_orb.json) – ORB-v3 configuration (with D3 options)
+- [examples/config_orb.json](examples/config_orb.json) – ORB-v3 configuration
 - [examples/config_sevennet.json](examples/config_sevennet.json) – SevenNet configuration (multi-modal `7net-omni`)
 - [examples/example_single_optimization.py](examples/example_single_optimization.py) – single-structure optimization from Python
 - [examples/example_ensemble_optimization.py](examples/example_ensemble_optimization.py) – ensemble/multi-structure optimization from Python
@@ -186,9 +190,10 @@ When a run is started from SMILES, an RDKit/MMFF force field (via nvMolKit on GP
 - SevenNet: models are downloaded automatically on first use; multi-modal
   checkpoints (e.g. `7net-omni`, `7net-mf-ompa`) also require a
   `model_modal` fidelity (see [docs/config.md](docs/config.md)).
-- D3 dispersion correction: set `"d3_correction": true` in the config
-  to enable DFT-D3(BJ) for any backend (see
-  [docs/config.md](docs/config.md)).
+- D3 dispersion correction: off by default. Set `"d3_correction": true` to
+  enable DFT-D3(BJ) for models trained without dispersion. It is rejected for
+  `uma-s-1p2p1-ft-d4rev` and logs a warning for the other UMA models and ORB
+  `*_omol` models (see [docs/config.md](docs/config.md)).
 
 ## License
 MIT License (see LICENSE)

@@ -620,7 +620,7 @@ def _check_smiles(smiles: str) -> None:
 
 
 _DEFAULT_MODEL_NAMES = {
-    "fairchem": "uma-s-1p2",
+    "fairchem": "uma-s-1p2p1-ft-d4rev",
     "orb": "orb_v3_direct_omol",
     "sevennet": "7net-omni",
 }

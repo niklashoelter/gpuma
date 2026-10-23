@@ -31,6 +31,9 @@ Guidance for AI coding agents working on the GPUMA repository. (Agents that
 - Lint the files you change with `ruff check` and `ruff format` (line length
   100). Some untouched files have older lint findings; leave those alone.
 - Docs: `mkdocs build --strict` must pass.
+- Pin every dependency exactly (`==`): runtime, the `dev` extra, the build
+  backend and the CI tools in `.github/workflows`. Bump them together after
+  testing; never use ranges.
 
 ## Conventions
 

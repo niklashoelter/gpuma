@@ -35,6 +35,8 @@ class ModelChoice:
 MODELS = [
     ModelChoice("uma-s-1p1",           "config.json",     "uma-s-1p1"),
     ModelChoice("uma-s-1p2",           "config.json",     "uma-s-1p2"),
+    ModelChoice("uma-s-1p2p1",         "config.json",     "uma-s-1p2p1"),
+    ModelChoice("uma-s-1p2p1-d4rev",   "config.json",     "uma-s-1p2p1-ft-d4rev"),
     ModelChoice("uma-m-1p1",           "config.json",     "uma-m-1p1"),
     ModelChoice("orb-v3-direct",       "config_orb.json", "orb_v3_direct_omol"),
     ModelChoice("orb-v3-conservative", "config_orb.json", "orb_v3_conservative_omol"),
@@ -48,9 +50,7 @@ FCONV      = [5e-1, 1e-1, 5e-2]
 def build_config(model, optimizer, fconv, device):
     cfg = load_config_from_file(os.path.join(_HERE, model.config_file))
     cfg.model.model_name    = model.model_name
-    cfg.model.d3_correction = True
-    cfg.model.d3_functional = "PBE"
-    cfg.model.d3_damping    = "BJ"
+    cfg.model.d3_correction = False
     cfg.optimization.batch_optimization_mode     = "batch"
     cfg.optimization.batch_optimizer             = optimizer
     cfg.optimization.force_convergence_criterion = fconv

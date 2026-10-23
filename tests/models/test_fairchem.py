@@ -153,8 +153,13 @@ class TestFairchemModelRegistry:
 
     def test_fairchem_model_names_exist(self):
         """AVAILABLE_FAIRCHEM_MODELS contains all expected UMA models."""
-        assert len(AVAILABLE_FAIRCHEM_MODELS) >= 3
-        assert "uma-s-1p2" in AVAILABLE_FAIRCHEM_MODELS
+        assert set(AVAILABLE_FAIRCHEM_MODELS) == {
+            "uma-s-1p2",
+            "uma-s-1p2p1",
+            "uma-s-1p2p1-ft-d4rev",
+            "uma-s-1p1",
+            "uma-m-1p1",
+        }
 
 
 class TestFairchemD3Caching:
@@ -316,3 +321,38 @@ class TestFairchemLocalCheckpoint:
         })
         with pytest.raises(ValueError, match="Model name must be specified"):
             _load_fairchem_torchsim(config)
+
+
+def test_d3_build_rejects_dispersion_included_model():
+    """D3 switched on after construction still fails before the model loads."""
+    import torch
+
+    from gpuma.models.dispersion import _build_d3_dispersion_model
+
+    config = Config({"model": {"model_type": "fairchem", "model_name": "uma-s-1p2p1-ft-d4rev"}})
+    config.model.d3_correction = True
+    with pytest.raises(ValueError, match="already includes dispersion"):
+        _build_d3_dispersion_model(config, torch.device("cpu"), torch.float64, compute_stress=False)
+
+
+@pytest.mark.parametrize("loader", ["get_predict_unit", "load_predict_unit"])
+def test_calculator_uses_batch_inference_settings(monkeypatch, tmp_path, loader):
+    """Both ASE-path loaders ask fairchem for the "batch" settings, like torch-sim does."""
+    from fairchem.core import pretrained_mlip
+
+    seen = {}
+
+    def fake_loader(*args, **kwargs):
+        seen.update(kwargs)
+        raise RuntimeError("stop")
+
+    monkeypatch.setattr(pretrained_mlip, loader, fake_loader)
+    model = {"model_type": "fairchem"}
+    if loader == "load_predict_unit":
+        checkpoint = tmp_path / "uma.pt"
+        checkpoint.write_bytes(b"")
+        model["model_path"] = str(checkpoint)
+    config = Config({"model": model, "technical": {"device": "cpu"}})
+    with pytest.raises(RuntimeError, match="stop"):
+        load_calculator(config)
+    assert seen["inference_settings"] == "batch"

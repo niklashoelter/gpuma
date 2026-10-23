@@ -116,14 +116,27 @@ def _check_cuda(wants_cuda: bool) -> Check:
     if torch.cuda.is_available():
         return Check("cuda", "ok", f"{torch.cuda.device_count()} GPU(s) visible")
     detail = "CUDA is not available"
+    hint = "Run on a GPU node and check that nvidia-smi lists the GPUs."
     if torch.version.cuda is None:
         detail += " (this torch build has no CUDA support)"
-    return Check(
-        "cuda",
-        "fail" if wants_cuda else "warn",
-        detail,
-        hint="Run on a GPU node and check that nvidia-smi lists the GPUs.",
-    )
+    elif _driver_too_old():
+        detail += f" (this torch build targets CUDA {torch.version.cuda}; the driver is too old)"
+        hint = "Update the NVIDIA driver, or install a torch build for an older CUDA."
+        if int(torch.version.cuda.split(".")[0]) >= 13:
+            hint = (
+                "Reinstall torch for CUDA 12.6: "
+                f"pip install torch=={torch.__version__.split('+')[0]} "
+                "--index-url https://download.pytorch.org/whl/cu126"
+            )
+    return Check("cuda", "fail" if wants_cuda else "warn", detail, hint=hint)
+
+
+def _driver_too_old() -> bool:
+    try:
+        torch.cuda.init()
+    except (RuntimeError, AssertionError) as exc:
+        return "too old" in str(exc)
+    return False
 
 
 def _check_gpus(device: str | None) -> Check | None:

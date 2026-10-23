@@ -355,6 +355,25 @@ class TestAutobatcherMemoryProbe:
         assert all(r is not None for r in results)
         assert probes == []
 
+    def test_pointwise_autotune_off_only_during_batch_run(self, monkeypatch, ethanol):
+        """Run-time pointwise tuning copies to pinned memory, which can fail near OOM."""
+        import torch._inductor.config as inductor_config
+        import torch_sim
+
+        seen = []
+        real = torch_sim.optimize
+
+        def recording(*args, **kwargs):
+            seen.append(inductor_config.triton.autotune_pointwise)
+            return real(*args, **kwargs)
+
+        monkeypatch.setattr(torch_sim, "optimize", recording)
+        before = inductor_config.triton.autotune_pointwise
+        results = optimize_structure_batch([ethanol], self._config())
+        assert results[0] is not None
+        assert seen == [False]
+        assert inductor_config.triton.autotune_pointwise == before
+
     def test_single_structure(self, ethanol):
         """Used to fail: the probe ceiling landed just under the structure's own metric."""
         results = optimize_structure_batch([ethanol], self._config())
