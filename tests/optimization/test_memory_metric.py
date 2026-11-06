@@ -45,13 +45,13 @@ def test_value_set_after_construction_is_checked():
         ("orb", "bfgs", "BFGS"),
         ("fairchem", "bfgs", "BFGS"),
         ("aimnet", "bfgs", "BFGS"),
-        ("aimnet", "lbfgs", "L-BFGS"),
+        ("aimnet", "lbfgs", None),
         ("aimnet", "fire", None),
         ("orb", "lbfgs", None),
     ],
 )
 def test_batch_optimizer_memory_warning(caplog, model_type, optimizer, warned):
-    """The memory estimate misses BFGS's Hessian, and AIMNet2 batches leave no room for L-BFGS."""
+    """The memory estimate misses BFGS's Hessian; other optimizers fit."""
     cfg = Config(
         {"model": {"model_type": model_type}, "optimization": {"batch_optimizer": optimizer}}
     )
