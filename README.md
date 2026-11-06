@@ -196,8 +196,6 @@ When a run is started from SMILES, an RDKit/MMFF force field (via nvMolKit on GP
 - AIMNet2: models are downloaded automatically on first use. They cover 14
   elements, and only `aimnet2-nse` handles open-shell structures; other inputs
   are rejected before the model loads (see [docs/config.md](docs/config.md)).
-  Use the `fire` batch optimizer: `lbfgs` can run out of GPU memory on large
-  AIMNet2 jobs.
 - BFGS: `"batch_optimizer": "bfgs"` keeps a dense Hessian per structure and can
   run out of GPU memory on large batch jobs with any backend; prefer `lbfgs` or `fire`.
 - D3 dispersion correction: off by default. Set `"d3_correction": true` to

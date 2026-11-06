@@ -43,8 +43,4 @@ Guidance for AI coding agents working on the GPUMA repository. (Agents that
 - The `--json` summary is a contract for agents. Only add keys; bump
   `SUMMARY_SCHEMA_VERSION` in `cli_report.py` for anything else.
 - No backward-compatibility shims unless asked for.
-- The AIMNet2 L-BFGS warning (`_warn_batch_optimizer_memory` in `optimizer.py`)
-  is temporary: drop it, and its docs and skill lines, once an `aimnet` release
-  contains isayevlab/aimnetcentral#150. Bump the pin, then rerun a large mixed
-  L-BFGS job to confirm.
 - Don't add AI co-author trailers or "generated with" footers to commits or PRs.

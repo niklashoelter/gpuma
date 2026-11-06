@@ -200,7 +200,7 @@ technical:
 | Parameter | Default | Description |
 |---|---|---|
 | `batch_optimization_mode` | `"batch"` | `"sequential"` (ASE per structure) or `"batch"` (torch-sim GPU-accelerated). If a batch fails, its structures are retried one at a time, so one bad input fails only itself |
-| `batch_optimizer` | `"fire"` | Optimizer for both single and batch modes: `"fire"`, `"gradient_descent"`, `"lbfgs"`, or `"bfgs"`. In single-structure (ASE) mode, maps to ASE FIRE/BFGS/LBFGS (`"gradient_descent"` falls back to FIRE). Defaults to `"fire"` if unset; an unknown value is an error. In batch mode, `"bfgs"` keeps a dense Hessian per structure that the memory estimate leaves out and can run out of GPU memory on large jobs, and `"lbfgs"` can do the same with AIMNet2; gpuma warns for both |
+| `batch_optimizer` | `"fire"` | Optimizer for both single and batch modes: `"fire"`, `"gradient_descent"`, `"lbfgs"`, or `"bfgs"`. In single-structure (ASE) mode, maps to ASE FIRE/BFGS/LBFGS (`"gradient_descent"` falls back to FIRE). Defaults to `"fire"` if unset; an unknown value is an error. In batch mode, `"bfgs"` keeps a dense Hessian per structure that the memory estimate leaves out and can run out of GPU memory on large jobs; gpuma warns for it |
 | `charge` | `0` | Total charge of the system (inferred from SMILES, not overridden). Must be an integer |
 | `multiplicity` | `1` | Spin multiplicity of the system. A multiplicity the electron count can't have (e.g. a singlet radical) is an error |
 | `force_convergence_criterion` | `5e-2` | Force convergence threshold (eV/A). Used for both single and batch modes |
@@ -237,7 +237,7 @@ technical:
 | `max_memory_padding` | `0.95` | Fraction of GPU memory the autobatcher is allowed to fill during calibration. Lower = more headroom, smaller batches. Must be between 0.05 and 0.95 |
 | `memory_scaling_factor` | `1.75` | Factor by which the autobatcher grows the probe size during calibration. Larger = faster calibration but coarser final batch size; smaller = slower but tighter. A job runs as one batch without probing only if its forward-pass peak times this factor fits in `max_memory_padding` of free memory. Must be > 1 |
 | `max_atoms_to_try` | `100000` | Upper bound on the autobatcher's calibration probe size (atoms) |
-| `memory_scales_with` | `"auto"` | Per-structure memory metric for batch sizing: `"n_atoms"`, `"n_edges"` or `"auto"`. `"auto"` uses `n_atoms` for UMA, whose large fixed memory per structure makes edge counts overcharge small molecules, and for AIMNet2, whose Coulomb term grows with the square of the batch's atom count; `n_edges` for ORB and SevenNet |
+| `memory_scales_with` | `"auto"` | Per-structure memory metric for batch sizing: `"n_atoms"`, `"n_edges"` or `"auto"`. `"auto"` uses `n_atoms` for UMA, whose large fixed memory per structure makes edge counts overcharge small molecules, and for AIMNet2, whose all-pairs Coulomb within each molecule edge counts don't track; `n_edges` for ORB and SevenNet |
 | `steps_between_swaps` | `1` | Optimization steps between batch swaps in the in-flight autobatcher. `1` is fastest on this codebase's screenings (uma-s/uma-m/orb); higher values are monotonically slower. Must be at least 1 |
 | `logging_level` | `"INFO"` | Logging verbosity: `"DEBUG"`, `"INFO"`, `"WARNING"`, `"ERROR"`, `"CRITICAL"` |
 

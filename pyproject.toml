@@ -33,7 +33,7 @@ dependencies = [
   "warp-lang==1.17.0",
   "sevenn[torchsim]==0.13.0",
   "nvmolkit==0.5.1",
-  "aimnet[ase,torchsim]==0.2.5"
+  "aimnet[ase,torchsim]==0.2.6"
 ]
 
 [project.optional-dependencies]

@@ -23,7 +23,7 @@ them for molecules.
 
 | Key | Default | Guidance |
 | --- | --- | --- |
-| `optimization.batch_optimizer` | `fire` | Use `lbfgs`, but `fire` with AIMNet2, where `lbfgs` can run out of GPU memory on large jobs. Never `bfgs`, which is slower than `fire` and can run out of GPU memory. |
+| `optimization.batch_optimizer` | `fire` | Use `lbfgs`. Never `bfgs`, which is slower than `fire` and can run out of GPU memory. |
 | `optimization.batch_optimization_mode` | `batch` | Keep `batch`. `sequential` optimizes one structure at a time and is only for debugging. |
 | `optimization.force_convergence_criterion` | `0.05` eV/Å | Tighten (e.g. `0.01`) only when the geometry feeds something force-sensitive, such as frequencies. |
 | `optimization.energy_convergence_criterion` | `null` | Leave unset; the force criterion is the reliable one. |

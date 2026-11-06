@@ -489,7 +489,7 @@ def _memory_scales_with(config: Config) -> str:
     if choice != "auto":
         return choice
     # UMA's large per-system memory makes edge counts overcharge small molecules; AIMNet2's
-    # all-pairs Coulomb matrix grows with the square of the batch's atoms, whatever its edges.
+    # all-pairs Coulomb within each molecule isn't tracked by edge counts either.
     return "n_atoms" if resolve_model_type(config) in ("fairchem", "aimnet") else "n_edges"
 
 
@@ -500,12 +500,6 @@ def _warn_batch_optimizer_memory(config: Config) -> None:
         logger.warning(
             "BFGS keeps a dense Hessian per structure that the batch memory estimate leaves out, "
             "so large jobs can run out of GPU memory; use lbfgs or fire"
-        )
-    elif name == "lbfgs" and resolve_model_type(config) == "aimnet":
-        # aimnet <= 0.2.5 sizes its Coulomb neighbor matrix by the batch's total atoms.
-        logger.warning(
-            "L-BFGS with AIMNet2 can run out of GPU memory on large jobs, as AIMNet2 batches "
-            "fill the GPU and leave no room for its history; use fire"
         )
 
 

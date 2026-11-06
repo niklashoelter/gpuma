@@ -87,8 +87,7 @@ For any code other than 0, read
   Se, Br and I; use `aimnet2-nse` for radicals and triplets. For conformer
   searches on organic molecules the model choice changes the results little.
 - **Optimizer.** Set `optimization.batch_optimizer` to `lbfgs`. It is faster
-  than the default `fire` and at least as accurate. With AIMNet2 use `fire`:
-  `lbfgs` can run out of GPU memory on large jobs. Avoid `bfgs`, which is
+  than the default `fire` and at least as accurate. Avoid `bfgs`, which is
   slower than `fire` and can run out of GPU memory on large jobs.
 - **Dispersion.** Leave `model.d3_correction` off for UMA and the ORB OMol
   models. Their training data (ωB97M-D4rev or ωB97M-V) already includes dispersion.
