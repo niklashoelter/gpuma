@@ -8,6 +8,7 @@ work than any of these assertions need.
 
 import copy
 
+import numpy as np
 import pytest
 
 from gpuma.config import Config, load_config_from_file
@@ -359,7 +360,7 @@ def test_generate_ensembles_keep_all_is_reproducible(cpu_config):
     assert len(first) == len(second)
     for a, b in zip(first, second, strict=True):
         assert a.symbols == b.symbols
-        assert a.coordinates == pytest.approx(b.coordinates)
+        assert np.array(a.coordinates) == pytest.approx(np.array(b.coordinates))
 
 
 def test_generate_ensembles_keep_all_first_agrees_with_generate_structures(cpu_config):
@@ -369,7 +370,7 @@ def test_generate_ensembles_keep_all_first_agrees_with_generate_structures(cpu_c
     (ensemble,) = generate_ensembles([ETHANOL], None, cpu_config, **kwargs)
 
     assert single.symbols == ensemble[0].symbols
-    assert single.coordinates == pytest.approx(ensemble[0].coordinates)
+    assert np.array(single.coordinates) == pytest.approx(np.array(ensemble[0].coordinates))
 
 
 # ---------------------------------------------------------------------------
@@ -545,7 +546,7 @@ def test_prune_symmetry_is_off_by_default(cpu_config):
 
     assert len(absent) == len(explicit)
     for one, other in zip(absent, explicit, strict=True):
-        assert one.coordinates == pytest.approx(other.coordinates)
+        assert np.array(one.coordinates) == pytest.approx(np.array(other.coordinates))
 
 
 def test_prune_symmetry_keeps_the_lowest_energy_conformer_first(cpu_config):
@@ -558,7 +559,7 @@ def test_prune_symmetry_keeps_the_lowest_energy_conformer_first(cpu_config):
         [ROTOR_RICH], None, cpu_config, prune_symmetry=True, **kwargs
     )
 
-    assert symmetric[0].coordinates == pytest.approx(unpruned[0].coordinates)
+    assert np.array(symmetric[0].coordinates) == pytest.approx(np.array(unpruned[0].coordinates))
 
 
 def test_prune_symmetry_survivors_are_a_subsequence_of_the_ensemble(cpu_config):
@@ -577,7 +578,7 @@ def test_prune_symmetry_survivors_are_a_subsequence_of_the_ensemble(cpu_config):
             next(
                 i
                 for i, candidate in enumerate(unpruned)
-                if candidate.coordinates == pytest.approx(structure.coordinates)
+                if np.array(candidate.coordinates) == pytest.approx(np.array(structure.coordinates))
             )
         )
     assert positions == sorted(positions)
