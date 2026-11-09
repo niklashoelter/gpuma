@@ -1,0 +1,17 @@
+# gpuma Documentation
+
+> Documentation for the gpuma package.
+
+GPU geometry optimization of molecules with machine-learned interatomic potentials (UMA, ORB-v3, SevenNet, AIMNet2), driven by the gpuma CLI.
+
+## Getting started
+
+- [Home](https://NiklasHoelter.github.io/gpuma/index.md)
+- [Installation](https://NiklasHoelter.github.io/gpuma/install/index.md)
+- [Using with AI agents](https://NiklasHoelter.github.io/gpuma/agents/index.md)
+
+## Usage
+
+- [Command Line Interface](https://NiklasHoelter.github.io/gpuma/cli/index.md)
+- [Configuration](https://NiklasHoelter.github.io/gpuma/config/index.md)
+

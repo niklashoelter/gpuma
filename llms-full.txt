@@ -1,0 +1,803 @@
+# gpuma Documentation
+
+> Documentation for the gpuma package.
+
+GPU geometry optimization of molecules with machine-learned interatomic potentials (UMA, ORB-v3, SevenNet, AIMNet2), driven by the gpuma CLI.
+
+# Getting started
+
+# GPUMA
+
+______________________________________________________________________
+
+GPUMA is a minimalist Python toolkit for facile and rapid high-throughput molecular geometry optimization based on machine-learning interatomic potentials (MLIPs).
+
+Four model backends are supported out of the box:
+
+- **Fairchem UMA** ([UMA/OMol25](https://arxiv.org/abs/2505.08762)) — the default backend.
+- **ORB-v3** ([orbital-materials/orb-models](https://github.com/orbital-materials/orb-models)) — included in core dependencies.
+- **SevenNet** ([SevenNet](https://github.com/MDIL-SNU/SevenNet)) — included in core dependencies, with support for multi-modal checkpoints such as `7net-omni`.
+- **AIMNet2** ([isayevlab/aimnetcentral](https://github.com/isayevlab/aimnetcentral)) — included in core dependencies: `aimnet2`, the open-shell `aimnet2-nse` and `aimnet2-2025`.
+
+Fairchem UMA, ORB-v3 and SevenNet support optional DFT-D3(BJ) dispersion correction. It is off by default and rejected for the default `uma-s-1p2p1-ft-d4rev` and the AIMNet2 models, which already include dispersion.
+
+GPUMA is especially designed for batch optimizations of many structures (conformer ensembles, datasets) on GPU, ensuring efficient parallelization and maximum GPU utilization by leveraging the [torch-sim library](https://arxiv.org/abs/2508.06628). It wraps model backends and torch-sim functionality to provide both a simple command-line interface (CLI) and a small but expressive Python API for single- and multi-structure optimizations.
+
+If conformer sampling is desired, GPUMA can generate conformer ensembles on the fly from SMILES strings. The SMILES → 3D embedding runs on the GPU via [nvMolKit](https://nvidia-bionemo.github.io/nvMolKit/) when a CUDA device is configured, and on the CPU via the [morfeus library](https://digital-chemistry-laboratory.github.io/morfeus/) otherwise; the backend is selected from `technical.device`. Alternative input formats are described in the CLI section below.
+
+Feedback and improvements are always welcome!
+
+## Installation
+
+> **Required for UMA models:** To access the UMA models on Hugging Face, **you must provide a token** either via the `HF_TOKEN` environment variable or via the config (direct token string or path to a file containing the token).
+
+### Option 1: Install from PyPI (recommended)
+
+This installs `gpuma` together with all dependencies (including the Fairchem UMA, ORB-v3, SevenNet and AIMNet2 backends, plus the nvMolKit GPU conformer-embedding backend). Every dependency is pinned to the exact tested version, so install gpuma into a fresh environment. At the moment, installation and tests have only been validated under Python 3.12; using other Python versions is currently considered experimental.
+
+> **GPU support:** By default, `pip install` may pull a CPU-only build of PyTorch (especially on Windows). To enable GPU acceleration, install PyTorch with CUDA **before** installing GPUMA. Visit [pytorch.org/get-started](https://pytorch.org/get-started/locally/) to get the install command for your platform and CUDA version. Keep `torch==2.13.0`, which gpuma pins, and only change the `cuXXX` index, e.g.:
+>
+> ```bash
+> pip install torch==2.13.0 --index-url https://download.pytorch.org/whl/cu126
+> ```
+>
+> The `cu126` build runs on drivers from 525 on; the default PyPI build needs driver 580 or newer.
+
+- **Using a `uv` virtual environment**
+
+  ```powershell
+  # create and activate a fresh environment
+  uv venv .venv --python 3.12
+
+  # activate the environment
+
+  # install PyTorch 2.13.0 with CUDA support (keep the version, pick the cuXXX index for your driver)
+  uv pip install torch==2.13.0 --index-url https://download.pytorch.org/whl/cu126
+
+  # install gpuma from PyPI inside the environment
+  uv pip install gpuma
+  ```
+
+- **Using a `conda` environment**
+
+  ```powershell
+  # create and activate a fresh environment with Python 3.12
+  conda create -n gpuma-py312 python=3.12
+  conda activate gpuma-py312
+
+  # install PyTorch 2.13.0 with CUDA support (keep the version, pick the cuXXX index for your driver)
+  pip install torch==2.13.0 --index-url https://download.pytorch.org/whl/cu126
+
+  # install gpuma from PyPI inside the environment
+  pip install gpuma
+  ```
+
+### ORB-v3 support
+
+ORB-v3 models are included in the standard installation. To use them, set `"model_type": "orb"` and `"model_name": "orb_v3_direct_omol"` in the `model` section of your configuration file (see [Configuration](https://NiklasHoelter.github.io/gpuma/config/index.md) and `examples/config_orb.json`).
+
+### SevenNet support
+
+SevenNet models are included in the standard installation. To use them, set `"model_type": "sevennet"` (alias `"7net"`) and a `"model_name"` such as `"7net-omni"` in the `model` section of your configuration file. Multi-modal checkpoints (e.g. `7net-omni`, `7net-mf-ompa`) additionally require a `"model_modal"` fidelity such as `"omol25_high"` (see [Configuration](https://NiklasHoelter.github.io/gpuma/config/index.md) and `examples/config_sevennet.json`).
+
+### AIMNet2 support
+
+AIMNet2 models are included in the standard installation. Set `"model_type": "aimnet"` (alias `"aimnet2"`) and a `"model_name"` of `"aimnet2"`, `"aimnet2-nse"` or `"aimnet2-2025"` (see [Configuration](https://NiklasHoelter.github.io/gpuma/config/index.md) and `examples/config_aimnet.json`). They cover 14 elements (H, B, C, N, O, F, Si, P, S, Cl, As, Se, Br, I); only `aimnet2-nse` handles open-shell structures.
+
+### Option 2: Install from source
+
+```bash
+# clone the repository
+git clone https://github.com/niklashoelter/gpuma.git
+cd gpuma
+
+# install PyTorch 2.13.0 with CUDA support (keep the version, pick the cuXXX index for your driver)
+pip install torch==2.13.0 --index-url https://download.pytorch.org/whl/cu126
+
+# install using (uv) pip
+uv pip install .
+# or, without uv:
+pip install .
+```
+
+## Documentation
+
+Full documentation is available at <https://niklashoelter.github.io/gpuma/>.
+
+Please refer to the documentation for detailed configuration options and advanced usage. Using a configuration file is highly recommended for reproducibility and ease of use.
+
+Also check the examples folder in the repository for sample config files and usage examples.
+
+## CLI Usage
+
+The CLI is provided via the command `gpuma`. For best results, create a config file (JSON or YAML) and reference it in all CLI calls.
+
+Refer to the documentation for details on configuration options and CLI usage.
+
+## Python API
+
+A minimalistic and high-level Python API is provided for easy integration into custom scripts and workflows.
+
+Please refer to the documentation for detailed usage examples and API reference.
+
+## Known limitations
+
+When a run is started from SMILES, an RDKit/MMFF force field (via nvMolKit on GPU or the morfeus library on CPU) is used to generate an initial structure. Spin is not taken into account during this step, so the initial estimated geometries can be incorrect. When the MLIP models are applied subsequently, the structure can sometimes be optimized to a maximum rather than a minimum because the model is not provided with Hessian matrices. This behavior only affects runs originating from SMILES; it does not occur with better starting geometries (e.g., when starting from XYZ files).
+
+## Troubleshooting
+
+- Version conflicts: gpuma pins every dependency exactly; install it into a fresh environment.
+- Fairchem/UMA: ensure network access for model downloads and optionally set or provide `huggingface_token` (e.g., via a token file) to access the UMA model family.
+- ORB-v3: set `"model_type": "orb"` in the `model` section of your config.
+- SevenNet: set `"model_type": "sevennet"` in the `model` section of your config; multi-modal checkpoints also need a `"model_modal"` fidelity.
+- AIMNet2: set `"model_type": "aimnet"`. Structures with other elements, an open-shell structure on a closed-shell model, or an H–H distance below 0.8 Å (for `aimnet2` and `aimnet2-2025`) are rejected before the model loads.
+- BFGS: `"batch_optimizer": "bfgs"` keeps a dense Hessian per structure and can run out of GPU memory on large batch jobs with any backend; prefer `lbfgs` or `fire`.
+- D3 dispersion correction: off by default. Enable it with `"d3_correction": true` for models trained without dispersion. It is rejected for `uma-s-1p2p1-ft-d4rev` and the AIMNet2 models and logs a warning for the other UMA models, ORB `*_omol` models and SevenNet `omol25_*` modals (see [Configuration](https://NiklasHoelter.github.io/gpuma/config/index.md)).
+
+## License
+
+MIT License (see LICENSE)
+
+# Installation
+
+## Option 1: Install from PyPI (recommended)
+
+```bash
+pip install gpuma
+```
+
+This installs `gpuma` together with its core dependencies. At the moment, installation and tests have only been validated under Python 3.12; using other Python versions is currently considered experimental.
+
+### GPU support
+
+By default, `pip install` may pull a **CPU-only** build of PyTorch (especially on Windows). To enable GPU acceleration, install PyTorch with CUDA **before** installing GPUMA.
+
+Visit [pytorch.org/get-started](https://pytorch.org/get-started/locally/) to get the install command matching your platform and CUDA version. Keep `torch==2.13.0`, which gpuma pins, and only change the `cuXXX` index, e.g.:
+
+```bash
+pip install torch==2.13.0 --index-url https://download.pytorch.org/whl/cu126
+```
+
+The `cu126` build runs on NVIDIA drivers from 525 on. The default PyPI build of torch 2.13 targets CUDA 13 and needs driver 580 or newer.
+
+Then install GPUMA. pip keeps the installed torch 2.13.0; any other torch version is replaced by the default PyPI build:
+
+```bash
+pip install gpuma
+```
+
+This pulls in all model backends (Fairchem UMA, ORB-v3, SevenNet and AIMNet2) as core dependencies — there is no separate optional extra to install.
+
+### Pinned dependencies
+
+Every dependency in `pyproject.toml` is pinned to the exact version gpuma is tested with (`==`, no ranges), including torch, fairchem-core, torch-sim, the `dev` extra and the build backend. Installing gpuma into an environment that already holds other versions of these packages replaces them, so use a fresh environment.
+
+### GPU conformer embedding
+
+SMILES → 3D conversion can run on the GPU via [nvMolKit](https://nvidia-bionemo.github.io/nvMolKit/), which is a core dependency and installs automatically from PyPI (it pins `rdkit==2026.3.1` to match the RDKit build it is linked against, so no extra package index is needed). The backend is selected by `technical.device`: a CUDA device uses nvMolKit, otherwise the CPU (morfeus) backend is used. The GPU path needs an NVIDIA GPU (compute capability 7.0+); on CPU-only machines the package still installs and the CPU backend is used.
+
+### Environment setup examples
+
+- **Using a `uv` virtual environment**
+
+  ```powershell
+  # create and activate a fresh environment (Python 3.12)
+  uv venv .venv --python 3.12
+
+  # activate the environment
+
+  # install PyTorch 2.13.0 with CUDA support (keep the version, pick the cuXXX index for your driver)
+  uv pip install torch==2.13.0 --index-url https://download.pytorch.org/whl/cu126
+
+  # install gpuma from PyPI inside the environment
+  uv pip install gpuma
+  ```
+
+- **Using a `conda` environment**
+
+  ```powershell
+  # create and activate a fresh environment with Python 3.12
+  conda create -n gpuma-py312 python=3.12
+  conda activate gpuma-py312
+
+  # install PyTorch 2.13.0 with CUDA support (keep the version, pick the cuXXX index for your driver)
+  pip install torch==2.13.0 --index-url https://download.pytorch.org/whl/cu126
+
+  # install gpuma from PyPI inside the environment
+  pip install gpuma
+  ```
+
+> ⚠️ **Required for UMA models:** To access the UMA models on Hugging Face, **you must provide a token** either via the `HF_TOKEN` environment variable or via the config (direct token string or path to a file containing the token).
+
+## Option 2: Install from source
+
+```bash
+# clone the repository
+git clone https://github.com/niklashoelter/gpuma.git
+cd gpuma
+
+# install PyTorch 2.13.0 with CUDA support (keep the version, pick the cuXXX index for your driver)
+pip install torch==2.13.0 --index-url https://download.pytorch.org/whl/cu126
+
+# install using (uv) pip
+uv pip install .
+# or, without uv:
+pip install .
+
+# for development: tests, linting and docs tools, all pinned
+uv pip install -e ".[dev]"
+```
+
+# Using GPUMA with AI agents
+
+GPUMA ships an [Agent Skill](https://agentskills.io) that teaches AI coding agents (Claude Code, OpenAI Codex, Gemini CLI, GitHub Copilot, Cursor) how to run it. With the skill installed you can ask for results in plain language, for example *"optimize the conformers of these 40 molecules and give me the lowest-energy one of each"*. The agent writes the config, checks the GPU, runs GPUMA and reports back. You don't need to know Python.
+
+## One-time setup on the GPU node
+
+1. **Install a coding agent**, for example Claude Code:
+
+   ```bash
+   curl -fsSL https://claude.ai/install.sh | bash
+   ```
+
+1. **Install GPUMA** as a stand-alone tool with [uv](https://docs.astral.sh/uv/), which also fetches the right Python version:
+
+   ```bash
+   curl -LsSf https://astral.sh/uv/install.sh | sh   # only if uv is missing
+   uv tool install gpuma --python 3.12 \
+       --index https://download.pytorch.org/whl/cu126 --index-strategy unsafe-best-match
+   ```
+
+   The extra index gives torch's CUDA 12.6 build, which runs on NVIDIA drivers from 525 on. Without it uv installs PyPI's default torch build, which needs driver 580 or newer.
+
+1. **Install the skill** for your agents:
+
+   ```bash
+   gpuma skills install
+   ```
+
+   This copies the skill into `~/.claude/skills/gpuma` (Claude Code) and `~/.agents/skills/gpuma` (Codex, Gemini CLI, Copilot, Cursor). Use `--target DIR` to install somewhere else, for example a project's `.claude/skills` folder.
+
+1. **Check the machine:**
+
+   ```bash
+   gpuma doctor
+   ```
+
+   It reports the visible GPUs and their free memory, whether the configured device works, whether a Hugging Face token is available (only needed for UMA models) and whether the skill is installed. It exits with 1 if anything needs fixing.
+
+## Working with the agent
+
+Start the agent in a folder that contains your input files (SMILES lists, XYZ files) and describe what you want:
+
+- *"Optimize ibuprofen and tell me its energy."*
+- *"Generate 50 conformers of this SMILES, optimize them, and list the five lowest relative energies in kcal/mol."*
+- *"Optimize every structure in `anions.xyz`; they all have charge -1."*
+- *"The last run failed, find out why and fix it."*
+
+The skill tells the agent to check the inputs with `--dry-run` before a run, start long runs in the background, and read the machine-readable `--json` summary instead of guessing from the logs.
+
+## Updating
+
+Reinstall the skill after each upgrade, so the agent's instructions match the installed version:
+
+```bash
+uv tool install --upgrade gpuma --python 3.12 \
+    --index https://download.pytorch.org/whl/cu126 --index-strategy unsafe-best-match
+gpuma skills install
+```
+
+`gpuma doctor` warns when the installed skill is from a different GPUMA version.
+
+## For agent and tool developers
+
+The CLI is designed to be driven by programs as well as people:
+
+- `--json` prints exactly one JSON object to stdout (all logs go to stderr), including per-structure energies and the engine diagnostics.
+- Exit codes: `0` success, `1` runtime failure, `2` usage error, `3` invalid input, config or device, `4` some structures in a batch failed.
+- `--dry-run` validates inputs, config and device without loading a model.
+- `gpuma config --schema` prints the config JSON Schema; `gpuma config --show` prints the resolved config.
+
+See [Command Line Interface](https://NiklasHoelter.github.io/gpuma/cli/index.md) for details. The documentation is also available as [llms.txt](https://niklashoelter.github.io/gpuma/llms.txt) and [llms-full.txt](https://niklashoelter.github.io/gpuma/llms-full.txt) for tools that read documentation in that format.
+# Usage
+
+# CLI Usage
+
+The CLI is provided via the command `gpuma`. For best results, create a config file (JSON or YAML) and reference it in all CLI calls.
+
+**Important:** For the optimization of very large ensembles or high-throughput workflows, using the batch optimization mode is recommended (set in the config file, see below). In this case, make sure to use a multi-XYZ input file or a directory of XYZ files and only start one GPUMA process to leverage maximum efficient GPU parallelization and avoid runtime overhead for model initialization and memory estimation.
+
+**Recommended CLI usage:**
+
+```bash
+# Optimize a single structure from SMILES using a config file
+gpuma optimize --smiles "C=C" --output examples/example_output/cli_smiles_ethylene_opt.xyz --config examples/config.json
+
+# Optimize a triplet state from SMILES (multiplicity = 3)
+# Charge is inferred from the SMILES; multiplicity is set via CLI
+gpuma optimize --smiles "C=C" --multiplicity 3 --output examples/example_output/cli_smiles_ethylene_triplet_opt.xyz --config examples/config.json
+
+# Optimize a single structure from an XYZ file
+gpuma optimize --xyz examples/example_input_xyzs/single_xyz_file.xyz --output examples/example_output/cli_single_xyz_optimization.xyz --config examples/config.json
+
+# Create and optimize a conformer ensemble from SMILES
+gpuma ensemble --smiles "c1c(CCOCC)cccc1" --conformers 10 --output examples/example_output/cli_ensemble_optimization.xyz --config examples/config.json
+
+# Batch optimization from a multi-XYZ file
+gpuma batch --multi-xyz examples/example_input_xyzs/multi_xyz_file.xyz \
+  --output examples/example_output/cli_multi_xyz_file_optimization.xyz --config examples/config.json
+
+# Batch optimization from a directory of XYZ files
+gpuma batch --xyz-dir examples/example_input_xyzs/multi_xyz_dir/ --output examples/example_output/cli_multi_xyz_dir_optimization.xyz  --config examples/config.json
+
+# Batch optimization from a directory of XYZ files with modified charge/spin
+gpuma batch --xyz-dir examples/example_input_xyzs/multi_xyz_dir/ --output examples/example_output/cli_multi_xyz_dir_optimization_modified_charge_spin.xyz --charge 1 --multiplicity 2 --config examples/config.json
+
+# Convert SMILES to XYZ (no optimization)
+gpuma convert --smiles "CCO" --output examples/example_output/cli_no_optimization.xyz --config examples/config.json
+
+# Generate conformers from SMILES (no optimization)
+gpuma generate --smiles "c1ccccc1" --conformers 5 --output examples/example_output/cli_conformer_generation.xyz --config examples/config.json
+
+# Create or validate configuration files
+gpuma config --create my_config.json
+gpuma config --validate examples/config.json
+
+# Verbose vs. quiet (set in config file)
+gpuma optimize --smiles "CCO" --output examples/example_output/ethanol_verbose.xyz --config examples/config.json
+gpuma ensemble --smiles "CCO" --conformers 3 --output examples/example_output/ethanol_ensemble_verbose.xyz --config examples/config.json
+```
+
+### `gpuma smiles` shorthand
+
+The `gpuma smiles` command is a shorthand for single-structure optimization directly from a SMILES string (equivalent to `gpuma optimize --smiles`):
+
+```bash
+gpuma smiles --smiles "CCO" --output examples/example_output/ethanol_opt.xyz --config examples/config.json
+```
+
+### Using ORB-v3 models
+
+To use ORB-v3 instead of Fairchem UMA, set `"model_type": "orb"` and an ORB `model_name` in your config file (see `examples/config_orb.json`). `--model-type orb` only switches the backend; the config must still name an ORB model, otherwise the run stops with exit code 3:
+
+```bash
+# Single optimization with ORB-v3
+gpuma --model-type orb optimize --smiles "CCO" --output output.xyz --config examples/config_orb.json
+
+# Ensemble with ORB-v3
+gpuma ensemble --smiles "CCO" --conformers 10 --output ensemble.xyz --config examples/config_orb.json
+
+# Batch optimization from a multi-XYZ file with ORB-v3
+gpuma batch --multi-xyz examples/example_input_xyzs/multi_xyz_file.xyz --output batch_orb.xyz --config examples/config_orb.json
+
+# Batch optimization from a directory of XYZ files with ORB-v3
+gpuma batch --xyz-dir examples/example_input_xyzs/multi_xyz_dir/ --output batch_dir_orb.xyz --config examples/config_orb.json
+```
+
+### Using SevenNet models
+
+To use SevenNet, set `"model_type": "sevennet"` (alias `"7net"`) in your config file (see `examples/config_sevennet.json`). Multi-modal checkpoints such as `7net-omni` also need a `"model_modal"` fidelity (e.g. `"omol25_high"`) in the `model` section. The commands are identical to the other backends, just pointed at a SevenNet config:
+
+```bash
+# Single optimization with SevenNet
+gpuma optimize --smiles "CCO" --output output.xyz --config examples/config_sevennet.json
+
+# Batch optimization from a directory of XYZ files with SevenNet
+gpuma batch --xyz-dir examples/example_input_xyzs/multi_xyz_dir/ --output batch_dir_7net.xyz --config examples/config_sevennet.json
+```
+
+You can also select SevenNet with the `--model-type` flag (`--model-type sevennet` or `--model-type 7net`), just like the other backends.
+
+### Using AIMNet2 models
+
+Set `"model_type": "aimnet"` (alias `"aimnet2"`) and `"model_name"` to `"aimnet2"`, `"aimnet2-nse"` (open-shell) or `"aimnet2-2025"` (see `examples/config_aimnet.json`), or pass `--model-type aimnet`. Inputs outside the model's range (elements, open-shell on a closed-shell model, H–H contacts below 0.8 Å) are rejected with exit code 3 before the model loads:
+
+```bash
+# Batch optimization from a multi-XYZ file with AIMNet2
+gpuma batch --multi-xyz examples/example_input_xyzs/multi_xyz_file.xyz --output batch_aimnet.xyz --config examples/config_aimnet.json
+
+# Open-shell structure with AIMNet2-NSE (set "model_name": "aimnet2-nse" in the config)
+gpuma optimize --xyz examples/example_input_xyzs/butene_triplet.xyz --multiplicity 3 --output triplet.xyz --config my_nse_config.json
+```
+
+**Note:**
+
+- If `--config` is not specified, `config.json` in the current directory is loaded by default. If that file does not exist either, GPUMA runs on its built-in defaults and logs a warning naming the default model. A `--config` path that does not exist is an error.
+
+- Global flags (`--device`, `--model-type`, `--verbose`, `--quiet`, `--json`, `--dry-run`) work before or after the subcommand; if given in both places, the one after the subcommand wins.
+
+- Direct CLI flags are supported, but using a config file is preferred for all workflows.
+
+- Unless explicitly overridden, the electronic state defaults are always `charge = 0` and `multiplicity = 1`.
+
+- For **SMILES inputs**, the total charge is automatically inferred from the SMILES via RDKit/MORFEUS. The multiplicity can be controlled globally via the config (`optimization.multiplicity`) or overridden per CLI call with `--multiplicity` where supported. Internally this is passed to the models as the `spin` channel.
+
+- For **XYZ inputs** (single and batch), both charge and multiplicity can be set via CLI flags (`--charge`, `--multiplicity`) or via the config (`optimization.charge`, `optimization.multiplicity`). CLI flags override the config values; without the flags, the config values are used. These values are passed down to the models as `Atoms.info = {"charge": charge, "spin": multiplicity}` and are written to the XYZ comments as `Charge: ... | Multiplicity: ...`.
+
+The config file is organized into four sections: `optimization` (batch settings, convergence, charge/multiplicity), `model` (backend, name, SevenNet modal, tokens, D3), `conformer_generation` (conformer count, seed), and `technical` (device, memory padding, logging). See [Configuration](https://NiklasHoelter.github.io/gpuma/config/index.md) for details.
+
+You can control the compute device globally in the config or from the CLI with `--device` (which overrides the config). Accepted values are `cpu`, `cuda` (default GPU), or `cuda:N` to select a specific GPU (e.g. `cuda:0`, `cuda:1`). A GPU index that does not exist, or a CUDA device on a machine without usable CUDA, is an error (exit code 3); optimization never silently switches to another GPU or to the CPU. Conformer generation alone may still fall back to the CPU, with a warning.
+
+```bash
+# use GPU 1 explicitly
+gpuma --device cuda:1 optimize --smiles "C=C" --output output.xyz --config examples/config.json
+
+# or set it in the config file: "device": "cuda:3"
+```
+
+Alternatively, you can use the `CUDA_VISIBLE_DEVICES` environment variable to control GPU visibility:
+
+```bash
+CUDA_VISIBLE_DEVICES=1 gpuma optimize --smiles "C=C" --output output.xyz --config examples/config.json
+```
+
+## Machine-readable output and exit codes
+
+Add `--json` to any command to get exactly one JSON object on stdout; all log output goes to stderr. This is meant for scripts and AI agents:
+
+```bash
+gpuma batch --multi-xyz in.xyz --output out.xyz --config config.json --json > summary.json
+```
+
+The summary contains:
+
+| Key                                              | Content                                                                                                                                   |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `status`                                         | `ok`, `partial`, `error` or `dry_run`                                                                                                     |
+| `exit_code`                                      | The process exit code (see below)                                                                                                         |
+| `command`, `output_file`                         | What ran and where results were written                                                                                                   |
+| `device`, `model`, `config`                      | The resolved device, the model (`type`, `name`, and `path` when a checkpoint was loaded), and the full config (Hugging Face token masked) |
+| `n_input`, `n_returned`                          | Number of input structures and of returned structures                                                                                     |
+| `n_generated`                                    | `ensemble` only: conformers generated (pruning can leave fewer than requested)                                                            |
+| `structures`                                     | Per returned structure: `index`, `n_atoms`, `charge`, `multiplicity`, `energy_ev`, `comment`, `converged`                                 |
+| `diagnostics`                                    | The engine diagnostic report (embedding and optimization events, convergence where known)                                                 |
+| `error`                                          | `{"type", "message"}` when the command failed, else `null`                                                                                |
+| `wall_time_s`, `gpuma_version`, `schema_version` | Run metadata                                                                                                                              |
+| `checks`, `recommended_device`                   | `doctor` only: each check (`name`, `status`, `detail`, `hint`, `data`) and the GPU to use                                                 |
+| `schema`                                         | `config --schema` only: the JSON Schema of the config                                                                                     |
+| `installed`                                      | `skills install` only: the paths the skill was written to                                                                                 |
+
+`config --show --json` puts the resolved config only in `config`. A usage error (exit code 2) also prints a summary, with `error.type` `UsageError` and `device`, `model` and `config` set to `null`.
+
+| Exit code | Meaning                                                                                         |
+| --------- | ----------------------------------------------------------------------------------------------- |
+| `0`       | Success                                                                                         |
+| `1`       | Runtime failure (for example an optimization crashed)                                           |
+| `2`       | Command-line usage error                                                                        |
+| `3`       | Invalid input, config value, model name or device, as detected by GPUMA's own checks            |
+| `4`       | Partial result: some structures failed to optimize or stopped at `max_steps` without converging |
+
+## Checking before running
+
+`--dry-run` (for `optimize`, `smiles`, `ensemble` and `batch`) validates the inputs, the config and the device without loading a model, and reports the number of input structures:
+
+```bash
+gpuma batch --multi-xyz in.xyz --output out.xyz --config config.json --dry-run
+```
+
+`gpuma config --show --config config.json` prints the configuration that will actually be used, after `--config` and global overrides such as `--device`. `gpuma config --schema` prints the JSON Schema of the config file, with every key's type, default and allowed values.
+
+## Environment checks
+
+`gpuma doctor` checks the environment without loading a model: CUDA, the free memory of each GPU, the configured device, the Hugging Face token (for UMA models), the model cache and the installed agent skill. It prints the GPU with the most free memory as the recommended device and exits with 1 if any check fails.
+
+```bash
+gpuma doctor --config config.json
+```
+
+## Agent skill
+
+`gpuma skills install` installs the GPUMA skill for AI coding agents; see [Using GPUMA with AI agents](https://NiklasHoelter.github.io/gpuma/agents/index.md).
+
+| Flag           | Description                                                                                    |
+| -------------- | ---------------------------------------------------------------------------------------------- |
+| `--target DIR` | Skills folder to install into (repeatable; default: `~/.claude/skills` and `~/.agents/skills`) |
+| `--force`      | Replace a `gpuma` skill folder that gpuma did not install                                      |
+
+# Configuration
+
+The configuration is organized into four top-level sections:
+
+| Section                | Purpose                                                                 |
+| ---------------------- | ----------------------------------------------------------------------- |
+| `optimization`         | Batch mode, convergence criteria, charge & multiplicity                 |
+| `model`                | Model backend, name, SevenNet modal, checkpoints, tokens, D3 correction |
+| `conformer_generation` | Conformer count and random seed                                         |
+| `technical`            | Device selection, memory & autobatcher knobs, logging                   |
+
+Unknown fields are preserved. **Always use a config file for CLI and API calls.**
+
+______________________________________________________________________
+
+## Full Example (JSON, Fairchem UMA)
+
+```json
+{
+  "optimization": {
+    "batch_optimization_mode": "batch",
+    "batch_optimizer": "fire",
+
+    "charge": 0,
+    "multiplicity": 1,
+
+    "force_convergence_criterion": 5e-2,
+    "energy_convergence_criterion": null,
+    "max_steps": 10000
+  },
+
+  "model": {
+    "model_type": "fairchem",
+    "model_name": "uma-s-1p2p1-ft-d4rev",
+    "model_modal": null,
+
+    "model_path": null,
+    "model_cache_dir": null,
+
+    "huggingface_token": null,
+    "huggingface_token_file": "/home/hf_secret",
+
+    "d3_correction": false,
+    "d3_functional": "PBE",
+    "d3_damping": "BJ"
+  },
+
+  "conformer_generation": {
+    "max_num_conformers": 20,
+    "conformer_seed": 42
+  },
+
+  "technical": {
+    "device": "cuda",
+    "max_memory_padding": 0.95,
+    "memory_scaling_factor": 1.75,
+
+    "max_atoms_to_try": 100000,
+    "memory_scales_with": "auto",
+    "steps_between_swaps": 1,
+
+    "logging_level": "INFO"
+  }
+}
+```
+
+## Minimal Example (JSON, ORB-v3)
+
+```json
+{
+  "model": {
+    "model_type": "orb",
+    "model_name": "orb_v3_direct_omol"
+  },
+  "technical": {
+    "device": "cuda"
+  }
+}
+```
+
+## Minimal Example (JSON, SevenNet)
+
+For multi-modal checkpoints such as `7net-omni` or `7net-mf-ompa`, a `model_modal` fidelity must be supplied. Single-modal checkpoints (e.g. `7net-0`) ignore it.
+
+```json
+{
+  "model": {
+    "model_type": "sevennet",
+    "model_name": "7net-omni",
+    "model_modal": "omol25_high"
+  },
+  "technical": {
+    "device": "cuda"
+  }
+}
+```
+
+## Minimal Example (JSON, AIMNet2)
+
+Use `aimnet2-nse` for open-shell structures; `aimnet2` and `aimnet2-2025` are closed-shell only.
+
+```json
+{
+  "model": {
+    "model_type": "aimnet",
+    "model_name": "aimnet2"
+  },
+  "technical": {
+    "device": "cuda"
+  }
+}
+```
+
+## D3 Dispersion Correction
+
+D3 is off by default and adds GPU memory per batch; enable it only for models trained without dispersion. `uma-s-1p2p1-ft-d4rev` and the AIMNet2 models already include dispersion and reject D3. The other UMA models, the ORB `*_omol` models and SevenNet's `omol25_*` modals are trained on ωB97M-V, which also includes it, so gpuma logs a warning when D3 is enabled for them.
+
+DFT-D3(BJ) dispersion correction is supported for the ORB-v3, Fairchem/UMA, and SevenNet backends. Internally ORB uses orb-models' native `D3SumModel` and Fairchem uses torch-sim's `D3DispersionModel` (via `SumModel` in batch mode); both share the same `nvalchemiops` GPU kernel. SevenNet uses its own native D3 implementation (`SevenNetD3Model` for the batch path, `SevenNetD3Calculator` for the single-structure path).
+
+```json
+{
+  "model": {
+    "model_type": "sevennet",
+    "model_name": "7net-0",
+
+    "d3_correction": true,
+    "d3_functional": "PBE",
+    "d3_damping": "BJ"
+  },
+  "technical": {
+    "device": "cuda"
+  }
+}
+```
+
+## Full Example (YAML)
+
+```yaml
+optimization:
+  batch_optimization_mode: batch
+  batch_optimizer: fire
+
+  charge: 0
+  multiplicity: 1
+
+  force_convergence_criterion: 5.0e-2
+  energy_convergence_criterion: null
+  max_steps: 10000
+
+model:
+  model_type: fairchem
+  model_name: uma-s-1p2p1-ft-d4rev
+  model_modal: null
+
+  model_path: null
+  model_cache_dir: null
+
+  huggingface_token: null
+  huggingface_token_file: /home/hf_secret
+
+  d3_correction: false
+  d3_functional: PBE
+  d3_damping: BJ
+
+conformer_generation:
+  max_num_conformers: 20
+  conformer_seed: 42
+
+technical:
+  device: cuda
+  max_memory_padding: 0.95
+  memory_scaling_factor: 1.75
+
+  max_atoms_to_try: 100000
+  memory_scales_with: auto
+  steps_between_swaps: 1
+
+  logging_level: INFO
+```
+
+______________________________________________________________________
+
+## Parameter Reference
+
+### `optimization`
+
+| Parameter                      | Default   | Description                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ------------------------------ | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `batch_optimization_mode`      | `"batch"` | `"sequential"` (ASE per structure) or `"batch"` (torch-sim GPU-accelerated). If a batch fails, its structures are retried one at a time, so one bad input fails only itself                                                                                                                                                                                                                                                            |
+| `batch_optimizer`              | `"fire"`  | Optimizer for both single and batch modes: `"fire"`, `"gradient_descent"`, `"lbfgs"`, or `"bfgs"`. In single-structure (ASE) mode, maps to ASE FIRE/BFGS/LBFGS (`"gradient_descent"` falls back to FIRE). Defaults to `"fire"` if unset; an unknown value is an error. In batch mode, `"bfgs"` keeps a dense Hessian per structure that the memory estimate leaves out and can run out of GPU memory on large jobs; gpuma warns for it |
+| `charge`                       | `0`       | Total charge of the system (inferred from SMILES, not overridden). Must be an integer                                                                                                                                                                                                                                                                                                                                                  |
+| `multiplicity`                 | `1`       | Spin multiplicity of the system. A multiplicity the electron count can't have (e.g. a singlet radical) is an error                                                                                                                                                                                                                                                                                                                     |
+| `force_convergence_criterion`  | `5e-2`    | Force convergence threshold (eV/A). Used for both single and batch modes                                                                                                                                                                                                                                                                                                                                                               |
+| `energy_convergence_criterion` | `null`    | Energy convergence threshold (eV): the energy change of one step. Used only when `force_convergence_criterion` is `null`, in both modes                                                                                                                                                                                                                                                                                                |
+| `max_steps`                    | `10000`   | Step limit per structure. A structure that reaches it is returned but marked not converged, and the CLI exits with code 4                                                                                                                                                                                                                                                                                                              |
+
+### `model`
+
+| Parameter                | Default                  | Description                                                                                                                                                                                                                                                                                  |
+| ------------------------ | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `model_type`             | `"fairchem"`             | Backend: `"fairchem"` / `"uma"`, `"orb"` / `"orb-v3"`, `"sevennet"` / `"7net"`, or `"aimnet"` / `"aimnet2"`                                                                                                                                                                                  |
+| `model_name`             | `"uma-s-1p2p1-ft-d4rev"` | Model identifier (see [Available Models](#available-models))                                                                                                                                                                                                                                 |
+| `model_modal`            | `null`                   | SevenNet multi-modal fidelity selector. Valid values depend on the checkpoint (`7net-omni`: e.g. `"omol25_high"`, `"omol25_low"`, `"spice"`, `"qcml"`; `7net-mf-ompa`: `"mpa"`, `"omat24"`). Required for multi-modal checkpoints; ignored by single-modal checkpoints and by other backends |
+| `model_path`             | `null`                   | Local checkpoint path (Fairchem and SevenNet; overrides `model_name`). A path that doesn't exist, or one set for ORB or AIMNet2, is an error                                                                                                                                                 |
+| `model_cache_dir`        | `null`                   | Directory for cached model downloads (Fairchem and AIMNet2, which gpuma points there via `AIMNET_CACHE_DIR`; ORB and SevenNet use their own caches, so setting it for them is an error). A directory that can't be created is an error                                                       |
+| `huggingface_token`      | `null`                   | HuggingFace token for model access                                                                                                                                                                                                                                                           |
+| `huggingface_token_file` | `null`                   | File path to read the HF token from                                                                                                                                                                                                                                                          |
+| `d3_correction`          | `false`                  | Enable D3 dispersion correction. Supported for the ORB, Fairchem/UMA, and SevenNet backends; rejected for `uma-s-1p2p1-ft-d4rev` and AIMNet2                                                                                                                                                 |
+| `d3_functional`          | `"PBE"`                  | DFT functional for D3 correction (ORB/Fairchem use the orb-models BJ-damping table; SevenNet uses its own native D3)                                                                                                                                                                         |
+| `d3_damping`             | `"BJ"`                   | Damping scheme for D3 correction (`"BJ"` or `"BJM"`). SevenNet supports only `"BJ"`                                                                                                                                                                                                          |
+
+### `conformer_generation`
+
+| Parameter            | Default | Description                                                                    |
+| -------------------- | ------- | ------------------------------------------------------------------------------ |
+| `max_num_conformers` | `20`    | Maximum number of conformers to generate from SMILES                           |
+| `conformer_seed`     | `42`    | Random seed for conformer generation, used by every command that embeds SMILES |
+
+### `technical`
+
+| Parameter               | Default                                 | Description                                                                                                                                                                                                                                                                                                                     |
+| ----------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `device`                | `"cuda"` (`"cpu"` if no GPU is visible) | `"cpu"`, `"cuda"`, or `"cuda:N"` (e.g. `"cuda:0"`). A GPU index that doesn't exist, or CUDA without a usable GPU, is an error                                                                                                                                                                                                   |
+| `max_memory_padding`    | `0.95`                                  | Fraction of GPU memory the autobatcher is allowed to fill during calibration. Lower = more headroom, smaller batches. Must be between 0.05 and 0.95                                                                                                                                                                             |
+| `memory_scaling_factor` | `1.75`                                  | Factor by which the autobatcher grows the probe size during calibration. Larger = faster calibration but coarser final batch size; smaller = slower but tighter. A job runs as one batch without probing only if its forward-pass peak times this factor fits in `max_memory_padding` of free memory. Must be > 1               |
+| `max_atoms_to_try`      | `100000`                                | Upper bound on the autobatcher's calibration probe size (atoms)                                                                                                                                                                                                                                                                 |
+| `memory_scales_with`    | `"auto"`                                | Per-structure memory metric for batch sizing: `"n_atoms"`, `"n_edges"` or `"auto"`. `"auto"` uses `n_atoms` for UMA, whose large fixed memory per structure makes edge counts overcharge small molecules, and for AIMNet2, whose all-pairs Coulomb within each molecule edge counts don't track; `n_edges` for ORB and SevenNet |
+| `steps_between_swaps`   | `1`                                     | Optimization steps between batch swaps in the in-flight autobatcher. `1` is fastest on this codebase's screenings (uma-s/uma-m/orb); higher values are monotonically slower. Must be at least 1                                                                                                                                 |
+| `logging_level`         | `"INFO"`                                | Logging verbosity: `"DEBUG"`, `"INFO"`, `"WARNING"`, `"ERROR"`, `"CRITICAL"`                                                                                                                                                                                                                                                    |
+
+> You can also control the GPU with the `CUDA_VISIBLE_DEVICES` environment variable.
+
+Before calibration, torch-sim measures every system's neighbor-list edge count so it can bin-pack batches. torch-sim runs that measurement over the whole submitted batch in one pass, which holds roughly ten kilobytes per atom and overflows a 44 GB card at a few million atoms. GPUMA routes the measurement through chunks sized from the device's free memory, so batch size is bounded by the optimization itself, not by this bookkeeping. The per-system numbers are identical either way, and there is no knob to set.
+
+______________________________________________________________________
+
+## Available Models
+
+### Fairchem UMA (`model_type: "fairchem"`)
+
+| Model Name             | Description                                                                                 |
+| ---------------------- | ------------------------------------------------------------------------------------------- |
+| `uma-s-1p2p1-ft-d4rev` | UMA small 1.2.1 fine-tuned on ωB97M-D4rev (default); includes dispersion, so D3 is rejected |
+| `uma-s-1p2p1`          | UMA small, version 1.2.1                                                                    |
+| `uma-s-1p2`            | UMA small, version 1.2                                                                      |
+| `uma-s-1p1`            | UMA small, version 1.1                                                                      |
+| `uma-m-1p1`            | UMA medium, version 1.1                                                                     |
+
+> Fairchem UMA models require a HuggingFace token for download.
+
+### ORB-v3 (`model_type: "orb"`)
+
+Use the **underscored** form as `model_name`.
+
+| Model Name                     | Description                        |
+| ------------------------------ | ---------------------------------- |
+| `orb_v3_direct_omol`           | ORB-v3 direct, omol (recommended)  |
+| `orb_v3_conservative_omol`     | ORB-v3 conservative, omol          |
+| `orb_v3_direct_20_omat`        | ORB-v3 direct, 20-layer omat       |
+| `orb_v3_direct_inf_omat`       | ORB-v3 direct, inf omat            |
+| `orb_v3_conservative_20_omat`  | ORB-v3 conservative, 20-layer omat |
+| `orb_v3_conservative_inf_omat` | ORB-v3 conservative, inf omat      |
+| `orb_v3_direct_20_mpa`         | ORB-v3 direct, 20-layer mpa        |
+| `orb_v3_direct_inf_mpa`        | ORB-v3 direct, inf mpa             |
+| `orb_v3_conservative_20_mpa`   | ORB-v3 conservative, 20-layer mpa  |
+| `orb_v3_conservative_inf_mpa`  | ORB-v3 conservative, inf mpa       |
+
+### SevenNet (`model_type: "sevennet"`)
+
+Multi-modal checkpoints (`7net-mf-ompa`, `7net-omni`, `7net-omni-i8`, `7net-omni-i12`) also require a `model_modal` fidelity whose valid values depend on the checkpoint (e.g. `omol25_high`, `omol25_low`, `spice`, `qcml` for `7net-omni`; `mpa`, `omat24` for `7net-mf-ompa`). A local checkpoint may instead be supplied via `model_path`.
+
+| Model Name         | Description                                |
+| ------------------ | ------------------------------------------ |
+| `7net-0`           | SevenNet-0 (single-modal)                  |
+| `7net-0_22may2024` | SevenNet-0, 22 May 2024 checkpoint         |
+| `7net-l3i5`        | SevenNet l3i5                              |
+| `7net-mf-0`        | SevenNet multi-fidelity 0                  |
+| `7net-mf-ompa`     | SevenNet multi-fidelity OMPA (multi-modal) |
+| `7net-omat`        | SevenNet OMat                              |
+| `7net-omni`        | SevenNet Omni (multi-modal)                |
+| `7net-omni-i8`     | SevenNet Omni i8 (multi-modal)             |
+| `7net-omni-i12`    | SevenNet Omni i12 (multi-modal)            |
+
+### AIMNet2 (`model_type: "aimnet"`)
+
+All three models cover H, B, C, N, O, F, Si, P, S, Cl, As, Se, Br and I, handle charged molecules and include D3 dispersion. gpuma loads ensemble member 0 of each. Before loading the model, gpuma rejects structures with other elements, an open-shell structure (multiplicity above 1) on `aimnet2` or `aimnet2-2025`, and, for those two models, an H–H distance below 0.8 Å with at least one heavy atom present: upstream reports a spurious minimum where two hydrogens on one atom collapse ([aimnetcentral#139](https://github.com/isayevlab/aimnetcentral/issues/139)).
+
+| Model Name     | Description                                                           |
+| -------------- | --------------------------------------------------------------------- |
+| `aimnet2`      | ωB97M-D3/def2-TZVPP, closed-shell; the general-purpose default        |
+| `aimnet2-nse`  | ωB97M-D3/def2-TZVPP (unrestricted), open-shell: uses the multiplicity |
+| `aimnet2-2025` | B97-3c, closed-shell; improved non-covalent interactions              |
+
+> D3 dispersion correction can be enabled for any ORB, Fairchem/UMA, or SevenNet model with `d3_correction: true`, except `uma-s-1p2p1-ft-d4rev`; AIMNet2 models already include it. gpuma warns when it is enabled for UMA, ORB `*_omol` models or SevenNet `omol25_*` modals; SevenNet supports only BJ damping.
+
+These model names are also available programmatically as `gpuma.AVAILABLE_FAIRCHEM_MODELS`, `gpuma.AVAILABLE_ORB_MODELS`, `gpuma.AVAILABLE_SEVENNET_MODELS`, and `gpuma.AVAILABLE_AIMNET_MODELS`.
+
+______________________________________________________________________
+
+See the `examples/` folder for:
+
+- Single optimization (`example_single_optimization.py`)
+- Ensemble / batch optimization (`example_ensemble_optimization.py`)
+- Dispersion (D3) correction with Fairchem and ORB (`example_dispersion.py`)
+- Full multi-axis benchmark across models / optimizers / convergence (`full_benchmark.py`)
+
+The example configs are sanitized (no tokens in plain text).

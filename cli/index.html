@@ -18,14 +18,14 @@
         <link rel="prev" href="../config/">
       
       
-        <link rel="next" href="../reference/">
+        <link rel="next" href="../agents/">
       
       
         
       
       
       <link rel="icon" href="../logo_round.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -421,10 +421,92 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#using-aimnet2-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using AIMNet2 models
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#machine-readable-output-and-exit-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Machine-readable output and exit codes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#checking-before-running" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checking before running
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#environment-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment checks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#agent-skill" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Agent skill
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
       
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using with AI agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -542,6 +624,61 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#using-aimnet2-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using AIMNet2 models
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#machine-readable-output-and-exit-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Machine-readable output and exit codes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#checking-before-running" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checking before running
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#environment-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment checks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#agent-skill" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Agent skill
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -572,17 +709,17 @@ and only start one GPUMA process to leverage maximum efficient GPU parallelizati
 and avoid runtime overhead for model initialization and memory estimation.</p>
 <p><strong>Recommended CLI usage:</strong></p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Optimize a single structure from SMILES using a config file</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>gpuma<span class="w"> </span>optimize<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">&quot;C=C&quot;</span><span class="w"> </span>--output<span class="w"> </span>examples/example_output/cli_smiles_ethylene_opt.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config.json
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>gpuma<span class="w"> </span>optimize<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">"C=C"</span><span class="w"> </span>--output<span class="w"> </span>examples/example_output/cli_smiles_ethylene_opt.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config.json
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Optimize a triplet state from SMILES (multiplicity = 3)</span>
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># Charge is inferred from the SMILES; multiplicity is set via CLI</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>gpuma<span class="w"> </span>optimize<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">&quot;C=C&quot;</span><span class="w"> </span>--multiplicity<span class="w"> </span><span class="m">3</span><span class="w"> </span>--output<span class="w"> </span>examples/example_output/cli_smiles_ethylene_triplet_opt.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config.json
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>gpuma<span class="w"> </span>optimize<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">"C=C"</span><span class="w"> </span>--multiplicity<span class="w"> </span><span class="m">3</span><span class="w"> </span>--output<span class="w"> </span>examples/example_output/cli_smiles_ethylene_triplet_opt.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config.json
 </span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
 </span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="c1"># Optimize a single structure from an XYZ file</span>
 </span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>gpuma<span class="w"> </span>optimize<span class="w"> </span>--xyz<span class="w"> </span>examples/example_input_xyzs/single_xyz_file.xyz<span class="w"> </span>--output<span class="w"> </span>examples/example_output/cli_single_xyz_optimization.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config.json
 </span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
 </span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1"># Create and optimize a conformer ensemble from SMILES</span>
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>gpuma<span class="w"> </span>ensemble<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">&quot;c1c(CCOCC)cccc1&quot;</span><span class="w"> </span>--conformers<span class="w"> </span><span class="m">10</span><span class="w"> </span>--output<span class="w"> </span>examples/example_output/cli_ensemble_optimization.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config.json
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>gpuma<span class="w"> </span>ensemble<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">"c1c(CCOCC)cccc1"</span><span class="w"> </span>--conformers<span class="w"> </span><span class="m">10</span><span class="w"> </span>--output<span class="w"> </span>examples/example_output/cli_ensemble_optimization.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config.json
 </span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
 </span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="c1"># Batch optimization from a multi-XYZ file</span>
 </span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>gpuma<span class="w"> </span>batch<span class="w"> </span>--multi-xyz<span class="w"> </span>examples/example_input_xyzs/multi_xyz_file.xyz<span class="w"> </span><span class="se">\</span>
@@ -595,32 +732,34 @@ and avoid runtime overhead for model initialization and memory estimation.</p>
 </span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>gpuma<span class="w"> </span>batch<span class="w"> </span>--xyz-dir<span class="w"> </span>examples/example_input_xyzs/multi_xyz_dir/<span class="w"> </span>--output<span class="w"> </span>examples/example_output/cli_multi_xyz_dir_optimization_modified_charge_spin.xyz<span class="w"> </span>--charge<span class="w"> </span><span class="m">1</span><span class="w"> </span>--multiplicity<span class="w"> </span><span class="m">2</span><span class="w"> </span>--config<span class="w"> </span>examples/config.json
 </span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>
 </span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="c1"># Convert SMILES to XYZ (no optimization)</span>
-</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>gpuma<span class="w"> </span>convert<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">&quot;CCO&quot;</span><span class="w"> </span>--output<span class="w"> </span>examples/example_output/cli_no_optimization.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config.json
+</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>gpuma<span class="w"> </span>convert<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">"CCO"</span><span class="w"> </span>--output<span class="w"> </span>examples/example_output/cli_no_optimization.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config.json
 </span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>
 </span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="c1"># Generate conformers from SMILES (no optimization)</span>
-</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>gpuma<span class="w"> </span>generate<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">&quot;c1ccccc1&quot;</span><span class="w"> </span>--conformers<span class="w"> </span><span class="m">5</span><span class="w"> </span>--output<span class="w"> </span>examples/example_output/cli_conformer_generation.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config.json
+</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>gpuma<span class="w"> </span>generate<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">"c1ccccc1"</span><span class="w"> </span>--conformers<span class="w"> </span><span class="m">5</span><span class="w"> </span>--output<span class="w"> </span>examples/example_output/cli_conformer_generation.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config.json
 </span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>
 </span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a><span class="c1"># Create or validate configuration files</span>
-</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>gpuma<span class="w"> </span>config<span class="w"> </span>--create<span class="w"> </span>examples/config.json
+</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>gpuma<span class="w"> </span>config<span class="w"> </span>--create<span class="w"> </span>my_config.json
 </span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>gpuma<span class="w"> </span>config<span class="w"> </span>--validate<span class="w"> </span>examples/config.json
 </span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>
 </span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a><span class="c1"># Verbose vs. quiet (set in config file)</span>
-</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>gpuma<span class="w"> </span>optimize<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">&quot;CCO&quot;</span><span class="w"> </span>--output<span class="w"> </span>examples/example_output/ethanol_verbose.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config.json
-</span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>gpuma<span class="w"> </span>ensemble<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">&quot;CCO&quot;</span><span class="w"> </span>--conformers<span class="w"> </span><span class="m">3</span><span class="w"> </span>--output<span class="w"> </span>examples/example_output/ethanol_ensemble_verbose.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config.json
+</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>gpuma<span class="w"> </span>optimize<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">"CCO"</span><span class="w"> </span>--output<span class="w"> </span>examples/example_output/ethanol_verbose.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config.json
+</span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>gpuma<span class="w"> </span>ensemble<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">"CCO"</span><span class="w"> </span>--conformers<span class="w"> </span><span class="m">3</span><span class="w"> </span>--output<span class="w"> </span>examples/example_output/ethanol_ensemble_verbose.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config.json
 </span></code></pre></div>
 <h3 id="gpuma-smiles-shorthand"><code>gpuma smiles</code> shorthand</h3>
 <p>The <code>gpuma smiles</code> command is a shorthand for single-structure optimization
 directly from a SMILES string (equivalent to <code>gpuma optimize --smiles</code>):</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>gpuma<span class="w"> </span>smiles<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">&quot;CCO&quot;</span><span class="w"> </span>--output<span class="w"> </span>examples/example_output/ethanol_opt.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config.json
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>gpuma<span class="w"> </span>smiles<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">"CCO"</span><span class="w"> </span>--output<span class="w"> </span>examples/example_output/ethanol_opt.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config.json
 </span></code></pre></div>
 <h3 id="using-orb-v3-models">Using ORB-v3 models</h3>
-<p>To use ORB-v3 instead of Fairchem UMA, either set <code>"model_type": "orb"</code> in
-your config file (see <code>examples/config_orb.json</code>) or override from the CLI:</p>
+<p>To use ORB-v3 instead of Fairchem UMA, set <code>"model_type": "orb"</code> and an ORB
+<code>model_name</code> in your config file (see <code>examples/config_orb.json</code>).
+<code>--model-type orb</code> only switches the backend; the config must still name an ORB
+model, otherwise the run stops with exit code 3:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Single optimization with ORB-v3</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>gpuma<span class="w"> </span>--model-type<span class="w"> </span>orb<span class="w"> </span>optimize<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">&quot;CCO&quot;</span><span class="w"> </span>--output<span class="w"> </span>output.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config_orb.json
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>gpuma<span class="w"> </span>--model-type<span class="w"> </span>orb<span class="w"> </span>optimize<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">"CCO"</span><span class="w"> </span>--output<span class="w"> </span>output.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config_orb.json
 </span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
 </span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Ensemble with ORB-v3</span>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>gpuma<span class="w"> </span>ensemble<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">&quot;CCO&quot;</span><span class="w"> </span>--conformers<span class="w"> </span><span class="m">10</span><span class="w"> </span>--output<span class="w"> </span>ensemble.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config_orb.json
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>gpuma<span class="w"> </span>ensemble<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">"CCO"</span><span class="w"> </span>--conformers<span class="w"> </span><span class="m">10</span><span class="w"> </span>--output<span class="w"> </span>ensemble.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config_orb.json
 </span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
 </span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># Batch optimization from a multi-XYZ file with ORB-v3</span>
 </span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>gpuma<span class="w"> </span>batch<span class="w"> </span>--multi-xyz<span class="w"> </span>examples/example_input_xyzs/multi_xyz_file.xyz<span class="w"> </span>--output<span class="w"> </span>batch_orb.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config_orb.json
@@ -635,15 +774,32 @@ such as <code>7net-omni</code> also need a <code>"model_modal"</code> fidelity (
 <code>"omol25_high"</code>) in the <code>model</code> section. The commands are identical to the
 other backends, just pointed at a SevenNet config:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Single optimization with SevenNet</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>gpuma<span class="w"> </span>optimize<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">&quot;CCO&quot;</span><span class="w"> </span>--output<span class="w"> </span>output.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config_sevennet.json
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>gpuma<span class="w"> </span>optimize<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">"CCO"</span><span class="w"> </span>--output<span class="w"> </span>output.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config_sevennet.json
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
 </span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Batch optimization from a directory of XYZ files with SevenNet</span>
 </span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>gpuma<span class="w"> </span>batch<span class="w"> </span>--xyz-dir<span class="w"> </span>examples/example_input_xyzs/multi_xyz_dir/<span class="w"> </span>--output<span class="w"> </span>batch_dir_7net.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config_sevennet.json
 </span></code></pre></div>
 <p>You can also select SevenNet with the <code>--model-type</code> flag
 (<code>--model-type sevennet</code> or <code>--model-type 7net</code>), just like the other backends.</p>
+<h3 id="using-aimnet2-models">Using AIMNet2 models</h3>
+<p>Set <code>"model_type": "aimnet"</code> (alias <code>"aimnet2"</code>) and <code>"model_name"</code> to
+<code>"aimnet2"</code>, <code>"aimnet2-nse"</code> (open-shell) or <code>"aimnet2-2025"</code> (see
+<code>examples/config_aimnet.json</code>), or pass <code>--model-type aimnet</code>. Inputs outside
+the model's range (elements, open-shell on a closed-shell model, H–H contacts
+below 0.8 Å) are rejected with exit code 3 before the model loads:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Batch optimization from a multi-XYZ file with AIMNet2</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>gpuma<span class="w"> </span>batch<span class="w"> </span>--multi-xyz<span class="w"> </span>examples/example_input_xyzs/multi_xyz_file.xyz<span class="w"> </span>--output<span class="w"> </span>batch_aimnet.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config_aimnet.json
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Open-shell structure with AIMNet2-NSE (set "model_name": "aimnet2-nse" in the config)</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>gpuma<span class="w"> </span>optimize<span class="w"> </span>--xyz<span class="w"> </span>examples/example_input_xyzs/butene_triplet.xyz<span class="w"> </span>--multiplicity<span class="w"> </span><span class="m">3</span><span class="w"> </span>--output<span class="w"> </span>triplet.xyz<span class="w"> </span>--config<span class="w"> </span>my_nse_config.json
+</span></code></pre></div>
 <p><strong>Note:</strong>
 - If <code>--config</code> is not specified, <code>config.json</code> in the current directory is loaded by default.
+  If that file does not exist either, GPUMA runs on its built-in defaults and logs a warning
+  naming the default model. A <code>--config</code> path that does not exist is an error.
+- Global flags (<code>--device</code>, <code>--model-type</code>, <code>--verbose</code>, <code>--quiet</code>, <code>--json</code>, <code>--dry-run</code>)
+  work before or after the subcommand; if given in both places, the one after the subcommand
+  wins.
 - Direct CLI flags are supported, but using a config file is preferred for all workflows.
 - Unless explicitly overridden, the electronic state defaults are always
   <code>charge = 0</code> and <code>multiplicity = 1</code>.</p>
@@ -656,7 +812,7 @@ other backends, just pointed at a SevenNet config:</p>
 <li>For <strong>XYZ inputs</strong> (single and batch), both charge and multiplicity can be
   set via CLI flags (<code>--charge</code>, <code>--multiplicity</code>) or via the config
   (<code>optimization.charge</code>, <code>optimization.multiplicity</code>). CLI flags override the
-  config values. These values are passed down to the models as
+  config values; without the flags, the config values are used. These values are passed down to the models as
   <code>Atoms.info = {"charge": charge, "spin": multiplicity}</code> and are written to
   the XYZ comments as <code>Charge: ... | Multiplicity: ...</code>.</li>
 </ul>
@@ -667,15 +823,157 @@ and <code>technical</code> (device, memory padding, logging).
 See <a href="../config/">Configuration</a> for details.</p>
 <p>You can control the compute device globally in the config or from the CLI with <code>--device</code> (which overrides the config).
 Accepted values are <code>cpu</code>, <code>cuda</code> (default GPU), or <code>cuda:N</code> to select a specific GPU (e.g. <code>cuda:0</code>, <code>cuda:1</code>).
-If the requested GPU index does not exist, GPUMA falls back to <code>cuda:0</code> with a warning.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># use GPU 1 explicitly</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>gpuma<span class="w"> </span>--device<span class="w"> </span>cuda:1<span class="w"> </span>optimize<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">&quot;C=C&quot;</span><span class="w"> </span>--output<span class="w"> </span>output.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config.json
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># or set it in the config file: &quot;device&quot;: &quot;cuda:3&quot;</span>
+A GPU index that does not exist, or a CUDA device on a machine without usable CUDA, is an
+error (exit code 3); optimization never silently switches to another GPU or to the CPU.
+Conformer generation alone may still fall back to the CPU, with a warning.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># use GPU 1 explicitly</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>gpuma<span class="w"> </span>--device<span class="w"> </span>cuda:1<span class="w"> </span>optimize<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">"C=C"</span><span class="w"> </span>--output<span class="w"> </span>output.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config.json
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># or set it in the config file: "device": "cuda:3"</span>
 </span></code></pre></div>
 <p>Alternatively, you can use the <code>CUDA_VISIBLE_DEVICES</code> environment variable to control GPU visibility:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>gpuma<span class="w"> </span>optimize<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">&quot;C=C&quot;</span><span class="w"> </span>--output<span class="w"> </span>output.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config.json
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>gpuma<span class="w"> </span>optimize<span class="w"> </span>--smiles<span class="w"> </span><span class="s2">"C=C"</span><span class="w"> </span>--output<span class="w"> </span>output.xyz<span class="w"> </span>--config<span class="w"> </span>examples/config.json
 </span></code></pre></div>
+<h2 id="machine-readable-output-and-exit-codes">Machine-readable output and exit codes</h2>
+<p>Add <code>--json</code> to any command to get exactly one JSON object on stdout; all log
+output goes to stderr. This is meant for scripts and AI agents:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>gpuma<span class="w"> </span>batch<span class="w"> </span>--multi-xyz<span class="w"> </span><span class="k">in</span>.xyz<span class="w"> </span>--output<span class="w"> </span>out.xyz<span class="w"> </span>--config<span class="w"> </span>config.json<span class="w"> </span>--json<span class="w"> </span>&gt;<span class="w"> </span>summary.json
+</span></code></pre></div>
+<p>The summary contains:</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>status</code></td>
+<td><code>ok</code>, <code>partial</code>, <code>error</code> or <code>dry_run</code></td>
+</tr>
+<tr>
+<td><code>exit_code</code></td>
+<td>The process exit code (see below)</td>
+</tr>
+<tr>
+<td><code>command</code>, <code>output_file</code></td>
+<td>What ran and where results were written</td>
+</tr>
+<tr>
+<td><code>device</code>, <code>model</code>, <code>config</code></td>
+<td>The resolved device, the model (<code>type</code>, <code>name</code>, and <code>path</code> when a checkpoint was loaded), and the full config (Hugging Face token masked)</td>
+</tr>
+<tr>
+<td><code>n_input</code>, <code>n_returned</code></td>
+<td>Number of input structures and of returned structures</td>
+</tr>
+<tr>
+<td><code>n_generated</code></td>
+<td><code>ensemble</code> only: conformers generated (pruning can leave fewer than requested)</td>
+</tr>
+<tr>
+<td><code>structures</code></td>
+<td>Per returned structure: <code>index</code>, <code>n_atoms</code>, <code>charge</code>, <code>multiplicity</code>, <code>energy_ev</code>, <code>comment</code>, <code>converged</code></td>
+</tr>
+<tr>
+<td><code>diagnostics</code></td>
+<td>The engine diagnostic report (embedding and optimization events, convergence where known)</td>
+</tr>
+<tr>
+<td><code>error</code></td>
+<td><code>{"type", "message"}</code> when the command failed, else <code>null</code></td>
+</tr>
+<tr>
+<td><code>wall_time_s</code>, <code>gpuma_version</code>, <code>schema_version</code></td>
+<td>Run metadata</td>
+</tr>
+<tr>
+<td><code>checks</code>, <code>recommended_device</code></td>
+<td><code>doctor</code> only: each check (<code>name</code>, <code>status</code>, <code>detail</code>, <code>hint</code>, <code>data</code>) and the GPU to use</td>
+</tr>
+<tr>
+<td><code>schema</code></td>
+<td><code>config --schema</code> only: the JSON Schema of the config</td>
+</tr>
+<tr>
+<td><code>installed</code></td>
+<td><code>skills install</code> only: the paths the skill was written to</td>
+</tr>
+</tbody>
+</table>
+<p><code>config --show --json</code> puts the resolved config only in <code>config</code>. A usage error
+(exit code 2) also prints a summary, with <code>error.type</code> <code>UsageError</code> and <code>device</code>,
+<code>model</code> and <code>config</code> set to <code>null</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Exit code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>0</code></td>
+<td>Success</td>
+</tr>
+<tr>
+<td><code>1</code></td>
+<td>Runtime failure (for example an optimization crashed)</td>
+</tr>
+<tr>
+<td><code>2</code></td>
+<td>Command-line usage error</td>
+</tr>
+<tr>
+<td><code>3</code></td>
+<td>Invalid input, config value, model name or device, as detected by GPUMA's own checks</td>
+</tr>
+<tr>
+<td><code>4</code></td>
+<td>Partial result: some structures failed to optimize or stopped at <code>max_steps</code> without converging</td>
+</tr>
+</tbody>
+</table>
+<h2 id="checking-before-running">Checking before running</h2>
+<p><code>--dry-run</code> (for <code>optimize</code>, <code>smiles</code>, <code>ensemble</code> and <code>batch</code>) validates the
+inputs, the config and the device without loading a model, and reports the
+number of input structures:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>gpuma<span class="w"> </span>batch<span class="w"> </span>--multi-xyz<span class="w"> </span><span class="k">in</span>.xyz<span class="w"> </span>--output<span class="w"> </span>out.xyz<span class="w"> </span>--config<span class="w"> </span>config.json<span class="w"> </span>--dry-run
+</span></code></pre></div>
+<p><code>gpuma config --show --config config.json</code> prints the configuration that will
+actually be used, after <code>--config</code> and global overrides such as <code>--device</code>.
+<code>gpuma config --schema</code> prints the JSON Schema of the config file, with every
+key's type, default and allowed values.</p>
+<h2 id="environment-checks">Environment checks</h2>
+<p><code>gpuma doctor</code> checks the environment without loading a model: CUDA, the free
+memory of each GPU, the configured device, the Hugging Face token (for UMA
+models), the model cache and the installed agent skill. It prints the GPU with
+the most free memory as the recommended device and exits with 1 if any check
+fails.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>gpuma<span class="w"> </span>doctor<span class="w"> </span>--config<span class="w"> </span>config.json
+</span></code></pre></div>
+<h2 id="agent-skill">Agent skill</h2>
+<p><code>gpuma skills install</code> installs the GPUMA skill for AI coding agents; see
+<a href="../agents/">Using GPUMA with AI agents</a>.</p>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--target DIR</code></td>
+<td>Skills folder to install into (repeatable; default: <code>~/.claude/skills</code> and <code>~/.agents/skills</code>)</td>
+</tr>
+<tr>
+<td><code>--force</code></td>
+<td>Replace a <code>gpuma</code> skill folder that gpuma did not install</td>
+</tr>
+</tbody>
+</table>
 
 
 
@@ -728,7 +1026,7 @@ If the requested GPU index does not exist, GPUMA falls back to <code>cuda:0</cod
       <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.expand", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

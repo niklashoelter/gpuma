@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../logo_round.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -358,6 +358,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pinned-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pinned dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#gpu-conformer-embedding" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -445,6 +456,33 @@
     
   
     Command Line Interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using with AI agents
   
 
     
@@ -561,6 +599,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pinned-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pinned dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#gpu-conformer-embedding" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -630,15 +679,24 @@ considered experimental.</p>
 (especially on Windows). To enable GPU acceleration, install PyTorch with
 CUDA <strong>before</strong> installing GPUMA.</p>
 <p>Visit <a href="https://pytorch.org/get-started/locally/">pytorch.org/get-started</a>
-to get the install command matching your platform and CUDA version, e.g.:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pip<span class="w"> </span>install<span class="w"> </span>torch<span class="w"> </span>--index-url<span class="w"> </span>https://download.pytorch.org/whl/cu124
+to get the install command matching your platform and CUDA version. Keep
+<code>torch==2.13.0</code>, which gpuma pins, and only change the <code>cuXXX</code> index, e.g.:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="nv">torch</span><span class="o">==</span><span class="m">2</span>.13.0<span class="w"> </span>--index-url<span class="w"> </span>https://download.pytorch.org/whl/cu126
 </span></code></pre></div>
-<p>Then install GPUMA — pip will see that a CUDA-enabled PyTorch is already
-present and will not replace it:</p>
+<p>The <code>cu126</code> build runs on NVIDIA drivers from 525 on. The default PyPI build of
+torch 2.13 targets CUDA 13 and needs driver 580 or newer.</p>
+<p>Then install GPUMA. pip keeps the installed torch 2.13.0; any other torch
+version is replaced by the default PyPI build:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pip<span class="w"> </span>install<span class="w"> </span>gpuma
 </span></code></pre></div>
-<p>This pulls in all model backends (Fairchem UMA, ORB-v3, and SevenNet) as
+<p>This pulls in all model backends (Fairchem UMA, ORB-v3, SevenNet and AIMNet2) as
 core dependencies — there is no separate optional extra to install.</p>
+<h3 id="pinned-dependencies">Pinned dependencies</h3>
+<p>Every dependency in <code>pyproject.toml</code> is pinned to the exact version gpuma is
+tested with (<code>==</code>, no ranges), including torch, fairchem-core, torch-sim, the
+<code>dev</code> extra and the build backend. Installing gpuma into an environment that
+already holds other versions of these packages replaces them, so use a fresh
+environment.</p>
 <h3 id="gpu-conformer-embedding">GPU conformer embedding</h3>
 <p>SMILES → 3D conversion can run on the GPU via
 <a href="https://nvidia-bionemo.github.io/nvMolKit/">nvMolKit</a>, which is a core
@@ -657,8 +715,8 @@ installs and the CPU backend is used.</p>
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
 </span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c"># activate the environment</span>
 </span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="c"># install PyTorch with CUDA support (pick your CUDA version at https://pytorch.org)</span>
-</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="n">uv</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">torch</span> <span class="p">-</span><span class="n">-index-url</span> <span class="n">https</span><span class="p">://</span><span class="n">download</span><span class="p">.</span><span class="n">pytorch</span><span class="p">.</span><span class="n">org</span><span class="p">/</span><span class="n">whl</span><span class="p">/</span><span class="n">cu124</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="c"># install PyTorch 2.13.0 with CUDA support (keep the version, pick the cuXXX index for your driver)</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="n">uv</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">torch</span><span class="p">==</span><span class="n">2</span><span class="p">.</span><span class="n">13</span><span class="p">.</span><span class="n">0</span> <span class="p">-</span><span class="n">-index-url</span> <span class="n">https</span><span class="p">://</span><span class="n">download</span><span class="p">.</span><span class="n">pytorch</span><span class="p">.</span><span class="n">org</span><span class="p">/</span><span class="n">whl</span><span class="p">/</span><span class="n">cu126</span>
 </span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
 </span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="c"># install gpuma from PyPI inside the environment</span>
 </span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="n">uv</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">gpuma</span>
@@ -670,8 +728,8 @@ installs and the CPU backend is used.</p>
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">conda</span> <span class="n">create</span> <span class="n">-n</span> <span class="n">gpuma-py312</span> <span class="n">python</span><span class="p">=</span><span class="n">3</span><span class="p">.</span><span class="n">12</span>
 </span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">conda</span> <span class="n">activate</span> <span class="n">gpuma-py312</span>
 </span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="c"># install PyTorch with CUDA support (pick your CUDA version at https://pytorch.org)</span>
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="n">pip</span> <span class="n">install</span> <span class="n">torch</span> <span class="p">-</span><span class="n">-index-url</span> <span class="n">https</span><span class="p">://</span><span class="n">download</span><span class="p">.</span><span class="n">pytorch</span><span class="p">.</span><span class="n">org</span><span class="p">/</span><span class="n">whl</span><span class="p">/</span><span class="n">cu124</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="c"># install PyTorch 2.13.0 with CUDA support (keep the version, pick the cuXXX index for your driver)</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="n">pip</span> <span class="n">install</span> <span class="n">torch</span><span class="p">==</span><span class="n">2</span><span class="p">.</span><span class="n">13</span><span class="p">.</span><span class="n">0</span> <span class="p">-</span><span class="n">-index-url</span> <span class="n">https</span><span class="p">://</span><span class="n">download</span><span class="p">.</span><span class="n">pytorch</span><span class="p">.</span><span class="n">org</span><span class="p">/</span><span class="n">whl</span><span class="p">/</span><span class="n">cu126</span>
 </span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
 </span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="c"># install gpuma from PyPI inside the environment</span>
 </span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="n">pip</span> <span class="n">install</span> <span class="n">gpuma</span>
@@ -680,20 +738,23 @@ installs and the CPU backend is used.</p>
 </ul>
 <blockquote>
 <p>⚠️ <strong>Required for UMA models:</strong></br>
-To access the UMA models on Hugging Face, <strong>you must provide a token</strong> either via the <code>HUGGINGFACE_TOKEN</code> environment variable or via the config (direct token string or path to a file containing the token).</p>
+To access the UMA models on Hugging Face, <strong>you must provide a token</strong> either via the <code>HF_TOKEN</code> environment variable or via the config (direct token string or path to a file containing the token).</p>
 </blockquote>
 <h2 id="option-2-install-from-source">Option 2: Install from source</h2>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># clone the repository</span>
 </span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/niklashoelter/gpuma.git
 </span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="nb">cd</span><span class="w"> </span>gpuma
 </span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="c1"># install PyTorch with CUDA support (pick your CUDA version at https://pytorch.org)</span>
-</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>pip<span class="w"> </span>install<span class="w"> </span>torch<span class="w"> </span>--index-url<span class="w"> </span>https://download.pytorch.org/whl/cu124
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="c1"># install PyTorch 2.13.0 with CUDA support (keep the version, pick the cuXXX index for your driver)</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="nv">torch</span><span class="o">==</span><span class="m">2</span>.13.0<span class="w"> </span>--index-url<span class="w"> </span>https://download.pytorch.org/whl/cu126
 </span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
 </span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="c1"># install using (uv) pip</span>
 </span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>.
 </span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="c1"># or, without uv:</span>
 </span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>pip<span class="w"> </span>install<span class="w"> </span>.
+</span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>
+</span><span id="__span-5-13"><a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="c1"># for development: tests, linting and docs tools, all pinned</span>
+</span><span id="__span-5-14"><a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">".[dev]"</span>
 </span></code></pre></div>
 
 
@@ -747,7 +808,7 @@ To access the UMA models on Hugging Face, <strong>you must provide a token</stro
       <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.expand", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>
