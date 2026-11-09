@@ -13,8 +13,8 @@ Documentation for the core functions in `gpuma`.
       `models/fairchem.py`, `models/orb.py`, `models/sevennet.py`, `models/aimnet.py`.
     - `gpuma.conformer_generation` — SMILES → 3D structure/ensemble embedding
       (`embed.py`, `mol_utils.py`).
-    - `gpuma.utils` — I/O (`io_handler.py`), logging (`logging_utils.py`) and
-      timing helpers (`decorators.py`).
+    - `gpuma.utils` — I/O (`io_handler.py`), logging (`logging_utils.py`),
+      timing helpers (`decorators.py`) and opt-in diagnostic reporting (`reporting.py`).
     - Top-level modules `structure.py`, `config.py`, `optimizer.py`, `api.py`,
       `cli.py`.
 

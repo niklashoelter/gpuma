@@ -233,3 +233,8 @@ gpuma doctor --config config.json
 
 `gpuma skills install` installs the GPUMA skill for AI coding agents; see
 [Using GPUMA with AI agents](agents.md).
+
+| Flag | Description |
+| --- | --- |
+| `--target DIR` | Skills folder to install into (repeatable; default: `~/.claude/skills` and `~/.agents/skills`) |
+| `--force` | Replace a `gpuma` skill folder that gpuma did not install |
